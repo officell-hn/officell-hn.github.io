@@ -131,6 +131,22 @@ section{padding:5rem 2rem}
 /* AD SPACE */
 .ad-banner{max-width:1100px;margin:0 auto 2rem;background:var(--card);border:1px dashed var(--border);border-radius:16px;padding:2rem;text-align:center;color:var(--muted);font-size:0.85rem;min-height:90px;display:flex;align-items:center;justify-content:center}
 
+/* FEATURED STORE PRODUCTS */
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.2rem}
+.store-card{background:var(--card);border:1px solid var(--border);border-radius:18px;overflow:hidden;transition:all .3s;display:flex;flex-direction:column;text-decoration:none;color:inherit}
+.store-card:hover{border-color:var(--accent2);transform:translateY(-4px);box-shadow:0 8px 30px rgba(255,107,53,.15)}
+.store-card-img{width:100%;height:160px;object-fit:cover;background:var(--surface)}
+.store-card-img-ph{width:100%;height:160px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:3rem;color:var(--muted)}
+.store-card-body{padding:1rem 1.2rem;flex:1;display:flex;flex-direction:column;gap:.4rem}
+.store-card-name{font-weight:600;font-size:.92rem;line-height:1.3}
+.store-card-cat{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.store-card-price{font-size:1.2rem;font-weight:700;color:var(--accent2);margin-top:auto;padding-top:.5rem}
+.store-card-cond{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:20px;font-weight:600;margin-top:.2rem}
+.cond-nuevo{background:rgba(0,232,143,.12);color:#00e88f}
+.cond-usado{background:rgba(255,107,53,.12);color:var(--accent2)}
+.cond-reacondicionado{background:rgba(0,212,255,.12);color:var(--accent)}
+.store-cta-bar{text-align:center;margin-top:2.5rem}
+
 /* PRODUCTS - AMAZON AFFILIATES */
 .products-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem}
 .product-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:1.5rem;text-align:center;transition:all 0.3s}
@@ -186,9 +202,9 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
   <ul class="nav-links">
     <li><a href="#servicios">Servicios</a></li>
     <li><a href="#nosotros">Nosotros</a></li>
+    <li><a href="tienda.html">🛒 Tienda</a></li>
     <li><a href="blog.html">Blog</a></li>
     <li><a href="ganar-dinero.html">Ganar Dinero</a></li>
-    <li><a href="#productos">Accesorios</a></li>
     <li><a href="#ubicacion">Ubicación</a></li>
   </ul>
   <a href="https://wa.me/50493323393" target="_blank" class="nav-cta">💬 WhatsApp</a>
@@ -323,6 +339,21 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
   <div class="ad-banner">📢 Espacio publicitario — Google AdSense (336x280 Large Rectangle)</div>
 </section>
 
+<!-- TIENDA DESTACADOS -->
+<section id="tienda">
+  <div class="section-inner">
+    <div class="section-tag">Disponible ahora</div>
+    <h2 class="section-title">PRODUCTOS DESTACADOS</h2>
+    <p class="section-desc">Celulares nuevos y usados, accesorios y más. Entrega en Danlí o coordinamos envío.</p>
+    <div id="store-featured" class="store-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--muted)">Cargando productos…</div>
+    </div>
+    <div class="store-cta-bar">
+      <a href="tienda.html" class="btn-primary" style="background:linear-gradient(135deg,#EF9F27,#ff6b35)">🛒 Ver todos los productos →</a>
+    </div>
+  </div>
+</section>
+
 <!-- PRODUCTOS AFILIADOS -->
 <section id="productos">
   <div class="section-inner">
@@ -439,15 +470,52 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
     <div class="footer-links">
       <a href="#servicios">Servicios</a>
       <a href="#nosotros">Nosotros</a>
+      <a href="tienda.html">🛒 Tienda</a>
       <a href="blog.html">Blog</a>
       <a href="ganar-dinero.html">Ganar Dinero</a>
-      <a href="#productos">Accesorios</a>
       <a href="#ubicacion">Ubicación</a>
       <a href="https://wa.me/50493323393" target="_blank">WhatsApp</a>
     </div>
     <div class="footer-copy">© 2026 OFFICELL Servicio Técnico — Danlí, El Paraíso, Honduras. Todos los derechos reservados.</div>
   </div>
 </footer>
+
+<script>
+(async () => {
+  const el = document.getElementById('store-featured');
+  try {
+    let r = await fetch('https://officell-ia-production.up.railway.app/api/tienda/productos?destacados=true');
+    let d = await r.json();
+    let prods = d.ok && d.productos.length ? d.productos : [];
+    if (!prods.length) {
+      r = await fetch('https://officell-ia-production.up.railway.app/api/tienda/productos');
+      d = await r.json();
+      prods = (d.productos || []).slice(0, 8);
+    } else {
+      prods = prods.slice(0, 8);
+    }
+    if (!prods.length) {
+      el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--muted)">Próximamente productos disponibles. <a href="https://wa.me/50493323393" style="color:var(--accent)">Consultar por WhatsApp →</a></div>';
+      return;
+    }
+    const condMap = {nuevo:'cond-nuevo',usado:'cond-usado',reacondicionado:'cond-reacondicionado'};
+    el.innerHTML = prods.map(p => `
+      <a href="tienda.html" class="store-card">
+        ${p.imagen_url ? `<img src="${esc(p.imagen_url)}" class="store-card-img" alt="${esc(p.nombre)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ''}
+        <div class="store-card-img-ph" style="${p.imagen_url?'display:none':''}">📦</div>
+        <div class="store-card-body">
+          <div class="store-card-cat">${esc(p.categoria_web||'')}</div>
+          <div class="store-card-name">${esc(p.nombre)}</div>
+          <span class="store-card-cond ${condMap[p.condicion]||''}">${esc(p.condicion||'')}</span>
+          <div class="store-card-price">L.${parseFloat(p.precio).toLocaleString('es-HN')}</div>
+        </div>
+      </a>`).join('');
+  } catch {
+    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--muted)"><a href="tienda.html" style="color:var(--accent)">Ver tienda →</a></div>';
+  }
+})();
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+</script>
 
 <!-- WHATSAPP FLOAT -->
 <a href="https://wa.me/50493323393?text=Hola%20necesito%20ayuda" target="_blank" class="wa-float" title="Escríbenos por WhatsApp">
