@@ -63,8 +63,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
 .badge-nuevo{background:rgba(0,232,143,0.15);color:var(--green);border:1px solid var(--green)}
 .badge-usado{background:rgba(255,107,53,0.15);color:var(--accent2);border:1px solid var(--accent2)}
 .badge-reacondicionado{background:rgba(0,212,255,0.15);color:var(--accent);border:1px solid var(--accent)}
-.producto-img{width:100%;height:200px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:4rem;overflow:hidden;border-radius:16px 16px 0 0}
-.producto-img img{width:100%;height:100%;object-fit:cover;object-position:center}
+.producto-img{width:100%;height:200px;background:var(--surface);overflow:hidden;border-radius:16px 16px 0 0;position:relative}
+.producto-img img{width:100%;height:200px;object-fit:cover;object-position:center top;display:block}
+.producto-img .ph-icon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:4rem}
 .producto-img-placeholder{width:100%;height:200px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:3.5rem}
 .producto-info{padding:1.2rem}
 .producto-categoria{font-size:0.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem;font-weight:600}
@@ -148,6 +149,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
   .productos-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem}
   .carrito-sidebar{width:100vw}
   .producto-img,.producto-img-placeholder{height:160px}
+  .producto-img img{height:160px}
 }
 </style>
 </head>
