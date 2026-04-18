@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tienda — OFFICELL Danlí, Honduras</title>
+<meta name="description" content="Compra celulares nuevos y usados, accesorios y más. Envío a domicilio en Danlí. OFFICELL Servicio Técnico.">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.paypal.com/sdk/js?client-id=AU96J6uUPDrKYiSfzgKH4mK8nA6w9h1YYjt1RFJsJZT83clI_T8e7q-Yds8rckOA57D71SR8MOVV_5G8&currency=USD&locale=es_HN" defer></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--card:#1a1a26;--border:#2a2a3a;
+  --text:#e8e8f0;--muted:#8888a0;--accent:#00d4ff;--accent2:#ff6b35;
+  --green:#00e88f;--gradient:linear-gradient(135deg,#00d4ff,#0066ff);
+  --glow:0 0 30px rgba(0,212,255,0.15);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+h1,h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:0.04em}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(20px);background:rgba(10,10,15,0.9);border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:0.6rem;text-decoration:none}
+.nav-logo-icon{width:36px;height:36px;background:var(--gradient);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;color:#000}
+.nav-logo-text{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--text);letter-spacing:0.05em}
+.nav-logo-text span{color:var(--accent)}
+.nav-links{display:flex;gap:1.5rem;list-style:none;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:0.9rem;font-weight:500;transition:color 0.3s}
+.nav-links a:hover,.nav-links a.active{color:var(--accent)}
+.carrito-btn{background:var(--gradient);color:#000;padding:0.5rem 1.2rem;border-radius:50px;text-decoration:none;font-weight:700;font-size:0.85rem;display:flex;align-items:center;gap:0.4rem;cursor:pointer;border:none;transition:transform 0.2s}
+.carrito-btn:hover{transform:scale(1.05)}
+.carrito-count{background:#000;color:var(--accent);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700}
+
+/* HERO TIENDA */
+.hero-tienda{padding:7rem 2rem 3rem;text-align:center}
+.hero-tienda h1{font-size:clamp(2.5rem,5vw,4rem);margin-bottom:0.5rem}
+.hero-tienda h1 span{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-tienda p{color:var(--muted);font-size:1rem;margin-bottom:2rem}
+
+/* BUSCADOR */
+.search-bar{max-width:500px;margin:0 auto 2rem;position:relative}
+.search-bar input{width:100%;padding:0.9rem 1.2rem 0.9rem 3rem;background:var(--card);border:1px solid var(--border);border-radius:50px;color:var(--text);font-size:0.95rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.3s}
+.search-bar input:focus{border-color:var(--accent)}
+.search-bar .icon{position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:1.1rem}
+
+/* FILTROS */
+.filtros{max-width:1200px;margin:0 auto 2rem;padding:0 1rem;display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center}
+.filtro-btn{padding:0.5rem 1.2rem;border-radius:50px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-size:0.85rem;font-weight:500;transition:all 0.3s;font-family:'DM Sans',sans-serif}
+.filtro-btn:hover,.filtro-btn.active{background:var(--gradient);border-color:transparent;color:#000;font-weight:700}
+
+/* CONDICIÓN FILTRO */
+.condicion-filtros{max-width:1200px;margin:0 auto 2.5rem;padding:0 1rem;display:flex;gap:0.5rem;justify-content:center}
+.cond-btn{padding:0.4rem 1rem;border-radius:50px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:0.8rem;transition:all 0.3s;font-family:'DM Sans',sans-serif}
+.cond-btn:hover,.cond-btn.active{border-color:var(--accent);color:var(--accent)}
+
+/* GRID PRODUCTOS */
+.productos-section{max-width:1200px;margin:0 auto;padding:0 1rem 4rem}
+.productos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.5rem}
+.producto-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:transform 0.3s,border-color 0.3s;position:relative}
+.producto-card:hover{transform:translateY(-4px);border-color:var(--accent)}
+.badge-destacado{position:absolute;top:0.75rem;left:0.75rem;background:var(--accent2);color:#fff;padding:0.25rem 0.6rem;border-radius:50px;font-size:0.7rem;font-weight:700;z-index:1}
+.badge-condicion{position:absolute;top:0.75rem;right:0.75rem;padding:0.25rem 0.6rem;border-radius:50px;font-size:0.7rem;font-weight:700;z-index:1}
+.badge-nuevo{background:rgba(0,232,143,0.15);color:var(--green);border:1px solid var(--green)}
+.badge-usado{background:rgba(255,107,53,0.15);color:var(--accent2);border:1px solid var(--accent2)}
+.badge-reacondicionado{background:rgba(0,212,255,0.15);color:var(--accent);border:1px solid var(--accent)}
+.producto-img{width:100%;height:200px;object-fit:cover;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:4rem}
+.producto-img img{width:100%;height:100%;object-fit:cover}
+.producto-img-placeholder{width:100%;height:200px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:3.5rem}
+.producto-info{padding:1.2rem}
+.producto-categoria{font-size:0.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem;font-weight:600}
+.producto-nombre{font-size:1rem;font-weight:700;margin-bottom:0.5rem;color:var(--text);line-height:1.3}
+.producto-desc{font-size:0.82rem;color:var(--muted);margin-bottom:1rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.producto-precio{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:var(--accent);letter-spacing:0.05em;margin-bottom:1rem}
+.producto-precio span{font-size:1rem;color:var(--muted)}
+.btn-agregar{width:100%;padding:0.75rem;background:var(--gradient);color:#000;border:none;border-radius:10px;font-weight:700;font-size:0.9rem;cursor:pointer;transition:opacity 0.3s;font-family:'DM Sans',sans-serif}
+.btn-agregar:hover{opacity:0.85}
+.btn-agregar:disabled{opacity:0.4;cursor:not-allowed}
+
+/* ESTADOS */
+.loading{text-align:center;padding:4rem;color:var(--muted)}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:4rem;color:var(--muted)}
+.empty-state .icon{font-size:3rem;margin-bottom:1rem}
+
+/* CARRITO SIDEBAR */
+.carrito-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.3s}
+.carrito-overlay.open{opacity:1;pointer-events:all}
+.carrito-sidebar{position:fixed;top:0;right:-420px;width:420px;max-width:100vw;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:201;transition:right 0.35s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column}
+.carrito-sidebar.open{right:0}
+.carrito-header{padding:1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.carrito-header h2{font-size:1.5rem}
+.cerrar-carrito{background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer;padding:0.25rem}
+.carrito-items{flex:1;overflow-y:auto;padding:1rem}
+.carrito-item{display:flex;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--border);align-items:center}
+.carrito-item-img{width:60px;height:60px;background:var(--card);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;overflow:hidden}
+.carrito-item-img img{width:100%;height:100%;object-fit:cover}
+.carrito-item-info{flex:1}
+.carrito-item-nombre{font-weight:600;font-size:0.9rem;margin-bottom:0.25rem}
+.carrito-item-precio{color:var(--accent);font-weight:700}
+.carrito-item-controles{display:flex;align-items:center;gap:0.5rem;margin-top:0.5rem}
+.qty-btn{background:var(--card);border:1px solid var(--border);color:var(--text);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
+.qty-btn:hover{border-color:var(--accent);color:var(--accent)}
+.qty-display{font-weight:600;min-width:24px;text-align:center}
+.eliminar-item{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;margin-left:auto;padding:0.25rem}
+.eliminar-item:hover{color:var(--accent2)}
+.carrito-footer{padding:1.5rem;border-top:1px solid var(--border)}
+.carrito-total{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+.carrito-total span:first-child{color:var(--muted)}
+.carrito-total .monto{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--accent)}
+.carrito-vacio{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.carrito-vacio .icon{font-size:3rem;margin-bottom:1rem}
+
+/* MODAL CHECKOUT */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity 0.3s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem;max-width:500px;width:100%;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:1.8rem;margin-bottom:1.5rem;text-align:center}
+.form-group{margin-bottom:1.2rem}
+.form-group label{display:block;font-size:0.85rem;color:var(--muted);margin-bottom:0.4rem;font-weight:500}
+.form-group input{width:100%;padding:0.85rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.95rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.3s}
+.form-group input:focus{border-color:var(--accent)}
+.form-group input::placeholder{color:var(--muted)}
+.resumen-pedido{background:var(--card);border-radius:12px;padding:1rem;margin-bottom:1.5rem}
+.resumen-pedido h3{font-size:1rem;margin-bottom:0.75rem;color:var(--muted)}
+.resumen-item{display:flex;justify-content:space-between;font-size:0.85rem;padding:0.25rem 0;border-bottom:1px solid var(--border)}
+.resumen-item:last-child{border:none;font-weight:700;font-size:1rem;color:var(--accent);padding-top:0.5rem}
+#paypal-button-container{margin-top:1rem}
+.btn-cancelar{width:100%;padding:0.75rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.9rem;margin-top:0.75rem;transition:all 0.3s}
+.btn-cancelar:hover{border-color:var(--accent2);color:var(--accent2)}
+.nota-paypal{font-size:0.75rem;color:var(--muted);text-align:center;margin-top:0.75rem}
+
+/* ÉXITO */
+.success-modal{text-align:center;padding:1rem}
+.success-icon{font-size:4rem;margin-bottom:1rem}
+.success-modal h2{color:var(--green);margin-bottom:0.75rem}
+.success-modal p{color:var(--muted);margin-bottom:1.5rem}
+.btn-success{padding:0.75rem 2rem;background:var(--gradient);color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif}
+
+/* WA FLOTANTE */
+.wa-float{position:fixed;bottom:2rem;left:2rem;z-index:150;background:#25D366;color:#fff;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;text-decoration:none;box-shadow:0 4px 20px rgba(37,211,102,0.4);transition:transform 0.3s}
+.wa-float:hover{transform:scale(1.1)}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  nav{padding:1rem}
+  .nav-links{display:none}
+  .productos-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem}
+  .carrito-sidebar{width:100vw}
+  .producto-img,.producto-img-placeholder{height:160px}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="OFFICELL_Web.html" class="nav-logo">
+    <div class="nav-logo-icon">O</div>
+    <span class="nav-logo-text">OFFICE<span>LL</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="OFFICELL_Web.html">Inicio</a></li>
+    <li><a href="tienda.html" class="active">Tienda</a></li>
+    <li><a href="files/blog.html">Blog</a></li>
+    <li><a href="OFFICELL_Web.html#ubicacion">Ubicación</a></li>
+  </ul>
+  <button class="carrito-btn" onclick="abrirCarrito()">
+    🛒 Carrito <span class="carrito-count" id="carritoCount">0</span>
+  </button>
+</nav>
+
+<!-- HERO -->
+<div class="hero-tienda">
+  <h1>Nuestra <span>Tienda</span></h1>
+  <p>Celulares nuevos y usados · Accesorios · Envío en Danlí</p>
+  <div class="search-bar">
+    <span class="icon">🔍</span>
+    <input type="text" id="busqueda" placeholder="Buscar producto..." oninput="buscar(this.value)">
+  </div>
+</div>
+
+<!-- FILTROS CATEGORÍA -->
+<div class="filtros" id="filtrosCat">
+  <button class="filtro-btn active" onclick="filtrarCategoria('todos', this)">🏪 Todos</button>
+</div>
+
+<!-- FILTROS CONDICIÓN -->
+<div class="condicion-filtros">
+  <button class="cond-btn active" onclick="filtrarCondicion('', this)">Todos</button>
+  <button class="cond-btn" onclick="filtrarCondicion('nuevo', this)">✨ Nuevos</button>
+  <button class="cond-btn" onclick="filtrarCondicion('usado', this)">🔄 Usados</button>
+  <button class="cond-btn" onclick="filtrarCondicion('reacondicionado', this)">🔧 Reacondicionados</button>
+</div>
+
+<!-- PRODUCTOS -->
+<div class="productos-section">
+  <div id="productosContainer">
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>Cargando productos...</p>
+    </div>
+  </div>
+</div>
+
+<!-- CARRITO SIDEBAR -->
+<div class="carrito-overlay" id="carritoOverlay" onclick="cerrarCarrito()"></div>
+<div class="carrito-sidebar" id="carritoSidebar">
+  <div class="carrito-header">
+    <h2>🛒 Tu Carrito</h2>
+    <button class="cerrar-carrito" onclick="cerrarCarrito()">✕</button>
+  </div>
+  <div class="carrito-items" id="carritoItems"></div>
+  <div class="carrito-footer" id="carritoFooter" style="display:none">
+    <div class="carrito-total">
+      <span>Total:</span>
+      <span class="monto" id="carritoTotal">L.0</span>
+    </div>
+    <button class="carrito-btn" style="width:100%;justify-content:center;font-size:1rem;padding:0.85rem" onclick="abrirCheckout()">
+      💳 Proceder al pago
+    </button>
+  </div>
+</div>
+
+<!-- MODAL CHECKOUT -->
+<div class="modal-overlay" id="checkoutModal">
+  <div class="modal" id="checkoutContent">
+    <h2>📦 Finalizar Pedido</h2>
+    <div class="form-group">
+      <label>Nombre completo *</label>
+      <input type="text" id="clienteNombre" placeholder="Tu nombre completo">
+    </div>
+    <div class="form-group">
+      <label>WhatsApp / Teléfono *</label>
+      <input type="tel" id="clienteTel" placeholder="+504 XXXX-XXXX">
+    </div>
+    <div class="form-group">
+      <label>Email (opcional)</label>
+      <input type="email" id="clienteEmail" placeholder="tu@email.com">
+    </div>
+    <div class="resumen-pedido">
+      <h3>Resumen del pedido</h3>
+      <div id="resumenItems"></div>
+    </div>
+    <p class="nota-paypal">🔒 Pago seguro procesado por PayPal. No guardamos datos de tu tarjeta.</p>
+    <div id="paypal-button-container"></div>
+    <button class="btn-cancelar" onclick="cerrarCheckout()">Cancelar</button>
+  </div>
+</div>
+
+<!-- WA FLOTANTE -->
+<a href="https://wa.me/50493313979" target="_blank" class="wa-float" title="WhatsApp OFFICELL">💬</a>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIGURACIÓN
+// ══════════════════════════════════════════════
+const API = 'https://officell-ia-production.up.railway.app/api/tienda';
+let todosProductos = [];
+let categoriaActiva = 'todos';
+let condicionActiva = '';
+let busquedaActiva = '';
+let carrito = JSON.parse(localStorage.getItem('officell_carrito') || '[]');
+
+// ══════════════════════════════════════════════
+// CARGAR PRODUCTOS
+// ══════════════════════════════════════════════
+async function cargarProductos() {
+  try {
+    const [prodRes, catRes] = await Promise.all([
+      fetch(`${API}/productos`),
+      fetch(`${API}/categorias`)
+    ]);
+    const prodData = await prodRes.json();
+    const catData = await catRes.json();
+
+    todosProductos = prodData.ok ? prodData.productos : [];
+
+    // Renderizar filtros de categoría
+    if (catData.ok && catData.categorias.length > 0) {
+      const labels = {
+        'celulares-nuevos':'📱 Celulares Nuevos','celulares-usados':'🔄 Celulares Usados',
+        'accesorios':'🎧 Accesorios','repuestos':'🔧 Repuestos','computadoras':'💻 Computadoras',
+        'tablets':'📟 Tablets','otros':'📦 Otros'
+      };
+      const filtrosEl = document.getElementById('filtrosCat');
+      filtrosEl.innerHTML = `<button class="filtro-btn active" onclick="filtrarCategoria('todos',this)">🏪 Todos</button>`;
+      catData.categorias.forEach(c => {
+        const label = labels[c.categoria] || c.categoria;
+        filtrosEl.innerHTML += `<button class="filtro-btn" onclick="filtrarCategoria('${c.categoria}',this)">${label} <small style="opacity:0.6">(${c.cantidad})</small></button>`;
+      });
+    }
+
+    renderProductos();
+  } catch(e) {
+    document.getElementById('productosContainer').innerHTML = `
+      <div class="empty-state">
+        <div class="icon">⚠️</div>
+        <p>No se pudo conectar con la tienda.<br>Intenta de nuevo o escríbenos por WhatsApp.</p>
+      </div>`;
+  }
+}
+
+// ══════════════════════════════════════════════
+// RENDERIZAR PRODUCTOS
+// ══════════════════════════════════════════════
+function renderProductos() {
+  let productos = todosProductos.filter(p => {
+    if (categoriaActiva !== 'todos' && p.categoria_web !== categoriaActiva) return false;
+    if (condicionActiva && p.condicion !== condicionActiva) return false;
+    if (busquedaActiva && !p.nombre.toLowerCase().includes(busquedaActiva.toLowerCase())) return false;
+    return true;
+  });
+
+  const container = document.getElementById('productosContainer');
+  if (!productos.length) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">🔍</div><p>No encontramos productos con ese filtro.<br>Prueba otra categoría.</p></div>`;
+    return;
+  }
+
+  const iconos = {'celulares-nuevos':'📱','celulares-usados':'📲','accesorios':'🎧','repuestos':'🔧','computadoras':'💻','tablets':'📟','otros':'📦'};
+
+  container.innerHTML = `<div class="productos-grid">${productos.map(p => {
+    const badgeCond = p.condicion === 'nuevo' ? 'badge-nuevo' : p.condicion === 'usado' ? 'badge-usado' : 'badge-reacondicionado';
+    const condLabel = p.condicion === 'nuevo' ? '✨ Nuevo' : p.condicion === 'usado' ? '🔄 Usado' : '🔧 Reacon.';
+    const icono = iconos[p.categoria_web] || '📦';
+    const imgHtml = p.imagen_url
+      ? `<div class="producto-img"><img src="${p.imagen_url}" alt="${p.nombre}" loading="lazy" onerror="this.parentNode.innerHTML='<div style=\\'font-size:3.5rem;width:100%;height:100%;display:flex;align-items:center;justify-content:center\\'>${icono}</div>'"></div>`
+      : `<div class="producto-img-placeholder">${icono}</div>`;
+
+    return `<div class="producto-card">
+      ${p.destacado ? '<span class="badge-destacado">⭐ Destacado</span>' : ''}
+      <span class="badge-condicion ${badgeCond}">${condLabel}</span>
+      ${imgHtml}
+      <div class="producto-info">
+        <div class="producto-categoria">${p.categoria_web || 'Producto'}</div>
+        <div class="producto-nombre">${p.nombre}</div>
+        ${p.descripcion ? `<div class="producto-desc">${p.descripcion}</div>` : ''}
+        <div class="producto-precio">L.${parseFloat(p.precio).toLocaleString()} <span>HNL</span></div>
+        <button class="btn-agregar" onclick="agregarCarrito(${JSON.stringify(p).replace(/"/g,'&quot;')})" ${p.cantidad < 1 ? 'disabled' : ''}>
+          ${p.cantidad < 1 ? 'Sin stock' : '🛒 Agregar al carrito'}
+        </button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ══════════════════════════════════════════════
+// FILTROS
+// ══════════════════════════════════════════════
+function filtrarCategoria(cat, btn) {
+  categoriaActiva = cat;
+  document.querySelectorAll('#filtrosCat .filtro-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProductos();
+}
+
+function filtrarCondicion(cond, btn) {
+  condicionActiva = cond;
+  document.querySelectorAll('.cond-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderProductos();
+}
+
+let busquedaTimer;
+function buscar(val) {
+  clearTimeout(busquedaTimer);
+  busquedaTimer = setTimeout(() => { busquedaActiva = val; renderProductos(); }, 300);
+}
+
+// ══════════════════════════════════════════════
+// CARRITO
+// ══════════════════════════════════════════════
+function agregarCarrito(producto) {
+  const idx = carrito.findIndex(i => i.id === producto.id);
+  if (idx >= 0) {
+    carrito[idx].cantidad++;
+  } else {
+    carrito.push({ ...producto, cantidad: 1 });
+  }
+  guardarCarrito();
+  actualizarContador();
+  abrirCarrito();
+}
+
+function guardarCarrito() {
+  localStorage.setItem('officell_carrito', JSON.stringify(carrito));
+}
+
+function actualizarContador() {
+  const total = carrito.reduce((s, i) => s + i.cantidad, 0);
+  document.getElementById('carritoCount').textContent = total;
+}
+
+function abrirCarrito() {
+  document.getElementById('carritoOverlay').classList.add('open');
+  document.getElementById('carritoSidebar').classList.add('open');
+  renderCarrito();
+}
+
+function cerrarCarrito() {
+  document.getElementById('carritoOverlay').classList.remove('open');
+  document.getElementById('carritoSidebar').classList.remove('open');
+}
+
+function renderCarrito() {
+  const container = document.getElementById('carritoItems');
+  const footer = document.getElementById('carritoFooter');
+  const iconos = {'celulares-nuevos':'📱','celulares-usados':'📲','accesorios':'🎧','repuestos':'🔧','computadoras':'💻','tablets':'📟','otros':'📦'};
+
+  if (!carrito.length) {
+    container.innerHTML = `<div class="carrito-vacio"><div class="icon">🛒</div><p>Tu carrito está vacío</p></div>`;
+    footer.style.display = 'none';
+    return;
+  }
+
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  container.innerHTML = carrito.map((item, idx) => {
+    const icono = iconos[item.categoria_web] || '📦';
+    const imgHtml = item.imagen_url
+      ? `<img src="${item.imagen_url}" alt="${item.nombre}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
+      : icono;
+    return `<div class="carrito-item">
+      <div class="carrito-item-img">${imgHtml}</div>
+      <div class="carrito-item-info">
+        <div class="carrito-item-nombre">${item.nombre}</div>
+        <div class="carrito-item-precio">L.${(item.precio * item.cantidad).toLocaleString()}</div>
+        <div class="carrito-item-controles">
+          <button class="qty-btn" onclick="cambiarQty(${idx},-1)">−</button>
+          <span class="qty-display">${item.cantidad}</span>
+          <button class="qty-btn" onclick="cambiarQty(${idx},1)">+</button>
+          <button class="eliminar-item" onclick="eliminarItem(${idx})">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('carritoTotal').textContent = `L.${total.toLocaleString()}`;
+  footer.style.display = 'block';
+}
+
+function cambiarQty(idx, delta) {
+  carrito[idx].cantidad += delta;
+  if (carrito[idx].cantidad <= 0) carrito.splice(idx, 1);
+  guardarCarrito();
+  actualizarContador();
+  renderCarrito();
+}
+
+function eliminarItem(idx) {
+  carrito.splice(idx, 1);
+  guardarCarrito();
+  actualizarContador();
+  renderCarrito();
+}
+
+// ══════════════════════════════════════════════
+// CHECKOUT + PAYPAL
+// ══════════════════════════════════════════════
+function abrirCheckout() {
+  cerrarCarrito();
+  // Renderizar resumen
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  document.getElementById('resumenItems').innerHTML =
+    carrito.map(i => `<div class="resumen-item"><span>${i.nombre} x${i.cantidad}</span><span>L.${(i.precio * i.cantidad).toLocaleString()}</span></div>`).join('') +
+    `<div class="resumen-item"><span>TOTAL</span><span>L.${total.toLocaleString()}</span></div>`;
+  document.getElementById('checkoutModal').classList.add('open');
+  iniciarPayPal(total);
+}
+
+function cerrarCheckout() {
+  document.getElementById('checkoutModal').classList.remove('open');
+}
+
+function iniciarPayPal(totalHNL) {
+  const container = document.getElementById('paypal-button-container');
+  container.innerHTML = '';
+  // Tipo de cambio aproximado HNL→USD (actualizar según necesidad)
+  const TC = 24.8;
+  const totalUSD = (totalHNL / TC).toFixed(2);
+
+  if (typeof paypal === 'undefined') {
+    container.innerHTML = `<p style="color:var(--accent2);text-align:center">⚠️ PayPal no disponible. Contáctanos por WhatsApp.</p><a href="https://wa.me/50493313979" target="_blank" class="btn-agregar" style="display:block;text-align:center;text-decoration:none;margin-top:1rem">💬 Pagar por WhatsApp</a>`;
+    return;
+  }
+
+  paypal.Buttons({
+    style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay' },
+    createOrder: (data, actions) => {
+      const nombre = document.getElementById('clienteNombre').value.trim();
+      const tel = document.getElementById('clienteTel').value.trim();
+      if (!nombre || !tel) { alert('Por favor ingresa tu nombre y teléfono'); return false; }
+      return actions.order.create({
+        purchase_units: [{
+          description: `Pedido OFFICELL Danlí`,
+          amount: { currency_code: 'USD', value: totalUSD },
+        }]
+      });
+    },
+    onApprove: async (data, actions) => {
+      const details = await actions.order.capture();
+      await registrarPedido(details.id);
+    },
+    onError: (err) => {
+      alert('Error en el pago. Intenta de nuevo o escríbenos por WhatsApp.');
+      console.error(err);
+    }
+  }).render('#paypal-button-container');
+}
+
+async function registrarPedido(paypalOrderId) {
+  const nombre = document.getElementById('clienteNombre').value.trim();
+  const tel = document.getElementById('clienteTel').value.trim();
+  const email = document.getElementById('clienteEmail').value.trim();
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+
+  try {
+    await fetch(`${API}/pedido`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre_cliente: nombre,
+        telefono_cliente: tel,
+        email_cliente: email,
+        productos: carrito.map(i => ({ id: i.id, nombre: i.nombre, precio: i.precio, cantidad: i.cantidad })),
+        total,
+        paypal_order_id: paypalOrderId
+      })
+    });
+  } catch(e) { console.error('Error registrando pedido:', e); }
+
+  // Limpiar carrito y mostrar éxito
+  carrito = [];
+  guardarCarrito();
+  actualizarContador();
+  document.getElementById('checkoutContent').innerHTML = `
+    <div class="success-modal">
+      <div class="success-icon">✅</div>
+      <h2>¡Pedido Confirmado!</h2>
+      <p>Gracias <strong>${nombre}</strong>. Nos comunicaremos contigo al <strong>${tel}</strong> para coordinar la entrega.</p>
+      <p style="margin-bottom:1.5rem">ID de pago: <code style="color:var(--accent)">${paypalOrderId}</code></p>
+      <button class="btn-success" onclick="cerrarCheckout();location.reload()">Seguir comprando</button>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+actualizarContador();
+cargarProductos();
+</script>
+</body>
+</html>
