@@ -6,7 +6,7 @@
 <title>Tienda — OFFICELL Danlí, Honduras</title>
 <meta name="description" content="Compra celulares nuevos y usados, accesorios y más. Envío a domicilio en Danlí. OFFICELL Servicio Técnico.">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://www.paypal.com/sdk/js?client-id=AU96J6uUPDrKYiSfzgKH4mK8nA6w9h1YYjt1RFJsJZT83clI_T8e7q-Yds8rckOA57D71SR8MOVV_5G8&currency=USD&locale=es_HN" defer></script>
+<script src="https://www.paypal.com/sdk/js?client-id=AU96J6uUPDrKYiSfzgKH4mK8nA6w9h1YYjt1RFJsJZT83clI_T8e7q-Yds8rckOA57D71SR8MOVV_5G8&currency=USD&locale=es_HN"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -482,7 +482,18 @@ function iniciarPayPal(totalHNL) {
   const totalUSD = (totalHNL / TC).toFixed(2);
 
   if (typeof paypal === 'undefined') {
-    container.innerHTML = `<p style="color:var(--accent2);text-align:center">⚠️ PayPal no disponible. Contáctanos por WhatsApp.</p><a href="https://wa.me/50493313979" target="_blank" class="btn-agregar" style="display:block;text-align:center;text-decoration:none;margin-top:1rem">💬 Pagar por WhatsApp</a>`;
+    // Esperar hasta 5 segundos a que PayPal cargue
+    let intentos = 0;
+    const esperar = setInterval(() => {
+      intentos++;
+      if (typeof paypal !== 'undefined') {
+        clearInterval(esperar);
+        iniciarPayPal(totalHNL);
+      } else if (intentos >= 10) {
+        clearInterval(esperar);
+        container.innerHTML = `<p style="color:var(--accent2);text-align:center;margin-bottom:1rem">⚠️ PayPal no disponible ahora.</p><a href="https://wa.me/50493323393?text=Hola%20quiero%20pagar%20un%20pedido%20de%20L.${totalHNL}" target="_blank" class="btn-agregar" style="display:block;text-align:center;text-decoration:none">💬 Coordinar pago por WhatsApp</a>`;
+      }
+    }, 500);
     return;
   }
 
