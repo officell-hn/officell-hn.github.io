@@ -6,7 +6,6 @@
 <title>Tienda — OFFICELL Danlí, Honduras</title>
 <meta name="description" content="Compra celulares nuevos y usados, accesorios y más. Envío a domicilio en Danlí. OFFICELL Servicio Técnico.">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://www.paypal.com/sdk/js?client-id=AU96J6uUPDrKYiSfzgKH4mK8nA6w9h1YYjt1RFJsJZT83clI_T8e7q-Yds8rckOA57D71SR8MOVV_5G8&currency=USD&locale=es_HN"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -271,8 +270,19 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
 
     <!-- PANEL PAYPAL -->
     <div id="pago-paypal" class="pago-panel">
-      <p class="nota-paypal">🔒 Pago seguro con PayPal o tarjeta de crédito/débito.</p>
-      <div id="paypal-button-container"></div>
+      <p class="nota-paypal">🔒 Pago seguro con PayPal. Se abrirá paypal.me/officelldanli en una nueva pestaña.</p>
+      <div id="paypal-me-info" style="background:var(--card);border-radius:10px;padding:1rem;margin:0.75rem 0;text-align:center">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.4rem">Total a pagar en USD</div>
+        <div id="paypal-total-usd" style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--accent)">$0.00</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem">Tipo de cambio: L.24.80 = $1.00 USD</div>
+      </div>
+      <button onclick="pagarConPaypalMe()" style="width:100%;padding:0.85rem;background:#0070ba;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:0.95rem;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:0.6rem">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/></svg>
+        Pagar con PayPal.me
+      </button>
+      <button onclick="enviarPedidoPaypal()" style="width:100%;padding:0.75rem;background:transparent;border:1px solid #0070ba;color:#0070ba;border-radius:10px;font-weight:600;font-size:0.88rem;cursor:pointer;font-family:'DM Sans',sans-serif">
+        ✅ Ya pagué — Enviar comprobante por WhatsApp
+      </button>
     </div>
 
     <!-- PANEL DEPÓSITO BANCARIO -->
@@ -559,7 +569,8 @@ function mostrarPago(tipo, btn) {
   if (tipo === 'paypal' && !paypalCargado) {
     paypalCargado = true;
     const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
-    iniciarPayPal(total);
+    const totalUSD = (total / 24.8).toFixed(2);
+    document.getElementById('paypal-total-usd').textContent = '$' + totalUSD;
   }
 }
 
@@ -582,51 +593,23 @@ function enviarPedidoWhatsApp(tipo) {
   window.open(`https://wa.me/50493323393?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-function iniciarPayPal(totalHNL) {
-  const container = document.getElementById('paypal-button-container');
-  container.innerHTML = '';
-  // Tipo de cambio aproximado HNL→USD (actualizar según necesidad)
-  const TC = 24.8;
-  const totalUSD = (totalHNL / TC).toFixed(2);
+function pagarConPaypalMe() {
+  const nombre = document.getElementById('clienteNombre').value.trim();
+  const tel = document.getElementById('clienteTel').value.trim();
+  if (!nombre || !tel) { alert('Por favor ingresa tu nombre y teléfono antes de pagar'); return; }
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  const totalUSD = (total / 24.8).toFixed(2);
+  window.open(`https://www.paypal.me/officelldanli/${totalUSD}`, '_blank');
+}
 
-  if (typeof paypal === 'undefined') {
-    // Esperar hasta 5 segundos a que PayPal cargue
-    let intentos = 0;
-    const esperar = setInterval(() => {
-      intentos++;
-      if (typeof paypal !== 'undefined') {
-        clearInterval(esperar);
-        iniciarPayPal(totalHNL);
-      } else if (intentos >= 10) {
-        clearInterval(esperar);
-        container.innerHTML = `<p style="color:var(--accent2);text-align:center;margin-bottom:1rem">⚠️ PayPal no disponible ahora.</p><a href="https://wa.me/50493323393?text=Hola%20quiero%20pagar%20un%20pedido%20de%20L.${totalHNL}" target="_blank" class="btn-agregar" style="display:block;text-align:center;text-decoration:none">💬 Coordinar pago por WhatsApp</a>`;
-      }
-    }, 500);
-    return;
-  }
-
-  paypal.Buttons({
-    style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'pay' },
-    createOrder: (data, actions) => {
-      const nombre = document.getElementById('clienteNombre').value.trim();
-      const tel = document.getElementById('clienteTel').value.trim();
-      if (!nombre || !tel) { alert('Por favor ingresa tu nombre y teléfono'); return false; }
-      return actions.order.create({
-        purchase_units: [{
-          description: `Pedido OFFICELL Danlí`,
-          amount: { currency_code: 'USD', value: totalUSD },
-        }]
-      });
-    },
-    onApprove: async (data, actions) => {
-      const details = await actions.order.capture();
-      await registrarPedido(details.id);
-    },
-    onError: (err) => {
-      alert('Error en el pago. Intenta de nuevo o escríbenos por WhatsApp.');
-      console.error(err);
-    }
-  }).render('#paypal-button-container');
+function enviarPedidoPaypal() {
+  const nombre = document.getElementById('clienteNombre').value.trim() || 'Cliente';
+  const tel = document.getElementById('clienteTel').value.trim() || '';
+  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+  const totalUSD = (total / 24.8).toFixed(2);
+  const items = carrito.map(i => `• ${i.nombre} x${i.cantidad} — L.${(i.precio*i.cantidad).toLocaleString('es-HN')}`).join('\n');
+  const msg = `*Pedido OFFICELL Web — Pago PayPal*\n\n👤 ${nombre}\n📞 ${tel}\n\n📦 *Productos:*\n${items}\n\n💰 *TOTAL: L.${total.toLocaleString('es-HN')} (USD $${totalUSD})*\n\n✅ Pagué por PayPal.me — adjunto comprobante`;
+  window.open(`https://wa.me/50493323393?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 async function registrarPedido(paypalOrderId) {
