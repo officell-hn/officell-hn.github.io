@@ -264,19 +264,19 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
     <!-- TABS MÉTODOS DE PAGO -->
     <div style="margin-bottom:0.8rem;font-size:0.85rem;color:var(--muted);font-weight:600">Método de pago</div>
     <div class="pago-tabs">
-      <button class="pago-tab active" onclick="mostrarPago('paypal',this)">💳 PayPal</button>
-      <button class="pago-tab" onclick="mostrarPago('banco',this)">🏦 Depósito</button>
+      <button class="pago-tab" onclick="mostrarPago('paypal',this)">💳 PayPal</button>
+      <button class="pago-tab active" onclick="mostrarPago('banco',this)">🏦 Depósito</button>
       <button class="pago-tab" onclick="mostrarPago('whatsapp',this)">💬 WhatsApp</button>
     </div>
 
     <!-- PANEL PAYPAL -->
-    <div id="pago-paypal" class="pago-panel active">
+    <div id="pago-paypal" class="pago-panel">
       <p class="nota-paypal">🔒 Pago seguro con PayPal o tarjeta de crédito/débito.</p>
       <div id="paypal-button-container"></div>
     </div>
 
     <!-- PANEL DEPÓSITO BANCARIO -->
-    <div id="pago-banco" class="pago-panel">
+    <div id="pago-banco" class="pago-panel active">
       <div class="bancos-grid">
         <div class="banco-item">
           <div><div class="banco-nombre">🏦 Banco Atlántida</div><div class="banco-num">1472-0372-607</div><div class="banco-titular">Adonias Arriaza Lagos</div></div>
@@ -326,7 +326,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
 </div>
 
 <!-- WA FLOTANTE -->
-<a href="https://wa.me/50493313979" target="_blank" class="wa-float" title="WhatsApp OFFICELL">💬</a>
+<a href="https://wa.me/50493323393" target="_blank" class="wa-float" title="WhatsApp OFFICELL">💬</a>
 
 <script>
 // ══════════════════════════════════════════════
@@ -542,18 +542,25 @@ function abrirCheckout() {
     carrito.map(i => `<div class="resumen-item"><span>${i.nombre} x${i.cantidad}</span><span>L.${(i.precio * i.cantidad).toLocaleString()}</span></div>`).join('') +
     `<div class="resumen-item"><span>TOTAL</span><span>L.${total.toLocaleString()}</span></div>`;
   document.getElementById('checkoutModal').classList.add('open');
-  iniciarPayPal(total);
+  // PayPal se carga solo si el usuario hace clic en esa pestaña
 }
 
 function cerrarCheckout() {
   document.getElementById('checkoutModal').classList.remove('open');
+  paypalCargado = false;
 }
 
+let paypalCargado = false;
 function mostrarPago(tipo, btn) {
   document.querySelectorAll('.pago-tab').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.pago-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('pago-' + tipo).classList.add('active');
+  if (tipo === 'paypal' && !paypalCargado) {
+    paypalCargado = true;
+    const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
+    iniciarPayPal(total);
+  }
 }
 
 function copiar(texto, btn) {
