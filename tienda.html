@@ -130,6 +130,23 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
 .btn-cancelar{width:100%;padding:0.75rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.9rem;margin-top:0.75rem;transition:all 0.3s}
 .btn-cancelar:hover{border-color:var(--accent2);color:var(--accent2)}
 .nota-paypal{font-size:0.75rem;color:var(--muted);text-align:center;margin-top:0.75rem}
+/* MÉTODOS DE PAGO */
+.pago-tabs{display:flex;gap:8px;margin-bottom:1.2rem;flex-wrap:wrap}
+.pago-tab{flex:1;min-width:120px;padding:0.6rem 0.5rem;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-size:0.82rem;font-weight:600;text-align:center;transition:all .2s;font-family:'DM Sans',sans-serif}
+.pago-tab.active{border-color:var(--azul,#185FA5);color:#fff;background:var(--azul,#185FA5)}
+.pago-tab:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+.pago-panel{display:none}
+.pago-panel.active{display:block}
+.bancos-grid{display:flex;flex-direction:column;gap:8px;margin-top:0.5rem}
+.banco-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.banco-nombre{font-weight:700;font-size:0.85rem;color:var(--text)}
+.banco-num{font-size:0.82rem;color:var(--accent);font-family:monospace;letter-spacing:.03em}
+.banco-titular{font-size:0.75rem;color:var(--muted);margin-top:2px}
+.copy-btn{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;padding:4px 8px;font-size:0.75rem;transition:.2s;white-space:nowrap}
+.copy-btn:hover{border-color:var(--accent);color:var(--accent)}
+.banco-nota{font-size:0.78rem;color:var(--muted);text-align:center;margin-top:10px;line-height:1.5}
+.btn-wa-pago{width:100%;padding:0.85rem;background:#25d366;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:0.95rem;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:0.75rem;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .2s}
+.btn-wa-pago:hover{opacity:.88}
 
 /* ÉXITO */
 .success-modal{text-align:center;padding:1rem}
@@ -244,8 +261,66 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
       <h3>Resumen del pedido</h3>
       <div id="resumenItems"></div>
     </div>
-    <p class="nota-paypal">🔒 Pago seguro procesado por PayPal. No guardamos datos de tu tarjeta.</p>
-    <div id="paypal-button-container"></div>
+    <!-- TABS MÉTODOS DE PAGO -->
+    <div style="margin-bottom:0.8rem;font-size:0.85rem;color:var(--muted);font-weight:600">Método de pago</div>
+    <div class="pago-tabs">
+      <button class="pago-tab active" onclick="mostrarPago('paypal',this)">💳 PayPal</button>
+      <button class="pago-tab" onclick="mostrarPago('banco',this)">🏦 Depósito</button>
+      <button class="pago-tab" onclick="mostrarPago('whatsapp',this)">💬 WhatsApp</button>
+    </div>
+
+    <!-- PANEL PAYPAL -->
+    <div id="pago-paypal" class="pago-panel active">
+      <p class="nota-paypal">🔒 Pago seguro con PayPal o tarjeta de crédito/débito.</p>
+      <div id="paypal-button-container"></div>
+    </div>
+
+    <!-- PANEL DEPÓSITO BANCARIO -->
+    <div id="pago-banco" class="pago-panel">
+      <div class="bancos-grid">
+        <div class="banco-item">
+          <div><div class="banco-nombre">🏦 Banco Atlántida</div><div class="banco-num">1472-0372-607</div><div class="banco-titular">Adonias Arriaza Lagos</div></div>
+          <button class="copy-btn" onclick="copiar('14720372607',this)">Copiar</button>
+        </div>
+        <div class="banco-item">
+          <div><div class="banco-nombre">🏦 BAC Honduras</div><div class="banco-num">753-432-881</div><div class="banco-titular">Adonias Arriaza Lagos</div></div>
+          <button class="copy-btn" onclick="copiar('753432881',this)">Copiar</button>
+        </div>
+        <div class="banco-item">
+          <div><div class="banco-nombre">🏦 Banhpais</div><div class="banco-num">2138-0022-7241</div><div class="banco-titular">Adonias Arriaza Lagos</div></div>
+          <button class="copy-btn" onclick="copiar('213800227241',this)">Copiar</button>
+        </div>
+        <div class="banco-item">
+          <div><div class="banco-nombre">🏦 Banrural</div><div class="banco-num">4050-4000-0461</div><div class="banco-titular">Adonias Arriaza Lagos</div></div>
+          <button class="copy-btn" onclick="copiar('405040000461',this)">Copiar</button>
+        </div>
+        <div class="banco-item">
+          <div><div class="banco-nombre">🏦 Cuscatlán</div><div class="banco-num">2110-2018-9964</div><div class="banco-titular">Adonias Arriaza Lagos</div></div>
+          <button class="copy-btn" onclick="copiar('211020189964',this)">Copiar</button>
+        </div>
+        <div class="banco-item">
+          <div><div class="banco-nombre">🏦 Ficohsa</div><div class="banco-num">2000-2022-7043</div><div class="banco-titular">Angie Denisse Rosales Zavala</div></div>
+          <button class="copy-btn" onclick="copiar('200020227043',this)">Copiar</button>
+        </div>
+        <div class="banco-item">
+          <div><div class="banco-nombre">📱 Tigo Money</div><div class="banco-num">9493-1979</div><div class="banco-titular">Adonias Arriaza Lagos</div></div>
+          <button class="copy-btn" onclick="copiar('94931979',this)">Copiar</button>
+        </div>
+        <div class="banco-item">
+          <div><div class="banco-nombre">📱 Dilo</div><div class="banco-num">9493-1979</div><div class="banco-titular">Adonias Arriaza Lagos</div></div>
+          <button class="copy-btn" onclick="copiar('94931979',this)">Copiar</button>
+        </div>
+      </div>
+      <p class="banco-nota">Después de realizar el depósito, envía el comprobante por WhatsApp al <strong>+504 9332-3393</strong> indicando tu nombre y el pedido.</p>
+      <button class="btn-wa-pago" onclick="enviarPedidoWhatsApp('deposito')">📸 Enviar comprobante por WhatsApp</button>
+    </div>
+
+    <!-- PANEL WHATSAPP -->
+    <div id="pago-whatsapp" class="pago-panel">
+      <p style="color:var(--muted);font-size:0.9rem;text-align:center;margin-bottom:1rem;line-height:1.6">Coordina tu pago directamente con nosotros por WhatsApp. Te atendemos de <strong>Lunes a Sábado 8AM–6PM</strong>.</p>
+      <button class="btn-wa-pago" onclick="enviarPedidoWhatsApp('whatsapp')">💬 Coordinar pago por WhatsApp</button>
+    </div>
+
     <button class="btn-cancelar" onclick="cerrarCheckout()">Cancelar</button>
   </div>
 </div>
@@ -472,6 +547,32 @@ function abrirCheckout() {
 
 function cerrarCheckout() {
   document.getElementById('checkoutModal').classList.remove('open');
+}
+
+function mostrarPago(tipo, btn) {
+  document.querySelectorAll('.pago-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.pago-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pago-' + tipo).classList.add('active');
+}
+
+function copiar(texto, btn) {
+  navigator.clipboard.writeText(texto).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copiado';
+    btn.style.color = '#00e88f';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+  });
+}
+
+function enviarPedidoWhatsApp(tipo) {
+  const nombre = document.getElementById('clienteNombre').value.trim() || 'Cliente';
+  const tel = document.getElementById('clienteTel').value.trim() || '';
+  const items = carrito.map(i => `• ${i.nombre} x${i.cantidad} — L.${(i.precio*i.cantidad).toLocaleString('es-HN')}`).join('\n');
+  const total = carrito.reduce((s,i) => s + i.precio*i.cantidad, 0);
+  const metodo = tipo === 'deposito' ? 'depósito bancario' : 'WhatsApp';
+  const msg = `*Pedido OFFICELL Web*\n\n👤 ${nombre}\n📞 ${tel}\n\n📦 *Productos:*\n${items}\n\n💰 *TOTAL: L.${total.toLocaleString('es-HN')}*\n\n💳 Método de pago: ${metodo}`;
+  window.open(`https://wa.me/50493323393?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 function iniciarPayPal(totalHNL) {
