@@ -375,11 +375,10 @@
         <input type="number" id="f-cantidad" placeholder="1" min="0" value="1">
       </div>
       <div class="form-group form-full">
-        <label>URL de imagen</label>
-        <input type="url" id="f-imagen" placeholder="https://…" oninput="previewImg()">
-        <div class="img-preview-wrap">
-          <img id="img-preview" class="img-preview" alt="preview" onerror="this.classList.remove('visible')">
-        </div>
+        <label>Imágenes del producto <span style="color:var(--muted);font-size:0.8rem">(agrega hasta 5 fotos)</span></label>
+        <div id="imagenes-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
+        <button type="button" onclick="agregarCampoImagen()" style="background:var(--bg3);color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:8px 16px;cursor:pointer;font-size:0.85rem;width:100%">+ Agregar otra imagen</button>
+        <div id="img-previews" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
       </div>
       <div class="form-group form-full">
         <label>Descripción</label>
@@ -625,7 +624,7 @@ function abrirModalEditar(p) {
   document.getElementById('f-precio').value = p.precio || '';
   document.getElementById('f-costo').value = p.costo || '';
   document.getElementById('f-cantidad').value = p.cantidad || 1;
-  document.getElementById('f-imagen').value = p.imagen_url || '';
+  setImagenesValue(p.imagen_url || '');
   document.getElementById('f-descripcion').value = p.descripcion || '';
   document.getElementById('f-enweb').checked = !!p.en_web;
   document.getElementById('f-destacado').checked = !!p.destacado;
@@ -639,7 +638,8 @@ function cerrarModal() {
 }
 
 function limpiarModal() {
-  ['f-nombre','f-categoria','f-precio','f-costo','f-imagen','f-descripcion'].forEach(id => document.getElementById(id).value = '');
+  ['f-nombre','f-categoria','f-precio','f-costo','f-descripcion'].forEach(id => document.getElementById(id).value = '');
+  setImagenesValue('');
   document.getElementById('f-condicion').value = 'nuevo';
   document.getElementById('f-cantidad').value = '1';
   document.getElementById('f-enweb').checked = true;
@@ -647,12 +647,53 @@ function limpiarModal() {
   document.getElementById('img-preview').classList.remove('visible');
 }
 
-function previewImg() {
-  const url = document.getElementById('f-imagen').value.trim();
-  const img = document.getElementById('img-preview');
-  if (url) { img.src = url; img.classList.add('visible'); }
-  else { img.classList.remove('visible'); }
+// ── MÚLTIPLES IMÁGENES ──
+function agregarCampoImagen(valor='') {
+  const lista = document.getElementById('imagenes-lista');
+  if (lista.children.length >= 5) return;
+  const idx = lista.children.length;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:6px;align-items:center';
+  row.innerHTML = `
+    <input type="url" class="img-campo" placeholder="https://… URL de imagen ${idx+1}" value="${valor}"
+      style="flex:1;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem"
+      oninput="actualizarPreviews()">
+    <button type="button" onclick="this.parentNode.remove();actualizarPreviews()"
+      style="background:rgba(231,76,60,0.15);color:var(--danger);border:none;border-radius:6px;padding:8px 12px;cursor:pointer;font-size:1rem">✕</button>`;
+  lista.appendChild(row);
+  actualizarPreviews();
 }
+
+function actualizarPreviews() {
+  const urls = [...document.querySelectorAll('.img-campo')].map(i=>i.value.trim()).filter(Boolean);
+  const wrap = document.getElementById('img-previews');
+  wrap.innerHTML = urls.map((url,i) => `
+    <div style="position:relative">
+      ${i===0?'<div style="position:absolute;top:2px;left:2px;background:var(--azul);color:#fff;font-size:0.6rem;padding:1px 5px;border-radius:4px">Principal</div>':''}
+      <img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid ${i===0?'var(--azul)':'var(--border)'}"
+        onerror="this.style.display='none'">
+    </div>`).join('');
+}
+
+function getImagenesValue() {
+  const urls = [...document.querySelectorAll('.img-campo')].map(i=>i.value.trim()).filter(Boolean);
+  if (urls.length === 0) return '';
+  if (urls.length === 1) return urls[0];
+  return JSON.stringify(urls);
+}
+
+function setImagenesValue(val) {
+  document.getElementById('imagenes-lista').innerHTML = '';
+  document.getElementById('img-previews').innerHTML = '';
+  if (!val) { agregarCampoImagen(); return; }
+  try {
+    const arr = JSON.parse(val);
+    if (Array.isArray(arr)) { arr.forEach(u => agregarCampoImagen(u)); return; }
+  } catch(e) {}
+  agregarCampoImagen(val); // URL simple
+}
+
+function previewImg() { actualizarPreviews(); }
 
 async function guardarProducto() {
   const nombre = document.getElementById('f-nombre').value.trim();
@@ -667,7 +708,7 @@ async function guardarProducto() {
     precio,
     costo: parseFloat(document.getElementById('f-costo').value) || 0,
     cantidad: parseInt(document.getElementById('f-cantidad').value) || 1,
-    imagen_url: document.getElementById('f-imagen').value.trim(),
+    imagen_url: getImagenesValue(),
     descripcion: document.getElementById('f-descripcion').value.trim(),
     en_web: document.getElementById('f-enweb').checked,
     destacado: document.getElementById('f-destacado').checked,

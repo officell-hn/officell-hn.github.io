@@ -201,10 +201,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
 <!-- FILTROS CATEGORÍA -->
 <div class="filtros" id="filtrosCat">
   <button class="filtro-btn active" onclick="filtrarCategoria('todos', this)">🏪 Todos</button>
+  <button class="filtro-btn" onclick="filtrarCategoria('diamantes-ff', this)" style="background:linear-gradient(135deg,#a855f7,#6d28d9);border-color:transparent;color:#fff;font-weight:700">💎 Diamantes Free Fire</button>
 </div>
 
 <!-- FILTROS CONDICIÓN -->
-<div class="condicion-filtros">
+<div class="condicion-filtros" id="condicion-filtros-wrap">
   <button class="cond-btn active" onclick="filtrarCondicion('', this)">Todos</button>
   <button class="cond-btn" onclick="filtrarCondicion('nuevo', this)">✨ Nuevos</button>
   <button class="cond-btn" onclick="filtrarCondicion('usado', this)">🔄 Usados</button>
@@ -274,7 +275,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
       <div id="paypal-me-info" style="background:var(--card);border-radius:10px;padding:1rem;margin:0.75rem 0;text-align:center">
         <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.4rem">Total a pagar en USD</div>
         <div id="paypal-total-usd" style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--accent)">$0.00</div>
-        <div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem">Tipo de cambio: L.24.80 = $1.00 USD</div>
+        <div class="tasa-label" style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem">Tasa del día: L.24.80 = $1.00 USD</div>
       </div>
       <button onclick="pagarConPaypalMe()" style="width:100%;padding:0.85rem;background:#0070ba;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:0.95rem;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:0.6rem">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/></svg>
@@ -345,6 +346,16 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
 const API = 'https://officell-ia-production.up.railway.app/api/tienda';
 let todosProductos = [];
 let categoriaActiva = 'todos';
+
+// ── DIAMANTES FREE FIRE ──
+const DIAMANTES_FF = [
+  { id:'ff-100',  nombre:'💎 100 Diamantes Free Fire',  precio:35,   descripcion:'Recarga instantánea de 100 diamantes para Free Fire. Se entrega en menos de 5 minutos.', imagen_url:'', condicion:'nuevo', destacado:false, cantidad:99 },
+  { id:'ff-300',  nombre:'💎 300 Diamantes Free Fire',  precio:105,  descripcion:'Recarga de 300 diamantes para Free Fire. Entrega inmediata por WhatsApp.', imagen_url:'', condicion:'nuevo', destacado:false, cantidad:99 },
+  { id:'ff-500',  nombre:'💎 500 Diamantes Free Fire',  precio:175,  descripcion:'Recarga de 500 diamantes. Ideal para comprar personajes o pases en Free Fire.', imagen_url:'', condicion:'nuevo', destacado:true,  cantidad:99 },
+  { id:'ff-1000', nombre:'💎 1,000 Diamantes Free Fire', precio:350,  descripcion:'1,000 diamantes para Free Fire. El favorito de los jugadores avanzados.', imagen_url:'', condicion:'nuevo', destacado:false, cantidad:99 },
+  { id:'ff-2000', nombre:'💎 2,000 Diamantes Free Fire', precio:700,  descripcion:'2,000 diamantes. Ahorra más comprando en cantidad.', imagen_url:'', condicion:'nuevo', destacado:false, cantidad:99 },
+  { id:'ff-5000', nombre:'💎 5,000 Diamantes Free Fire', precio:1750, descripcion:'5,000 diamantes. El paquete más completo para dominar Free Fire.', imagen_url:'', condicion:'nuevo', destacado:true,  cantidad:99 },
+];
 let condicionActiva = '';
 let busquedaActiva = '';
 let carrito = JSON.parse(localStorage.getItem('officell_carrito') || '[]');
@@ -392,6 +403,37 @@ async function cargarProductos() {
 // RENDERIZAR PRODUCTOS
 // ══════════════════════════════════════════════
 function renderProductos() {
+  // Ocultar filtros de condición cuando se ven diamantes
+  const condWrap = document.getElementById('condicion-filtros-wrap');
+  if (condWrap) condWrap.style.display = categoriaActiva === 'diamantes-ff' ? 'none' : '';
+
+  // Categoría especial: Diamantes Free Fire
+  if (categoriaActiva === 'diamantes-ff') {
+    const container = document.getElementById('productosContainer');
+    container.innerHTML = `
+      <div style="text-align:center;margin-bottom:2rem">
+        <div style="font-size:3rem;margin-bottom:0.5rem">💎</div>
+        <h2 style="font-family:'Bebas Neue',sans-serif;font-size:2rem;background:linear-gradient(135deg,#a855f7,#6d28d9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.3rem">DIAMANTES FREE FIRE</h2>
+        <p style="color:var(--muted);font-size:0.9rem">Recarga inmediata · Entrega por WhatsApp · L.35 / 100 diamantes</p>
+      </div>
+      <div class="productos-grid">${DIAMANTES_FF.map(p => { mapaProductos[p.id] = p; return `
+        <div class="producto-card" style="border-color:rgba(168,85,247,0.3)">
+          ${p.destacado ? '<span class="badge-destacado" style="background:linear-gradient(135deg,#a855f7,#6d28d9)">⭐ Popular</span>' : ''}
+          <div class="producto-img" style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(109,40,217,0.25));display:flex;align-items:center;justify-content:center;font-size:4.5rem">💎</div>
+          <div class="producto-info">
+            <div class="producto-categoria" style="color:#a855f7">Producto Virtual</div>
+            <div class="producto-nombre">${p.nombre}</div>
+            <div class="producto-desc">${p.descripcion}</div>
+            <div class="producto-precio" style="color:#a855f7">L.${p.precio.toLocaleString()} <span>HNL</span></div>
+            <button class="btn-agregar" onclick="agregarPorId('${p.id}')" style="background:linear-gradient(135deg,#a855f7,#6d28d9)">
+              💎 Agregar al carrito
+            </button>
+          </div>
+        </div>`; }).join('')}
+      </div>`;
+    return;
+  }
+
   let productos = todosProductos.filter(p => {
     if (categoriaActiva !== 'todos' && p.categoria_web !== categoriaActiva) return false;
     if (condicionActiva && p.condicion !== condicionActiva) return false;
@@ -407,12 +449,31 @@ function renderProductos() {
 
   const iconos = {'celulares-nuevos':'📱','celulares-usados':'📲','accesorios':'🎧','repuestos':'🔧','computadoras':'💻','tablets':'📟','otros':'📦'};
 
+  // Registrar todos en el mapa para onclick seguro
+  productos.forEach(p => { mapaProductos[p.id] = p; });
+
   container.innerHTML = `<div class="productos-grid">${productos.map(p => {
     const badgeCond = p.condicion === 'nuevo' ? 'badge-nuevo' : p.condicion === 'usado' ? 'badge-usado' : 'badge-reacondicionado';
     const condLabel = p.condicion === 'nuevo' ? '✨ Nuevo' : p.condicion === 'usado' ? '🔄 Usado' : '🔧 Reacon.';
     const icono = iconos[p.categoria_web] || '📦';
-    const imgHtml = p.imagen_url
-      ? `<div class="producto-img"><img src="${p.imagen_url}" alt="${p.nombre}" loading="lazy" onerror="this.parentNode.innerHTML='<div style=\\'font-size:3.5rem;width:100%;height:100%;display:flex;align-items:center;justify-content:center\\'>${icono}</div>'"></div>`
+
+    // Soporte para múltiples imágenes
+    let imagenes = [];
+    if (p.imagen_url) {
+      try { const arr = JSON.parse(p.imagen_url); if (Array.isArray(arr)) imagenes = arr; else imagenes = [p.imagen_url]; }
+      catch(e) { imagenes = [p.imagen_url]; }
+    }
+    const imgPrincipal = imagenes[0] || '';
+    const pid = 'p' + p.id;
+    const imgHtml = imgPrincipal
+      ? `<div class="producto-img" id="imgwrap-${pid}">
+           <img id="imgmain-${pid}" src="${imgPrincipal}" alt="${p.nombre}" loading="lazy"
+             onerror="this.parentNode.innerHTML='<div style=\\'font-size:3.5rem;width:100%;height:100%;display:flex;align-items:center;justify-content:center\\'>${icono}</div>'">
+           ${imagenes.length > 1 ? `<div style="position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:0.65rem;padding:2px 7px;border-radius:10px">📷 ${imagenes.length}</div>` : ''}
+         </div>
+         ${imagenes.length > 1 ? `<div style="display:flex;gap:4px;padding:6px 10px;background:var(--surface);overflow-x:auto">
+           ${imagenes.map((u,i) => `<img src="${u}" loading="lazy" onclick="document.getElementById('imgmain-${pid}').src='${u}'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid ${i===0?'var(--accent)':'transparent'};flex-shrink:0;transition:border 0.2s" onerror="this.style.display='none'">`).join('')}
+         </div>` : ''}`
       : `<div class="producto-img-placeholder">${icono}</div>`;
 
     return `<div class="producto-card">
@@ -424,7 +485,7 @@ function renderProductos() {
         <div class="producto-nombre">${p.nombre}</div>
         ${p.descripcion ? `<div class="producto-desc">${p.descripcion}</div>` : ''}
         <div class="producto-precio">L.${parseFloat(p.precio).toLocaleString()} <span>HNL</span></div>
-        <button class="btn-agregar" onclick="agregarCarrito(${JSON.stringify(p).replace(/"/g,'&quot;')})" ${p.cantidad < 1 ? 'disabled' : ''}>
+        <button class="btn-agregar" onclick="agregarPorId('${p.id}')" ${p.cantidad < 1 ? 'disabled' : ''}>
           ${p.cantidad < 1 ? 'Sin stock' : '🛒 Agregar al carrito'}
         </button>
       </div>
@@ -453,6 +514,16 @@ let busquedaTimer;
 function buscar(val) {
   clearTimeout(busquedaTimer);
   busquedaTimer = setTimeout(() => { busquedaActiva = val; renderProductos(); }, 300);
+}
+
+// ══════════════════════════════════════════════
+// MAPA DE PRODUCTOS (para onclick seguro)
+// ══════════════════════════════════════════════
+const mapaProductos = {};
+
+function agregarPorId(id) {
+  const p = mapaProductos[id];
+  if (p) agregarCarrito(p);
 }
 
 // ══════════════════════════════════════════════
@@ -561,16 +632,35 @@ function cerrarCheckout() {
 }
 
 let paypalCargado = false;
+let tasaCambioHNL = 24.80; // fallback mientras carga
+
+async function obtenerTasaCambio() {
+  try {
+    const r = await fetch('https://api.frankfurter.app/latest?from=USD&to=HNL');
+    const data = await r.json();
+    if (data && data.rates && data.rates.HNL) {
+      tasaCambioHNL = parseFloat(data.rates.HNL.toFixed(2));
+    }
+  } catch(e) {
+    // Si falla, se queda con el fallback 24.80
+  }
+}
+
 function mostrarPago(tipo, btn) {
   document.querySelectorAll('.pago-tab').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.pago-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('pago-' + tipo).classList.add('active');
-  if (tipo === 'paypal' && !paypalCargado) {
+  if (tipo === 'paypal') {
     paypalCargado = true;
     const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
-    const totalUSD = (total / 24.8).toFixed(2);
-    document.getElementById('paypal-total-usd').textContent = '$' + totalUSD;
+    const infoEl = document.getElementById('paypal-me-info');
+    infoEl.querySelector('#paypal-total-usd').textContent = '⏳ Consultando tasa...';
+    obtenerTasaCambio().then(() => {
+      const totalUSD = (total / tasaCambioHNL).toFixed(2);
+      infoEl.querySelector('#paypal-total-usd').textContent = '$' + totalUSD;
+      infoEl.querySelector('.tasa-label').textContent = `Tasa del día: L.${tasaCambioHNL} = $1.00 USD`;
+    });
   }
 }
 
@@ -598,7 +688,7 @@ function pagarConPaypalMe() {
   const tel = document.getElementById('clienteTel').value.trim();
   if (!nombre || !tel) { alert('Por favor ingresa tu nombre y teléfono antes de pagar'); return; }
   const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
-  const totalUSD = (total / 24.8).toFixed(2);
+  const totalUSD = (total / tasaCambioHNL).toFixed(2);
   window.open(`https://www.paypal.me/officelldanli/${totalUSD}`, '_blank');
 }
 
@@ -606,7 +696,7 @@ function enviarPedidoPaypal() {
   const nombre = document.getElementById('clienteNombre').value.trim() || 'Cliente';
   const tel = document.getElementById('clienteTel').value.trim() || '';
   const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
-  const totalUSD = (total / 24.8).toFixed(2);
+  const totalUSD = (total / tasaCambioHNL).toFixed(2);
   const items = carrito.map(i => `• ${i.nombre} x${i.cantidad} — L.${(i.precio*i.cantidad).toLocaleString('es-HN')}`).join('\n');
   const msg = `*Pedido OFFICELL Web — Pago PayPal*\n\n👤 ${nombre}\n📞 ${tel}\n\n📦 *Productos:*\n${items}\n\n💰 *TOTAL: L.${total.toLocaleString('es-HN')} (USD $${totalUSD})*\n\n✅ Pagué por PayPal.me — adjunto comprobante`;
   window.open(`https://wa.me/50493323393?text=${encodeURIComponent(msg)}`, '_blank');
