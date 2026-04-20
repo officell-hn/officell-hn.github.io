@@ -201,7 +201,6 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
 <!-- FILTROS CATEGORÍA -->
 <div class="filtros" id="filtrosCat">
   <button class="filtro-btn active" onclick="filtrarCategoria('todos', this)">🏪 Todos</button>
-  <button class="filtro-btn" onclick="filtrarCategoria('diamantes-ff', this)" style="background:linear-gradient(135deg,#a855f7,#6d28d9);border-color:transparent;color:#fff;font-weight:700">💎 Diamantes Free Fire</button>
 </div>
 
 <!-- FILTROS CONDICIÓN -->
@@ -387,6 +386,8 @@ async function cargarProductos() {
         const label = labels[c.categoria] || c.categoria;
         filtrosEl.innerHTML += `<button class="filtro-btn" onclick="filtrarCategoria('${c.categoria}',this)">${label} <small style="opacity:0.6">(${c.cantidad})</small></button>`;
       });
+      // Botón Diamantes FF — siempre al final
+      filtrosEl.innerHTML += `<button class="filtro-btn" onclick="filtrarCategoria('diamantes-ff',this)" style="background:linear-gradient(135deg,#a855f7,#6d28d9);border-color:transparent;color:#fff;font-weight:700">💎 Diamantes Free Fire</button>`;
     }
 
     renderProductos();
