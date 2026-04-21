@@ -637,13 +637,23 @@ let tasaCambioHNL = 24.80; // fallback mientras carga
 
 async function obtenerTasaCambio() {
   try {
-    const r = await fetch('https://api.frankfurter.app/latest?from=USD&to=HNL');
+    // open.er-api.com soporta HNL (Lempira hondureño)
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
     const data = await r.json();
     if (data && data.rates && data.rates.HNL) {
       tasaCambioHNL = parseFloat(data.rates.HNL.toFixed(2));
+      return;
+    }
+  } catch(e) {}
+  try {
+    // API de respaldo
+    const r2 = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    const data2 = await r2.json();
+    if (data2 && data2.rates && data2.rates.HNL) {
+      tasaCambioHNL = parseFloat(data2.rates.HNL.toFixed(2));
     }
   } catch(e) {
-    // Si falla, se queda con el fallback 24.80
+    // Si ambas fallan, queda el fallback 24.80
   }
 }
 
