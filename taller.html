@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2940299212538219"
+crossorigin="anonymous"></script><!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Z5D12EC06P"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-Z5D12EC06P');
+</script>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="apple-touch-icon" href="favicon-192.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taller de Reparaciones — OFFICELL Danlí, Honduras</title>
+<meta name="description" content="Consulta el estado de tu reparación en tiempo real. Pantallas, baterías, software, desbloqueos y más en OFFICELL Danlí, Honduras.">
+<link rel="canonical" href="https://officell-hn.github.io/taller.html" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://officell-hn.github.io/taller.html" />
+<meta property="og:title" content="Taller de Reparaciones — OFFICELL Danlí" />
+<meta property="og:description" content="Consulta el estado de tu reparación en tiempo real. Pantallas, baterías, software, desbloqueos y más." />
+<meta property="og:image" content="https://officell-hn.github.io/LOGO_OFFICELL.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--card:#1a1a26;--border:#2a2a3a;
+  --text:#e8e8f0;--muted:#8888a0;--accent:#00d4ff;--accent2:#ff6b35;
+  --green:#00e88f;--gradient:linear-gradient(135deg,#00d4ff,#0066ff);
+  --glow:0 0 30px rgba(0,212,255,0.15);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+h1,h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:0.04em}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;backdrop-filter:blur(20px);background:rgba(10,10,15,0.9);border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:0.6rem;text-decoration:none}
+.nav-links{display:flex;gap:1.5rem;list-style:none;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:0.9rem;font-weight:500;transition:color 0.3s}
+.nav-links a:hover,.nav-links a.active{color:var(--accent)}
+.nav-cta{background:var(--gradient);color:#000;padding:0.5rem 1.2rem;border-radius:50px;text-decoration:none;font-weight:700;font-size:0.85rem}
+.nav-cta:hover{opacity:0.9}
+
+/* HERO */
+.hero{padding:7rem 2rem 4rem;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at center,rgba(0,212,255,0.05) 0%,transparent 60%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);border-radius:50px;padding:0.4rem 1rem;font-size:0.85rem;color:var(--accent);margin-bottom:1.5rem}
+.hero-badge span{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}}
+.hero h1{font-size:clamp(2.5rem,6vw,5rem);margin-bottom:1rem;line-height:1}
+.hero h1 span{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--muted);font-size:1.05rem;max-width:560px;margin:0 auto 2.5rem}
+
+/* BÚSQUEDA */
+.search-wrapper{max-width:560px;margin:0 auto}
+.search-box{display:flex;gap:0;background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:border-color 0.3s;box-shadow:var(--glow)}
+.search-box:focus-within{border-color:var(--accent)}
+.search-box input{flex:1;padding:1.1rem 1.5rem;background:transparent;border:none;color:var(--text);font-size:1.05rem;font-family:'DM Sans',sans-serif;outline:none}
+.search-box input::placeholder{color:var(--muted)}
+.btn-buscar{padding:1rem 1.8rem;background:var(--gradient);color:#000;border:none;font-weight:700;font-size:1rem;cursor:pointer;transition:opacity 0.2s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.btn-buscar:hover{opacity:0.85}
+.btn-buscar:disabled{opacity:0.5;cursor:not-allowed}
+.search-hint{margin-top:0.75rem;font-size:0.82rem;color:var(--muted);text-align:center}
+.search-hint code{color:var(--accent);background:rgba(0,212,255,0.08);padding:0.1rem 0.4rem;border-radius:4px;font-family:monospace}
+
+/* RESULTADO */
+.resultado-wrap{max-width:560px;margin:2rem auto 0;display:none}
+.resultado-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2rem;position:relative;overflow:hidden}
+.resultado-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gradient)}
+.resultado-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;gap:1rem}
+.resultado-codigo{font-family:monospace;font-size:0.9rem;color:var(--muted);background:var(--surface);padding:0.3rem 0.75rem;border-radius:6px}
+.resultado-equipo{font-size:1.3rem;font-weight:700;margin-bottom:0.25rem}
+.resultado-cliente{font-size:0.85rem;color:var(--muted)}
+.badge-estado{display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 1rem;border-radius:50px;font-size:0.85rem;font-weight:700;white-space:nowrap}
+.badge-recibido{background:rgba(136,136,160,0.15);color:var(--muted);border:1px solid var(--border)}
+.badge-en_reparacion{background:rgba(255,107,53,0.12);color:var(--accent2);border:1px solid rgba(255,107,53,0.3)}
+.badge-listo{background:rgba(0,232,143,0.12);color:var(--green);border:1px solid rgba(0,232,143,0.3)}
+.badge-entregado{background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.2)}
+.resultado-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem}
+.dato-item{background:var(--surface);border-radius:10px;padding:0.85rem 1rem}
+.dato-label{font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem}
+.dato-valor{font-size:0.95rem;font-weight:600}
+.notas-box{margin-top:1rem;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.15);border-radius:10px;padding:1rem}
+.notas-label{font-size:0.75rem;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem;font-weight:600}
+.notas-text{font-size:0.9rem;color:var(--text);line-height:1.5}
+.resultado-wa{display:block;margin-top:1.5rem;text-align:center;padding:0.85rem;background:#25D366;color:#fff;border-radius:12px;text-decoration:none;font-weight:700;font-size:0.95rem;transition:opacity 0.2s}
+.resultado-wa:hover{opacity:0.88}
+
+/* ERROR */
+.error-card{background:rgba(255,107,53,0.05);border:1px solid rgba(255,107,53,0.2);border-radius:16px;padding:1.5rem;text-align:center}
+.error-icon{font-size:2.5rem;margin-bottom:0.75rem}
+.error-card h3{color:var(--accent2);margin-bottom:0.5rem}
+.error-card p{color:var(--muted);font-size:0.9rem}
+
+/* LOADING */
+.loading-card{text-align:center;padding:2rem}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* PROGRESO ESTADO */
+.progress-bar{display:flex;align-items:center;margin-top:1.5rem;position:relative}
+.progress-bar::before{content:'';position:absolute;top:14px;left:14px;right:14px;height:2px;background:var(--border);z-index:0}
+.progress-bar .prog-fill{position:absolute;top:14px;left:14px;height:2px;background:var(--gradient);z-index:1;transition:width 0.6s ease}
+.prog-step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;z-index:2}
+.prog-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;font-size:0.75rem;margin-bottom:0.4rem;transition:all 0.3s}
+.prog-dot.active{background:var(--gradient);border-color:transparent;color:#000;font-weight:700}
+.prog-dot.done{background:var(--green);border-color:transparent;color:#000}
+.prog-label{font-size:0.68rem;color:var(--muted);text-align:center;line-height:1.2;max-width:60px}
+.prog-label.active{color:var(--text);font-weight:600}
+
+/* SECCIÓN SERVICIOS */
+.section-title{font-size:clamp(2rem,4vw,3rem);text-align:center;margin-bottom:0.5rem}
+.section-title span{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.section-sub{text-align:center;color:var(--muted);font-size:1rem;margin-bottom:3rem}
+.servicios-section{padding:5rem 2rem;max-width:1200px;margin:0 auto}
+.servicios-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.5rem}
+.servicio-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.8rem;transition:transform 0.3s,border-color 0.3s,box-shadow 0.3s;position:relative;overflow:hidden}
+.servicio-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gradient);opacity:0;transition:opacity 0.3s}
+.servicio-card:hover{transform:translateY(-4px);border-color:rgba(0,212,255,0.3);box-shadow:0 8px 32px rgba(0,212,255,0.08)}
+.servicio-card:hover::after{opacity:1}
+.servicio-emoji{font-size:2.5rem;margin-bottom:1rem;display:block}
+.servicio-nombre{font-size:1.1rem;font-weight:700;margin-bottom:0.5rem}
+.servicio-desc{font-size:0.85rem;color:var(--muted);line-height:1.5;margin-bottom:1rem}
+.servicio-precio{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--accent);letter-spacing:0.05em}
+.servicio-precio span{font-family:'DM Sans',sans-serif;font-size:0.8rem;color:var(--muted);font-weight:400}
+.btn-cotizar{display:block;width:100%;margin-top:1rem;padding:0.7rem;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;text-align:center;text-decoration:none;font-size:0.88rem;font-weight:600;transition:all 0.2s}
+.btn-cotizar:hover{border-color:var(--green);color:var(--green)}
+
+/* CÓMO FUNCIONA */
+.como-section{padding:5rem 2rem;background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.como-inner{max-width:960px;margin:0 auto}
+.pasos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-bottom:3rem}
+.paso{text-align:center;position:relative}
+.paso-num{width:64px;height:64px;border-radius:50%;background:var(--gradient);color:#000;font-family:'Bebas Neue',sans-serif;font-size:2rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;box-shadow:0 4px 20px rgba(0,212,255,0.2)}
+.paso-titulo{font-size:1.15rem;font-weight:700;margin-bottom:0.5rem}
+.paso-desc{color:var(--muted);font-size:0.9rem;line-height:1.5}
+.como-cta{background:var(--card);border:1px solid rgba(0,232,143,0.2);border-radius:16px;padding:1.5rem 2rem;text-align:center;display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap}
+.como-cta-icon{font-size:2rem}
+.como-cta-text{font-size:1rem;color:var(--text)}
+.como-cta-text strong{color:var(--green)}
+.como-cta-text code{background:rgba(0,212,255,0.08);color:var(--accent);padding:0.1rem 0.5rem;border-radius:4px;font-family:monospace}
+
+/* CTA SECTION */
+.cta-section{padding:5rem 2rem;text-align:center}
+.cta-inner{max-width:600px;margin:0 auto}
+.cta-section h2{font-size:clamp(2rem,4vw,3.5rem);margin-bottom:1rem}
+.cta-section h2 span{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.cta-section p{color:var(--muted);margin-bottom:2rem;font-size:1rem}
+.btn-wa-cta{display:inline-flex;align-items:center;gap:0.7rem;padding:1rem 2.5rem;background:#25D366;color:#fff;border-radius:50px;text-decoration:none;font-weight:700;font-size:1.05rem;transition:transform 0.2s,box-shadow 0.2s;box-shadow:0 4px 20px rgba(37,211,102,0.3)}
+.btn-wa-cta:hover{transform:scale(1.04);box-shadow:0 6px 28px rgba(37,211,102,0.4)}
+
+/* FOOTER */
+footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem 2rem 2rem;text-align:center}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-logo{font-family:'Bebas Neue',sans-serif;font-size:2rem;margin-bottom:0.5rem}
+.footer-logo span{color:var(--accent)}
+.footer-text{color:var(--muted);font-size:0.85rem;margin-bottom:1.5rem}
+.footer-links{display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;margin-bottom:1.5rem}
+.footer-links a{color:var(--muted);text-decoration:none;font-size:0.85rem;transition:color 0.3s}
+.footer-links a:hover{color:var(--accent)}
+.footer-copy{color:var(--border);font-size:0.75rem}
+
+/* WA FLOTANTE */
+.wa-float{position:fixed;bottom:2rem;left:2rem;z-index:150;background:#25D366;color:#fff;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;text-decoration:none;box-shadow:0 4px 20px rgba(37,211,102,0.4);transition:transform 0.3s}
+.wa-float:hover{transform:scale(1.1)}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  nav{padding:1rem}
+  .nav-links{display:none}
+  .pasos-grid{grid-template-columns:1fr}
+  .resultado-grid{grid-template-columns:1fr}
+  .servicios-grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+  .progress-bar{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <img src="LOGO_OFFICELL.png" alt="OFFICELL Servicio Técnico" width="251" height="194" style="height:40px">
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html">Inicio</a></li>
+    <li><a href="tienda.html">Tienda</a></li>
+    <li><a href="taller.html" class="active">🔧 Taller</a></li>
+    <li><a href="blog.html">Blog</a></li>
+    <li><a href="agentes-bancarios.html">🏦 Agentes</a></li>
+    <li><a href="contacto.html">Contacto</a></li>
+  </ul>
+  <a href="https://wa.me/50493323393" target="_blank" class="nav-cta">💬 WhatsApp</a>
+</nav>
+
+<!-- HERO + BÚSQUEDA -->
+<section class="hero">
+  <div class="hero-badge"><span></span> Seguimiento en tiempo real</div>
+  <h1>ESTADO DE TU <span>EQUIPO</span></h1>
+  <p>Ingresa tu código de seguimiento para ver el estado de tu reparación en tiempo real</p>
+  <div class="search-wrapper">
+    <div class="search-box">
+      <input type="text" id="codigoInput" placeholder="Ej: OFF-0502-847" maxlength="14"
+             oninput="this.value=this.value.toUpperCase()"
+             onkeydown="if(event.key==='Enter')buscarOrden()">
+      <button class="btn-buscar" id="btnBuscar" onclick="buscarOrden()">🔍 Consultar</button>
+    </div>
+    <p class="search-hint">El código está en tu recibo — ejemplo: <code>OFF-0502-847</code></p>
+  </div>
+  <div class="resultado-wrap" id="resultadoWrap"></div>
+</section>
+
+<!-- SERVICIOS -->
+<section class="servicios-section" id="servicios">
+  <h2 class="section-title">NUESTROS <span>SERVICIOS</span></h2>
+  <p class="section-sub">Reparaciones profesionales con garantía para todas las marcas</p>
+  <div class="servicios-grid" id="serviciosGrid">
+    <div style="text-align:center;padding:3rem;color:var(--muted);grid-column:1/-1">
+      <div class="spinner"></div>
+      <p>Cargando servicios...</p>
+    </div>
+  </div>
+</section>
+
+<!-- CÓMO FUNCIONA -->
+<section class="como-section">
+  <div class="como-inner">
+    <h2 class="section-title" style="margin-bottom:0.5rem">¿CÓMO <span>FUNCIONA?</span></h2>
+    <p class="section-sub">Proceso simple y transparente</p>
+    <div class="pasos-grid">
+      <div class="paso">
+        <div class="paso-num">1</div>
+        <div class="paso-titulo">Trae tu equipo</div>
+        <p class="paso-desc">Visítanos en Danlí. También puedes cotizar antes por WhatsApp y conocer el precio estimado.</p>
+      </div>
+      <div class="paso">
+        <div class="paso-num">2</div>
+        <div class="paso-titulo">Diagnóstico gratis</div>
+        <p class="paso-desc">Evaluamos tu equipo sin costo. Te explicamos el problema y te damos un precio final antes de reparar.</p>
+      </div>
+      <div class="paso">
+        <div class="paso-num">3</div>
+        <div class="paso-titulo">Retira reparado</div>
+        <p class="paso-desc">Recibe tu código de seguimiento y consulta el estado aquí mismo hasta que esté listo para retirar.</p>
+      </div>
+    </div>
+    <div class="como-cta">
+      <div class="como-cta-icon">📲</div>
+      <div class="como-cta-text">
+        Recibe tu código y consulta el estado en <strong>officell-hn.github.io/taller.html</strong><br>
+        con tu código <code>OFF-MMDD-XXX</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2>¿Listo para traer<br><span>tu equipo?</span></h2>
+    <p>Escríbenos por WhatsApp y cotizamos tu reparación al instante. Diagnóstico gratis para todos los equipos.</p>
+    <a href="https://wa.me/50493323393?text=Hola%2C+quiero+una+cotizaci%C3%B3n+para+reparaci%C3%B3n" target="_blank" class="btn-wa-cta">
+      💬 Cotizar por WhatsApp
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">OFFICE<span>LL</span> SERVICIO TÉCNICO</div>
+    <p class="footer-text">Reparación profesional de celulares y computadoras en Danlí, Honduras.</p>
+    <div class="footer-links">
+      <a href="index.html#servicios">Servicios</a>
+      <a href="sobre-nosotros.html">Nosotros</a>
+      <a href="tienda.html">🛒 Tienda</a>
+      <a href="taller.html">🔧 Taller</a>
+      <a href="blog.html">Blog</a>
+      <a href="agentes-bancarios.html">🏦 Agentes Bancarios</a>
+      <a href="contacto.html">Contacto</a>
+      <a href="politica-privacidad.html">Privacidad</a>
+      <a href="https://wa.me/50493323393" target="_blank">WhatsApp</a>
+    </div>
+    <div class="footer-copy">© 2026 OFFICELL Servicio Técnico — Danlí, El Paraíso, Honduras. Todos los derechos reservados.</div>
+  </div>
+</footer>
+
+<!-- WA FLOTANTE -->
+<a href="https://wa.me/50493323393" target="_blank" class="wa-float" title="WhatsApp OFFICELL">💬</a>
+
+<script>
+const API = 'https://officell-ia-production.up.railway.app/api/tienda';
+
+// ── Servicios ──────────────────────────────────────────────
+async function cargarServicios() {
+  try {
+    const r = await fetch(`${API}/taller/servicios`);
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error);
+    const grid = document.getElementById('serviciosGrid');
+    grid.innerHTML = d.servicios.map(s => `
+      <div class="servicio-card">
+        <span class="servicio-emoji">${s.emoji}</span>
+        <div class="servicio-nombre">${s.nombre}</div>
+        <p class="servicio-desc">${s.descripcion}</p>
+        ${s.precio_desde > 0
+          ? `<div class="servicio-precio">L.${s.precio_desde.toLocaleString()} <span>desde</span></div>`
+          : `<div class="servicio-precio" style="color:var(--green)">Gratis <span>consulta</span></div>`}
+        <a href="https://wa.me/50493323393?text=Hola%2C+quiero+cotizar%3A+${encodeURIComponent(s.nombre)}" target="_blank" class="btn-cotizar">💬 Cotizar por WhatsApp</a>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('serviciosGrid').innerHTML =
+      '<p style="color:var(--muted);text-align:center;grid-column:1/-1">No se pudieron cargar los servicios.</p>';
+  }
+}
+
+// ── Búsqueda de orden ──────────────────────────────────────
+async function buscarOrden() {
+  const codigo = document.getElementById('codigoInput').value.trim().toUpperCase();
+  if (!codigo) {
+    alert('Ingresa tu código de seguimiento');
+    return;
+  }
+  const wrap = document.getElementById('resultadoWrap');
+  const btn  = document.getElementById('btnBuscar');
+  wrap.style.display = 'block';
+  btn.disabled = true;
+  btn.textContent = 'Buscando...';
+  wrap.innerHTML = `<div class="loading-card"><div class="spinner"></div><p style="color:var(--muted)">Consultando estado...</p></div>`;
+
+  try {
+    const r = await fetch(`${API}/taller/orden/${encodeURIComponent(codigo)}`);
+    const d = await r.json();
+    if (!d.ok) {
+      wrap.innerHTML = `
+        <div class="error-card">
+          <div class="error-icon">🔍</div>
+          <h3>Código no encontrado</h3>
+          <p>${d.error || 'Verifica que el código esté escrito correctamente tal como aparece en tu recibo.'}</p>
+        </div>`;
+      return;
+    }
+    const o = d.orden;
+    const estados = ['recibido','en_reparacion','listo','entregado'];
+    const estadoIdx = estados.indexOf(o.estado);
+
+    // Barra de progreso
+    const progSteps = [
+      {key:'recibido',      label:'Recibido',    icon:'📥'},
+      {key:'en_reparacion', label:'Reparando',   icon:'🔧'},
+      {key:'listo',         label:'Listo',        icon:'🎉'},
+      {key:'entregado',     label:'Entregado',    icon:'✅'}
+    ];
+    const pct = estadoIdx < 0 ? 0 : Math.round((estadoIdx / (progSteps.length - 1)) * 100);
+    const progressHTML = `
+      <div class="progress-bar">
+        <div class="prog-fill" style="width:calc(${pct}% - ${pct > 0 ? 14 : 0}px)"></div>
+        ${progSteps.map((s,i) => `
+          <div class="prog-step">
+            <div class="prog-dot ${i < estadoIdx ? 'done' : i === estadoIdx ? 'active' : ''}">${i < estadoIdx ? '✓' : s.icon}</div>
+            <div class="prog-label ${i === estadoIdx ? 'active' : ''}">${s.label}</div>
+          </div>
+        `).join('')}
+      </div>`;
+
+    wrap.innerHTML = `
+      <div class="resultado-card">
+        <div class="resultado-header">
+          <div>
+            <div class="resultado-equipo">${o.equipo}</div>
+            ${o.cliente_nombre ? `<div class="resultado-cliente">Cliente: ${o.cliente_nombre}</div>` : ''}
+          </div>
+          <div class="resultado-codigo">${o.codigo_seguimiento}</div>
+        </div>
+        <div style="text-align:center">
+          <span class="badge-estado badge-${o.estado}">${o.estado_desc}</span>
+        </div>
+        ${progressHTML}
+        <div class="resultado-grid">
+          <div class="dato-item">
+            <div class="dato-label">Tipo de servicio</div>
+            <div class="dato-valor">${formatTipo(o.tipo_servicio)}</div>
+          </div>
+          <div class="dato-item">
+            <div class="dato-label">Fecha de entrada</div>
+            <div class="dato-valor">${o.fecha_entrada || '—'}</div>
+          </div>
+          <div class="dato-item" style="grid-column:span 1">
+            <div class="dato-label">Fecha estimada</div>
+            <div class="dato-valor">${o.fecha_estimada || 'Por confirmar'}</div>
+          </div>
+        </div>
+        ${o.notas ? `
+        <div class="notas-box">
+          <div class="notas-label">📝 Notas del técnico</div>
+          <div class="notas-text">${o.notas}</div>
+        </div>` : ''}
+        <a href="https://wa.me/50493323393?text=Hola%2C+consulto+por+mi+equipo+con+c%C3%B3digo+${encodeURIComponent(o.codigo_seguimiento)}" target="_blank" class="resultado-wa">
+          💬 Consultar por WhatsApp
+        </a>
+      </div>`;
+  } catch(e) {
+    wrap.innerHTML = `
+      <div class="error-card">
+        <div class="error-icon">⚠️</div>
+        <h3>Error de conexión</h3>
+        <p>No se pudo conectar con el servidor. Intenta de nuevo o escríbenos por WhatsApp.</p>
+      </div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 Consultar';
+  }
+}
+
+function formatTipo(t) {
+  const m = {
+    reparacion: 'Reparación', pantalla: 'Pantalla', bateria: 'Batería',
+    puerto: 'Puerto de carga', software: 'Software/Flasheo',
+    desbloqueo: 'Desbloqueo', agua: 'Daño por agua',
+    computadora: 'Computadora', diagnostico: 'Diagnóstico'
+  };
+  return m[t] || (t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Reparación');
+}
+
+// Auto-buscar si viene con ?codigo=XXX en la URL
+(function() {
+  const p = new URLSearchParams(window.location.search);
+  const c = p.get('codigo');
+  if (c) {
+    document.getElementById('codigoInput').value = c.toUpperCase();
+    buscarOrden();
+  }
+})();
+
+cargarServicios();
+</script>
+</body>
+</html>

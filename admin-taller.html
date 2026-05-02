@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Taller — OFFICELL</title>
+<style>
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--card:#1a1a26;--border:#2a2a3a;
+  --text:#e8e8f0;--muted:#8888a0;--accent:#00d4ff;--accent2:#ff6b35;
+  --green:#00e88f;--gradient:linear-gradient(135deg,#00d4ff,#0066ff);
+  --danger:#ff4444;--warning:#ffaa00;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── LOGIN ── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2.5rem;width:380px;text-align:center}
+.login-logo{font-size:2.5rem;font-weight:900;letter-spacing:0.05em;margin-bottom:0.25rem}
+.login-logo span{color:var(--accent)}
+.login-sub{color:var(--muted);font-size:0.9rem;margin-bottom:2rem}
+.login-card input{width:100%;padding:0.9rem 1.2rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:1rem;margin-bottom:1rem;outline:none}
+.login-card input:focus{border-color:var(--accent)}
+.btn-login{width:100%;padding:0.9rem;background:var(--gradient);color:#000;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;transition:opacity 0.2s}
+.btn-login:hover{opacity:0.85}
+.login-error{color:var(--danger);font-size:0.85rem;margin-top:0.75rem;display:none}
+
+/* ── APP ── */
+#app{display:none}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.header-brand{font-weight:800;font-size:1.1rem;letter-spacing:0.04em}
+.header-brand span{color:var(--accent)}
+.header-actions{display:flex;gap:0.75rem;align-items:center}
+.btn-sm{padding:0.45rem 1rem;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:0.85rem;transition:all 0.2s}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm.danger:hover{border-color:var(--danger);color:var(--danger)}
+.btn-primary{padding:0.55rem 1.2rem;border-radius:8px;background:var(--gradient);color:#000;border:none;font-weight:700;font-size:0.88rem;cursor:pointer;transition:opacity 0.2s}
+.btn-primary:hover{opacity:0.85}
+
+main{padding:1.5rem;max-width:1400px;margin:0 auto}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem 1.5rem;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.accent::before{background:var(--gradient)}
+.stat-card.orange::before{background:var(--accent2)}
+.stat-card.green::before{background:var(--green)}
+.stat-card.blue::before{background:#0066ff}
+.stat-label{font-size:0.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem}
+.stat-value{font-size:2rem;font-weight:800;line-height:1}
+.stat-sub{font-size:0.75rem;color:var(--muted);margin-top:0.3rem}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.filtros{display:flex;gap:0.5rem;flex-wrap:wrap}
+.filtro-btn{padding:0.45rem 1rem;border-radius:50px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-size:0.85rem;transition:all 0.2s}
+.filtro-btn:hover,.filtro-btn.active{background:var(--gradient);border-color:transparent;color:#000;font-weight:700}
+
+/* ── TABLA ── */
+.tabla-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--surface);padding:0.75rem 1rem;text-align:left;font-size:0.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background 0.15s}
+tbody tr:hover{background:var(--surface)}
+td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
+.codigo-cell{font-family:monospace;font-size:0.95rem;font-weight:700;color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:0.4rem}
+.codigo-cell:hover{text-decoration:underline}
+.equipo-cell{font-weight:600}
+.cliente-cell{color:var(--muted);font-size:0.82rem}
+.precio-cell{font-weight:700;color:var(--green)}
+.fecha-cell{font-size:0.82rem;color:var(--muted)}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:0.3rem;padding:0.3rem 0.75rem;border-radius:50px;font-size:0.78rem;font-weight:700;white-space:nowrap}
+.badge-recibido{background:rgba(136,136,160,0.15);color:var(--muted);border:1px solid var(--border)}
+.badge-en_reparacion{background:rgba(255,107,53,0.12);color:var(--accent2);border:1px solid rgba(255,107,53,0.3)}
+.badge-listo{background:rgba(0,232,143,0.12);color:var(--green);border:1px solid rgba(0,232,143,0.3)}
+.badge-entregado{background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.2)}
+.badge-cancelado{background:rgba(255,68,68,0.1);color:var(--danger);border:1px solid rgba(255,68,68,0.2)}
+
+/* ── ACCIONES ── */
+.acciones{display:flex;gap:0.4rem;flex-wrap:nowrap}
+.btn-accion{padding:0.35rem 0.75rem;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:0.78rem;transition:all 0.2s;white-space:nowrap}
+.btn-accion:hover{border-color:var(--accent);color:var(--accent)}
+.btn-accion.danger:hover{border-color:var(--danger);color:var(--danger)}
+.btn-accion.print:hover{border-color:var(--green);color:var(--green)}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity 0.25s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2rem;width:100%;max-width:540px;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.modal-title{font-size:1.3rem;font-weight:800}
+.btn-close{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:0.25rem}
+.btn-close:hover{color:var(--text)}
+.form-group{margin-bottom:1.1rem}
+.form-group label{display:block;font-size:0.82rem;color:var(--muted);margin-bottom:0.35rem;font-weight:600}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:0.8rem 1rem;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:0.95rem;font-family:inherit;outline:none;transition:border-color 0.2s}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent)}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-group select option{background:var(--card)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.modal-footer{display:flex;gap:0.75rem;margin-top:1.5rem}
+.btn-cancel{flex:1;padding:0.85rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;cursor:pointer;font-size:0.95rem;transition:all 0.2s}
+.btn-cancel:hover{border-color:var(--danger);color:var(--danger)}
+.btn-save{flex:2;padding:0.85rem;background:var(--gradient);color:#000;border:none;border-radius:10px;font-weight:700;font-size:0.95rem;cursor:pointer;transition:opacity 0.2s}
+.btn-save:hover{opacity:0.85}
+
+/* ── DETAIL VIEW ── */
+.detail-row{display:flex;justify-content:space-between;padding:0.6rem 0;border-bottom:1px solid var(--border);font-size:0.9rem}
+.detail-row:last-child{border:none}
+.detail-label{color:var(--muted);font-weight:600}
+.detail-value{text-align:right;max-width:60%}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:4rem;color:var(--muted)}
+.empty .icon{font-size:3rem;margin-bottom:1rem}
+
+/* ── LOADING ── */
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:3rem;color:var(--muted)}
+
+/* ── PRINT ── */
+@media print{
+  body *{visibility:hidden}
+  #print-area,#print-area *{visibility:visible}
+  #print-area{position:fixed;inset:0;background:#fff;color:#000;padding:20mm;font-family:'Arial',sans-serif}
+  .print-logo{font-size:28px;font-weight:900;text-align:center;margin-bottom:4px;letter-spacing:0.1em}
+  .print-logo span{color:#00a8cc}
+  .print-subtitle{text-align:center;font-size:12px;color:#666;margin-bottom:6mm}
+  .print-title{font-size:22px;font-weight:900;text-align:center;border-bottom:2px solid #000;padding-bottom:4mm;margin-bottom:6mm;text-transform:uppercase;letter-spacing:0.1em}
+  .print-codigo{text-align:center;font-size:36px;font-weight:900;letter-spacing:0.15em;color:#00a8cc;background:#f0f8ff;padding:6mm;border-radius:4mm;margin-bottom:6mm;font-family:'Courier New',monospace}
+  .print-table{width:100%;border-collapse:collapse;margin-bottom:6mm}
+  .print-table th{background:#f5f5f5;padding:3mm 4mm;text-align:left;font-size:11px;text-transform:uppercase;border:1px solid #ddd}
+  .print-table td{padding:3mm 4mm;font-size:12px;border:1px solid #ddd}
+  .print-section-title{font-size:13px;font-weight:900;text-transform:uppercase;color:#333;border-bottom:1px solid #eee;padding-bottom:2mm;margin:4mm 0 2mm}
+  .print-terms{font-size:10px;color:#666;border-top:1px solid #ddd;padding-top:4mm;margin-top:4mm}
+  .print-footer{font-size:10px;text-align:center;color:#888;margin-top:6mm}
+  .no-print{display:none}
+}
+#print-area{display:none}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .form-row{grid-template-columns:1fr}
+  thead th:nth-child(n+5),td:nth-child(n+5){display:none}
+}
+@media(max-width:480px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  main{padding:1rem 0.75rem}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">OFFICE<span>LL</span></div>
+    <div class="login-sub">Panel Admin — Taller de Reparaciones</div>
+    <input type="password" id="pwdInput" placeholder="Contraseña de administrador"
+           onkeydown="if(event.key==='Enter')login()">
+    <button class="btn-login" onclick="login()">Entrar</button>
+    <div class="login-error" id="loginError">Contraseña incorrecta</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="header-brand">OFFICE<span>LL</span> — Taller</div>
+    <div class="header-actions">
+      <button class="btn-primary" onclick="abrirNuevaOrden()">+ Nueva Orden</button>
+      <button class="btn-sm danger" onclick="logout()">Salir</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-card accent">
+        <div class="stat-label">Total Órdenes</div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-sub">En el sistema</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">En Taller</div>
+        <div class="stat-value" id="statEnTaller">—</div>
+        <div class="stat-sub">Recibidas + En reparación</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Listas</div>
+        <div class="stat-value" id="statListas">—</div>
+        <div class="stat-sub">Para retirar</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Entregadas</div>
+        <div class="stat-value" id="statEntregadas">—</div>
+        <div class="stat-sub">Total completadas</div>
+      </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div class="filtros" id="filtros">
+        <button class="filtro-btn active" onclick="filtrar('',this)">Todos</button>
+        <button class="filtro-btn" onclick="filtrar('recibido',this)">📥 Recibido</button>
+        <button class="filtro-btn" onclick="filtrar('en_reparacion',this)">🔧 En Reparación</button>
+        <button class="filtro-btn" onclick="filtrar('listo',this)">🎉 Listo</button>
+        <button class="filtro-btn" onclick="filtrar('entregado',this)">✅ Entregado</button>
+      </div>
+      <button class="btn-sm" onclick="cargarOrdenes()" style="margin-left:auto">🔄 Actualizar</button>
+    </div>
+
+    <!-- TABLA -->
+    <div class="tabla-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Equipo / Cliente</th>
+            <th>Estado</th>
+            <th>Entrada</th>
+            <th>Estimado</th>
+            <th>Precio</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaBody">
+          <tr><td colspan="7"><div class="loading"><div class="spinner"></div>Cargando órdenes...</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL NUEVA ORDEN / EDITAR -->
+<div class="overlay" id="overlayOrden">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalOrdenTitle">Nueva Orden</div>
+      <button class="btn-close" onclick="cerrarModalOrden()">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Cliente Nombre</label>
+        <input type="text" id="fCliente" placeholder="Nombre del cliente">
+      </div>
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input type="tel" id="fTel" placeholder="+504 XXXX-XXXX">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Equipo (marca + modelo) *</label>
+      <input type="text" id="fEquipo" placeholder="Ej: Samsung Galaxy A54">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Tipo de Servicio</label>
+        <select id="fTipo">
+          <option value="reparacion">Reparación General</option>
+          <option value="pantalla">Cambio de Pantalla</option>
+          <option value="bateria">Cambio de Batería</option>
+          <option value="puerto">Puerto de Carga</option>
+          <option value="software">Software / Flasheo</option>
+          <option value="desbloqueo">Desbloqueo</option>
+          <option value="agua">Daño por Agua</option>
+          <option value="computadora">Computadora</option>
+          <option value="diagnostico">Solo Diagnóstico</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Precio (L.)</label>
+        <input type="number" id="fPrecio" placeholder="0" min="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Problema reportado</label>
+      <textarea id="fProblema" placeholder="Descripción del problema..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha estimada entrega</label>
+        <input type="date" id="fFechaEst">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notas internas</label>
+      <textarea id="fNotas" placeholder="Notas para el técnico..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalOrden()">Cancelar</button>
+      <button class="btn-save" id="btnGuardarOrden" onclick="guardarOrden()">Crear Orden</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CAMBIAR ESTADO -->
+<div class="overlay" id="overlayEstado">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">Actualizar Orden</div>
+      <button class="btn-close" onclick="cerrarModalEstado()">✕</button>
+    </div>
+    <div style="margin-bottom:1rem;padding:0.75rem 1rem;background:var(--card);border-radius:10px;font-size:0.9rem">
+      <strong id="estadoEquipo">—</strong>
+      <div style="color:var(--muted);font-size:0.82rem;margin-top:0.25rem" id="estadoCodigo">—</div>
+    </div>
+    <div class="form-group">
+      <label>Nuevo Estado</label>
+      <select id="fEstado">
+        <option value="recibido">📥 Recibido</option>
+        <option value="en_reparacion">🔧 En Reparación</option>
+        <option value="listo">🎉 Listo para retirar</option>
+        <option value="entregado">✅ Entregado</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Diagnóstico</label>
+      <textarea id="fDiag" placeholder="Diagnóstico técnico..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Precio Final (L.)</label>
+        <input type="number" id="fPrecioEst" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Fecha Estimada</label>
+        <input type="date" id="fFechaEstEd">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notas</label>
+      <textarea id="fNotasEd" placeholder="Notas para el cliente..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModalEstado()">Cancelar</button>
+      <button class="btn-save" onclick="actualizarEstado()">Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE -->
+<div class="overlay" id="overlayDetalle">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Detalle de Orden</div>
+      <button class="btn-close" onclick="cerrarDetalle()">✕</button>
+    </div>
+    <div id="detalleContent"></div>
+    <div class="modal-footer" style="margin-top:1rem">
+      <button class="btn-cancel" onclick="cerrarDetalle()">Cerrar</button>
+      <button class="btn-save" onclick="imprimirDesdeDetalle()" style="background:#25D366">🖨️ Imprimir Recibo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ÁREA DE IMPRESIÓN (oculta normalmente) -->
+<div id="print-area"></div>
+
+<script>
+const API = 'https://officell-ia-production.up.railway.app/api/tienda';
+let TOKEN = '';
+let ORDENES = [];
+let filtroActual = '';
+let ordenActualId = null;
+let ordenDetalleActual = null;
+
+// ── Auth ──────────────────────────────────────────────────
+function login() {
+  const pwd = document.getElementById('pwdInput').value;
+  if (!pwd) return;
+  TOKEN = pwd;
+  localStorage.setItem('oc_admin_token', pwd);
+  verificarToken();
+}
+function logout() {
+  TOKEN = '';
+  localStorage.removeItem('oc_admin_token');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pwdInput').value = '';
+}
+async function verificarToken() {
+  try {
+    const r = await fetch(`${API}/taller/ordenes`, { headers: { 'x-admin-token': TOKEN } });
+    if (r.status === 401) {
+      document.getElementById('loginError').style.display = 'block';
+      TOKEN = '';
+      return;
+    }
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    const d = await r.json();
+    ORDENES = d.ordenes || [];
+    renderTabla(ORDENES);
+    renderStats(ORDENES);
+  } catch(e) {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('loginError').textContent = 'Error de conexión';
+  }
+}
+
+// Auto login si hay token guardado
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('oc_admin_token');
+  if (saved) { TOKEN = saved; verificarToken(); }
+});
+
+// ── Cargar órdenes ────────────────────────────────────────
+async function cargarOrdenes() {
+  document.getElementById('tablaBody').innerHTML =
+    '<tr><td colspan="7"><div class="loading"><div class="spinner"></div>Cargando...</div></td></tr>';
+  try {
+    const url = filtroActual ? `${API}/taller/ordenes?estado=${filtroActual}` : `${API}/taller/ordenes`;
+    const r = await fetch(url, { headers: { 'x-admin-token': TOKEN } });
+    const d = await r.json();
+    ORDENES = d.ordenes || [];
+    renderTabla(ORDENES);
+    renderStats(ORDENES);
+  } catch(e) {
+    document.getElementById('tablaBody').innerHTML =
+      '<tr><td colspan="7"><div class="empty"><div class="icon">⚠️</div>Error al cargar órdenes</div></td></tr>';
+  }
+}
+
+function filtrar(estado, btn) {
+  filtroActual = estado;
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const lista = estado ? ORDENES.filter(o => o.estado === estado) : ORDENES;
+  renderTabla(lista);
+}
+
+// ── Render tabla ──────────────────────────────────────────
+function renderTabla(ordenes) {
+  if (!ordenes.length) {
+    document.getElementById('tablaBody').innerHTML =
+      '<tr><td colspan="7"><div class="empty"><div class="icon">📋</div>No hay órdenes</div></td></tr>';
+    return;
+  }
+  document.getElementById('tablaBody').innerHTML = ordenes.map(o => `
+    <tr>
+      <td>
+        <div class="codigo-cell" onclick="copiarCodigo('${o.codigo_seguimiento||''}')">
+          ${o.codigo_seguimiento || '<span style="color:var(--muted)">—</span>'}
+          ${o.codigo_seguimiento ? '<span style="font-size:0.75rem;opacity:0.6">📋</span>' : ''}
+        </div>
+      </td>
+      <td>
+        <div class="equipo-cell">${esc(o.equipo)}</div>
+        <div class="cliente-cell">${esc(o.cliente_nombre||'—')} · ${esc(o.cliente_telefono||'—')}</div>
+      </td>
+      <td><span class="badge badge-${o.estado}">${badgeLabel(o.estado)}</span></td>
+      <td class="fecha-cell">${o.fecha_entrada||'—'}</td>
+      <td class="fecha-cell">${o.fecha_estimada||'—'}</td>
+      <td class="precio-cell">L.${parseFloat(o.precio||0).toLocaleString()}</td>
+      <td>
+        <div class="acciones">
+          <button class="btn-accion" onclick="verDetalle('${o.id}')">Ver</button>
+          <button class="btn-accion" onclick="abrirEditarEstado('${o.id}')">Estado</button>
+          <button class="btn-accion print" onclick="imprimir('${o.id}')">🖨️</button>
+          <button class="btn-accion danger" onclick="cancelarOrden('${o.id}')">✕</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderStats(ordenes) {
+  const all = ORDENES.length;
+  const enTaller = ORDENES.filter(o => o.estado === 'recibido' || o.estado === 'en_reparacion').length;
+  const listas   = ORDENES.filter(o => o.estado === 'listo').length;
+  const entregadas = ORDENES.filter(o => o.estado === 'entregado').length;
+  document.getElementById('statTotal').textContent    = all;
+  document.getElementById('statEnTaller').textContent = enTaller;
+  document.getElementById('statListas').textContent   = listas;
+  document.getElementById('statEntregadas').textContent = entregadas;
+}
+
+function badgeLabel(estado) {
+  const m = {
+    recibido:'📥 Recibido', en_reparacion:'🔧 En Reparación',
+    listo:'🎉 Listo', entregado:'✅ Entregado', cancelado:'✕ Cancelado'
+  };
+  return m[estado] || estado;
+}
+
+// ── Nueva orden ───────────────────────────────────────────
+function abrirNuevaOrden() {
+  ordenActualId = null;
+  document.getElementById('modalOrdenTitle').textContent = 'Nueva Orden';
+  document.getElementById('btnGuardarOrden').textContent = 'Crear Orden';
+  ['fCliente','fTel','fEquipo','fProblema','fNotas','fPrecio'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = '';
+  });
+  document.getElementById('fTipo').value = 'reparacion';
+  document.getElementById('fFechaEst').value = '';
+  document.getElementById('overlayOrden').classList.add('open');
+}
+function cerrarModalOrden() {
+  document.getElementById('overlayOrden').classList.remove('open');
+}
+
+async function guardarOrden() {
+  const equipo = document.getElementById('fEquipo').value.trim();
+  if (!equipo) { alert('El equipo es requerido'); return; }
+  const btn = document.getElementById('btnGuardarOrden');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+  const body = {
+    cliente_nombre:  document.getElementById('fCliente').value.trim(),
+    cliente_telefono:document.getElementById('fTel').value.trim(),
+    equipo,
+    tipo_servicio:   document.getElementById('fTipo').value,
+    problema:        document.getElementById('fProblema').value.trim(),
+    precio:          parseFloat(document.getElementById('fPrecio').value)||0,
+    fecha_estimada:  document.getElementById('fFechaEst').value||null,
+    notas:           document.getElementById('fNotas').value.trim()
+  };
+  try {
+    const r = await fetch(`${API}/taller/orden`, {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'x-admin-token': TOKEN },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error);
+    cerrarModalOrden();
+    alert(`Orden creada!\nCódigo: ${d.codigo_seguimiento}\n\n📋 Copia este código para el cliente.`);
+    await cargarOrdenes();
+  } catch(e) {
+    alert('Error al crear orden: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Crear Orden';
+  }
+}
+
+// ── Cambiar estado ────────────────────────────────────────
+function abrirEditarEstado(id) {
+  const o = ORDENES.find(x => x.id === id);
+  if (!o) return;
+  ordenActualId = id;
+  document.getElementById('estadoEquipo').textContent = o.equipo;
+  document.getElementById('estadoCodigo').textContent = o.codigo_seguimiento || o.id;
+  document.getElementById('fEstado').value    = o.estado || 'recibido';
+  document.getElementById('fDiag').value      = o.diagnostico || '';
+  document.getElementById('fPrecioEst').value = o.precio || '';
+  document.getElementById('fFechaEstEd').value= o.fecha_estimada || '';
+  document.getElementById('fNotasEd').value   = o.notas || '';
+  document.getElementById('overlayEstado').classList.add('open');
+}
+function cerrarModalEstado() {
+  document.getElementById('overlayEstado').classList.remove('open');
+}
+async function actualizarEstado() {
+  if (!ordenActualId) return;
+  const body = {
+    estado:         document.getElementById('fEstado').value,
+    diagnostico:    document.getElementById('fDiag').value.trim()||null,
+    precio:         parseFloat(document.getElementById('fPrecioEst').value)||null,
+    fecha_estimada: document.getElementById('fFechaEstEd').value||null,
+    notas:          document.getElementById('fNotasEd').value.trim()||null
+  };
+  try {
+    const r = await fetch(`${API}/taller/orden/${ordenActualId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type':'application/json', 'x-admin-token': TOKEN },
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error);
+    cerrarModalEstado();
+    await cargarOrdenes();
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+// ── Cancelar orden ────────────────────────────────────────
+async function cancelarOrden(id) {
+  const o = ORDENES.find(x => x.id === id);
+  if (!confirm(`¿Cancelar la orden de "${o?.equipo}"?`)) return;
+  try {
+    await fetch(`${API}/taller/orden/${id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-token': TOKEN }
+    });
+    await cargarOrdenes();
+  } catch(e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+// ── Ver detalle ───────────────────────────────────────────
+function verDetalle(id) {
+  const o = ORDENES.find(x => x.id === id);
+  if (!o) return;
+  ordenDetalleActual = o;
+  const html = `
+    <div class="detail-row"><span class="detail-label">Código</span><span class="detail-value" style="font-family:monospace;color:var(--accent);font-weight:700">${o.codigo_seguimiento||'—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Estado</span><span class="detail-value"><span class="badge badge-${o.estado}">${badgeLabel(o.estado)}</span></span></div>
+    <div class="detail-row"><span class="detail-label">Equipo</span><span class="detail-value">${esc(o.equipo)}</span></div>
+    <div class="detail-row"><span class="detail-label">Cliente</span><span class="detail-value">${esc(o.cliente_nombre||'—')}</span></div>
+    <div class="detail-row"><span class="detail-label">Teléfono</span><span class="detail-value">${esc(o.cliente_telefono||'—')}</span></div>
+    <div class="detail-row"><span class="detail-label">Tipo servicio</span><span class="detail-value">${esc(o.tipo_servicio||'—')}</span></div>
+    <div class="detail-row"><span class="detail-label">Problema</span><span class="detail-value">${esc(o.problema||'—')}</span></div>
+    <div class="detail-row"><span class="detail-label">Diagnóstico</span><span class="detail-value">${esc(o.diagnostico||'—')}</span></div>
+    <div class="detail-row"><span class="detail-label">Precio</span><span class="detail-value" style="color:var(--green);font-weight:700">L.${parseFloat(o.precio||0).toLocaleString()}</span></div>
+    <div class="detail-row"><span class="detail-label">Fecha entrada</span><span class="detail-value">${o.fecha_entrada||'—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Fecha estimada</span><span class="detail-value">${o.fecha_estimada||'—'}</span></div>
+    <div class="detail-row"><span class="detail-label">Notas</span><span class="detail-value">${esc(o.notas||'—')}</span></div>
+    <div class="detail-row"><span class="detail-label">Creado en</span><span class="detail-value">${fmtDate(o.creado_en)}</span></div>
+    <div class="detail-row"><span class="detail-label">Actualizado</span><span class="detail-value">${fmtDate(o.actualizado_en)}</span></div>
+  `;
+  document.getElementById('detalleContent').innerHTML = html;
+  document.getElementById('overlayDetalle').classList.add('open');
+}
+function cerrarDetalle() {
+  document.getElementById('overlayDetalle').classList.remove('open');
+}
+function imprimirDesdeDetalle() {
+  if (ordenDetalleActual) imprimir(ordenDetalleActual.id);
+}
+
+// ── Imprimir recibo ───────────────────────────────────────
+function imprimir(id) {
+  const o = ORDENES.find(x => x.id === id);
+  if (!o) return;
+  const html = `
+    <div class="print-logo">OFFICE<span>LL</span></div>
+    <div class="print-subtitle">Servicio Técnico · Danlí, El Paraíso, Honduras · WhatsApp: 9332-3393</div>
+    <div class="print-title">Recibo de Reparación</div>
+    <div class="print-codigo">${o.codigo_seguimiento || o.id}</div>
+    <div class="print-section-title">Datos del Cliente</div>
+    <table class="print-table">
+      <tr><th>Nombre</th><td>${o.cliente_nombre||'—'}</td><th>Teléfono</th><td>${o.cliente_telefono||'—'}</td></tr>
+    </table>
+    <div class="print-section-title">Datos del Equipo</div>
+    <table class="print-table">
+      <tr><th>Equipo</th><td colspan="3">${o.equipo}</td></tr>
+      <tr><th>Tipo de Servicio</th><td>${o.tipo_servicio||'Reparación'}</td><th>Precio Estimado</th><td>L.${parseFloat(o.precio||0).toLocaleString()}</td></tr>
+      <tr><th>Problema</th><td colspan="3">${o.problema||'—'}</td></tr>
+    </table>
+    <div class="print-section-title">Fechas</div>
+    <table class="print-table">
+      <tr><th>Fecha de Entrada</th><td>${o.fecha_entrada||new Date().toISOString().substring(0,10)}</td><th>Entrega Estimada</th><td>${o.fecha_estimada||'Por confirmar'}</td></tr>
+    </table>
+    <div class="print-section-title">Estado Actual</div>
+    <table class="print-table">
+      <tr><th>Estado</th><td colspan="3"><strong>${badgeLabelText(o.estado)}</strong></td></tr>
+      ${o.notas ? `<tr><th>Notas</th><td colspan="3">${o.notas}</td></tr>` : ''}
+    </table>
+    <div class="print-terms">
+      <strong>Términos y Condiciones:</strong> Garantía según tipo de servicio (pantallas: 30 días, baterías: 90 días, software: 15 días).
+      El equipo debe ser retirado dentro de los 30 días posteriores a que esté listo. Pasado este plazo, OFFICELL no se responsabiliza por el equipo.
+    </div>
+    <div class="print-footer">
+      Consulte el estado de su reparación en: <strong>officell-hn.github.io/taller.html</strong>
+      con su código <strong>${o.codigo_seguimiento || o.id}</strong>
+    </div>
+  `;
+  document.getElementById('print-area').innerHTML = html;
+  document.getElementById('print-area').style.display = 'block';
+  window.print();
+  document.getElementById('print-area').style.display = 'none';
+}
+
+function badgeLabelText(estado) {
+  const m = {
+    recibido:'Recibido en taller', en_reparacion:'En reparación',
+    listo:'Listo para retirar', entregado:'Entregado', cancelado:'Cancelado'
+  };
+  return m[estado] || estado;
+}
+
+// ── Helpers ───────────────────────────────────────────────
+function copiarCodigo(c) {
+  if (!c) return;
+  navigator.clipboard.writeText(c).then(() => {
+    const msg = document.createElement('div');
+    msg.textContent = '¡Código copiado!';
+    msg.style.cssText = 'position:fixed;bottom:1rem;right:1rem;background:var(--green);color:#000;padding:0.6rem 1.2rem;border-radius:8px;font-weight:700;z-index:999;animation:fadeIn 0.2s ease';
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 2000);
+  });
+}
+
+function esc(str) {
+  return String(str||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleString('es-HN', { timeZone: 'America/Tegucigalpa', dateStyle: 'short', timeStyle: 'short' });
+}
+
+// Cerrar modales al click fuera
+['overlayOrden','overlayEstado','overlayDetalle'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>
