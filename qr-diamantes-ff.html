@@ -11,111 +11,127 @@
     background: #1a0a2e;
     color: #fff;
     margin: 0;
-    padding: 2rem;
+    padding: 1.5rem;
     text-align: center;
   }
-  h1 { font-size: 1.8rem; margin-bottom: 0.25rem; }
-  .sub { color: #c084fc; margin-bottom: 1.5rem; font-size: 1rem; }
+  h1 { font-size: 1.6rem; margin-bottom: 0.2rem; }
+  .sub { color: #c084fc; margin-bottom: 1rem; font-size: 0.9rem; }
   #btn-imprimir {
     background: linear-gradient(135deg, #a855f7, #6d28d9);
     color: #fff; border: none; border-radius: 10px;
-    padding: 0.8rem 2rem; font-size: 1rem; font-weight: 700;
-    cursor: pointer; margin-bottom: 2rem;
+    padding: 0.75rem 2rem; font-size: 1rem; font-weight: 700;
+    cursor: pointer; margin-bottom: 1.5rem;
   }
   #btn-imprimir:hover { opacity: 0.85; }
-  .preview-info {
-    font-size: 0.85rem; color: #a78bfa; margin-bottom: 1rem;
-  }
 
-  /* ── Hoja imprimible ── */
+  /* ── Impresión ── */
   @media print {
-    body { background: #fff !important; color: #000 !important; padding: 0; }
-    #btn-imprimir, .preview-info, h1, .sub { display: none !important; }
-    #hoja { box-shadow: none !important; }
+    body { background: #fff !important; padding: 0; margin: 0; }
+    #controles { display: none !important; }
+    #hoja { box-shadow: none !important; margin: 0 !important; }
   }
 
+  /* ── Hoja ── */
   #hoja {
     background: #fff;
     color: #000;
     width: 216mm;
-    min-height: 279mm;
+    height: 279mm;
     margin: 0 auto;
-    padding: 8mm 8mm 6mm;
+    padding: 4mm 5mm;
     box-sizing: border-box;
     box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
+  /* Cabecera compacta */
   .hoja-cabecera {
-    text-align: center;
-    border-bottom: 3px solid #6d28d9;
-    padding-bottom: 4mm;
-    margin-bottom: 5mm;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 5mm;
+    justify-content: space-between;
+    border-bottom: 2px solid #6d28d9;
+    padding-bottom: 2mm;
+    margin-bottom: 2mm;
+    flex-shrink: 0;
   }
-  .hoja-logo-txt {
-    font-size: 22px;
+  .cab-marca {
+    font-size: 14px;
     font-weight: 900;
     letter-spacing: 2px;
     color: #000;
   }
-  .hoja-logo-txt span { color: #6d28d9; }
-  .hoja-titulo {
-    font-size: 13px;
+  .cab-marca span { color: #6d28d9; }
+  .cab-titulo {
+    font-size: 12px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: #6d28d9;
   }
-  .hoja-sub {
-    font-size: 10px;
+  .cab-sub {
+    font-size: 8px;
     color: #555;
-    margin-top: 1mm;
+    text-align: right;
   }
 
+  /* Grilla — ocupa todo el espacio restante */
   .grid-qr {
+    flex: 1;
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 4mm;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+    gap: 2mm;
+    min-height: 0;
   }
 
+  /* Celda QR */
   .qr-item {
-    text-align: center;
-    border: 1px solid #ddd;
-    border-radius: 2mm;
-    padding: 2mm 1mm 1.5mm;
+    border: 1px solid #e0d4f7;
+    border-radius: 1.5mm;
     background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1mm 1mm 0.5mm;
+    overflow: hidden;
+    min-height: 0;
   }
-  .qr-item canvas,
   .qr-item img {
     display: block;
-    margin: 0 auto;
-    width: 28mm !important;
-    height: 28mm !important;
+    width: 100%;
+    flex: 1;
+    object-fit: contain;
+    min-height: 0;
   }
-  .qr-nombre {
+  .qr-lbl {
     font-size: 7px;
     font-weight: 900;
-    color: #000;
-    margin-top: 1mm;
-    line-height: 1.3;
+    color: #6d28d9;
+    text-align: center;
+    margin-top: 0.5mm;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .qr-web {
     font-size: 6px;
-    color: #6d28d9;
-    margin-top: 0.5mm;
+    color: #888;
+    text-align: center;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
+  /* Pie compacto */
   .hoja-pie {
-    border-top: 2px solid #6d28d9;
-    margin-top: 5mm;
-    padding-top: 3mm;
+    flex-shrink: 0;
+    border-top: 1.5px solid #6d28d9;
+    margin-top: 2mm;
+    padding-top: 1.5mm;
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    font-size: 9px;
+    font-size: 7px;
     color: #555;
   }
   .hoja-pie strong { color: #000; }
@@ -123,30 +139,28 @@
 </head>
 <body>
 
-<h1>💎 Diamantes Free Fire</h1>
-<p class="sub">30 códigos QR listos para imprimir en hoja tamaño carta</p>
-<p class="preview-info">La URL del QR lleva directo a la sección de Diamantes Free Fire en la tienda OFFICELL.</p>
-<button id="btn-imprimir" onclick="window.print()">🖨️ Imprimir hoja</button>
+<div id="controles">
+  <h1>💎 Diamantes Free Fire</h1>
+  <p class="sub">30 códigos QR — tamaño carta completo</p>
+  <button id="btn-imprimir" onclick="window.print()">🖨️ Imprimir hoja</button>
+</div>
 
 <div id="hoja">
   <div class="hoja-cabecera">
-    <div>
-      <div class="hoja-logo-txt">OFFICE<span>LL</span></div>
-      <div class="hoja-sub">Danlí, El Paraíso · WhatsApp: 9332-3393</div>
+    <div class="cab-marca">OFFICE<span>LL</span></div>
+    <div style="text-align:center">
+      <div class="cab-titulo">💎 Diamantes Free Fire</div>
+      <div class="cab-sub">Escanea para comprar tu recarga al instante</div>
     </div>
-    <div style="border-left:2px solid #6d28d9; height:12mm; margin:0 3mm;"></div>
-    <div>
-      <div class="hoja-titulo">💎 Diamantes Free Fire</div>
-      <div class="hoja-sub">Escanea y compra tu recarga al instante</div>
-    </div>
+    <div class="cab-sub">Danlí, Honduras<br>WhatsApp: 9332-3393</div>
   </div>
 
   <div class="grid-qr" id="gridQR"></div>
 
   <div class="hoja-pie">
-    <div>officell-hn.github.io/tienda.html · <strong>WhatsApp: 9332-3393</strong></div>
-    <div>Servicio Técnico &amp; Banca · Recargas de juegos</div>
-    <div><strong>OFFICELL</strong> — Danlí, Honduras</div>
+    <span>officell-hn.github.io/tienda.html</span>
+    <span>Servicio Técnico &amp; Banca · Recargas de juegos</span>
+    <span><strong>OFFICELL</strong> — WhatsApp: 9332-3393</span>
   </div>
 </div>
 
@@ -155,32 +169,39 @@ const URL_DESTINO = 'https://officell-hn.github.io/tienda.html?cat=diamantes-ff'
 const TOTAL = 30;
 const grid = document.getElementById('gridQR');
 
-for (let i = 0; i < TOTAL; i++) {
-  const item = document.createElement('div');
-  item.className = 'qr-item';
+async function generarQRs() {
+  for (let i = 0; i < TOTAL; i++) {
+    const item = document.createElement('div');
+    item.className = 'qr-item';
 
-  const canvas = document.createElement('canvas');
-  item.appendChild(canvas);
+    // Generar QR como data URL de alta resolución
+    const dataUrl = await QRCode.toDataURL(URL_DESTINO, {
+      width: 500,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+      color: { dark: '#000000', light: '#ffffff' }
+    });
 
-  const nombre = document.createElement('div');
-  nombre.className = 'qr-nombre';
-  nombre.textContent = '💎 Diamantes Free Fire';
-  item.appendChild(nombre);
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.alt = 'QR Diamantes Free Fire';
 
-  const web = document.createElement('div');
-  web.className = 'qr-web';
-  web.textContent = 'officell-hn.github.io';
-  item.appendChild(web);
+    const lbl = document.createElement('div');
+    lbl.className = 'qr-lbl';
+    lbl.textContent = '💎 Diamantes Free Fire';
 
-  grid.appendChild(item);
+    const web = document.createElement('div');
+    web.className = 'qr-web';
+    web.textContent = 'officell-hn.github.io';
 
-  QRCode.toCanvas(canvas, URL_DESTINO, {
-    width: 106,   // ~28mm @ 96dpi
-    margin: 1,
-    errorCorrectionLevel: 'M',
-    color: { dark: '#000000', light: '#ffffff' }
-  });
+    item.appendChild(img);
+    item.appendChild(lbl);
+    item.appendChild(web);
+    grid.appendChild(item);
+  }
 }
+
+generarQRs();
 </script>
 </body>
 </html>
