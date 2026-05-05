@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Taller — OFFICELL</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <style>
 :root{
   --bg:#0a0a0f;--surface:#12121a;--card:#1a1a26;--border:#2a2a3a;
@@ -123,7 +124,7 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading{text-align:center;padding:3rem;color:var(--muted)}
 
-/* ── PRINT ── */
+/* ── PRINT — A4 (default) ── */
 @media print{
   body *{visibility:hidden}
   #print-area,#print-area *{visibility:visible}
@@ -139,7 +140,24 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
   .print-section-title{font-size:13px;font-weight:900;text-transform:uppercase;color:#333;border-bottom:1px solid #eee;padding-bottom:2mm;margin:4mm 0 2mm}
   .print-terms{font-size:10px;color:#666;border-top:1px solid #ddd;padding-top:4mm;margin-top:4mm}
   .print-footer{font-size:10px;text-align:center;color:#888;margin-top:6mm}
+  .print-qr{text-align:center;margin:4mm 0 2mm}
+  .print-qr img{width:42mm;height:42mm}
+  .print-qr-label{font-size:9px;color:#666;text-align:center;margin-top:1mm}
   .no-print{display:none}
+}
+/* ── PRINT — 80mm térmica ── */
+@media print{
+  body.fmt-80mm #print-area{padding:4mm 5mm}
+  body.fmt-80mm .print-logo{font-size:18px;margin-bottom:2px}
+  body.fmt-80mm .print-subtitle{font-size:9px;margin-bottom:3mm}
+  body.fmt-80mm .print-title{font-size:13px;padding-bottom:2mm;margin-bottom:3mm}
+  body.fmt-80mm .print-codigo{font-size:20px;padding:3mm;margin-bottom:3mm}
+  body.fmt-80mm .print-table th{font-size:8px;padding:1.5mm 2mm}
+  body.fmt-80mm .print-table td{font-size:9px;padding:1.5mm 2mm}
+  body.fmt-80mm .print-section-title{font-size:10px;margin:2mm 0 1mm}
+  body.fmt-80mm .print-terms{font-size:8px;padding-top:2mm;margin-top:2mm}
+  body.fmt-80mm .print-footer{font-size:8px;margin-top:3mm}
+  body.fmt-80mm .print-qr img{width:35mm;height:35mm}
 }
 #print-area{display:none}
 
@@ -355,7 +373,8 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
     <div id="detalleContent"></div>
     <div class="modal-footer" style="margin-top:1rem">
       <button class="btn-cancel" onclick="cerrarDetalle()">Cerrar</button>
-      <button class="btn-save" onclick="imprimirDesdeDetalle()" style="background:#25D366">🖨️ Imprimir Recibo</button>
+      <button class="btn-save" onclick="imprimir(ordenDetalleActual.id,'a4')" style="background:#25D366">🖨️ A4</button>
+      <button class="btn-save" onclick="imprimir(ordenDetalleActual.id,'80mm')" style="background:#0a8a4a">🧾 80mm</button>
     </div>
   </div>
 </div>
@@ -465,7 +484,7 @@ function renderTabla(ordenes) {
         <div class="acciones">
           <button class="btn-accion" onclick="verDetalle('${o.id}')">Ver</button>
           <button class="btn-accion" onclick="abrirEditarEstado('${o.id}')">Estado</button>
-          <button class="btn-accion print" onclick="imprimir('${o.id}')">🖨️</button>
+          <button class="btn-accion print" onclick="imprimir('${o.id}','a4')" title="Imprimir A4">🖨️</button>
           <button class="btn-accion danger" onclick="cancelarOrden('${o.id}')">✕</button>
         </div>
       </td>
@@ -627,19 +646,17 @@ function verDetalle(id) {
 function cerrarDetalle() {
   document.getElementById('overlayDetalle').classList.remove('open');
 }
-function imprimirDesdeDetalle() {
-  if (ordenDetalleActual) imprimir(ordenDetalleActual.id);
-}
-
 // ── Imprimir recibo ───────────────────────────────────────
-function imprimir(id) {
+function imprimir(id, formato) {
   const o = ORDENES.find(x => x.id === id);
   if (!o) return;
+  const codigo  = o.codigo_seguimiento || o.id;
+  const qrUrl   = `https://officell-hn.github.io/taller.html?codigo=${encodeURIComponent(codigo)}`;
   const html = `
     <div class="print-logo">OFFICE<span>LL</span></div>
     <div class="print-subtitle">Servicio Técnico · Danlí, El Paraíso, Honduras · WhatsApp: 9332-3393</div>
     <div class="print-title">Recibo de Reparación</div>
-    <div class="print-codigo">${o.codigo_seguimiento || o.id}</div>
+    <div class="print-codigo">${codigo}</div>
     <div class="print-section-title">Datos del Cliente</div>
     <table class="print-table">
       <tr><th>Nombre</th><td>${o.cliente_nombre||'—'}</td><th>Teléfono</th><td>${o.cliente_telefono||'—'}</td></tr>
@@ -663,15 +680,39 @@ function imprimir(id) {
       <strong>Términos y Condiciones:</strong> Garantía según tipo de servicio (pantallas: 30 días, baterías: 90 días, software: 15 días).
       El equipo debe ser retirado dentro de los 30 días posteriores a que esté listo. Pasado este plazo, OFFICELL no se responsabiliza por el equipo.
     </div>
+    <div class="print-qr">
+      <img id="qr-img" src="" alt="QR">
+      <div class="print-qr-label">Escanea para ver el estado de tu reparación</div>
+    </div>
     <div class="print-footer">
-      Consulte el estado de su reparación en: <strong>officell-hn.github.io/taller.html</strong>
-      con su código <strong>${o.codigo_seguimiento || o.id}</strong>
+      officell-hn.github.io/taller.html · Código: <strong>${codigo}</strong>
     </div>
   `;
+
+  // Inyectar @page según formato
+  let styleEl = document.getElementById('_print_page_style');
+  if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = '_print_page_style'; document.head.appendChild(styleEl); }
+  styleEl.textContent = formato === '80mm'
+    ? `@page { size: 80mm auto; margin: 4mm; }`
+    : `@page { size: A4; margin: 15mm; }`;
+
+  if (formato === '80mm') document.body.classList.add('fmt-80mm');
+  else document.body.classList.remove('fmt-80mm');
+
   document.getElementById('print-area').innerHTML = html;
   document.getElementById('print-area').style.display = 'block';
-  window.print();
-  document.getElementById('print-area').style.display = 'none';
+
+  // Generar QR y luego imprimir
+  const qrSize = formato === '80mm' ? 132 : 160;
+  QRCode.toDataURL(qrUrl, { width: qrSize, margin: 1, errorCorrectionLevel: 'M' })
+    .then(dataUrl => {
+      document.getElementById('qr-img').src = dataUrl;
+      setTimeout(() => {
+        window.print();
+        document.getElementById('print-area').style.display = 'none';
+        document.body.classList.remove('fmt-80mm');
+      }, 200);
+    });
 }
 
 function badgeLabelText(estado) {
