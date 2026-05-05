@@ -309,19 +309,20 @@
         <table>
           <thead>
             <tr>
-              <th>ID Pedido</th>
+              <th>Código</th>
               <th>Cliente</th>
               <th>Teléfono</th>
-              <th>Email</th>
+              <th>🎮 ID Juego</th>
               <th>Productos</th>
               <th>Total</th>
+              <th>Método</th>
               <th>Estado</th>
-              <th>PayPal ID</th>
               <th>Fecha</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody id="tbody-pedidos">
-            <tr><td colspan="9" class="loading"><div class="spinner"></div></td></tr>
+            <tr><td colspan="10" class="loading"><div class="spinner"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -888,28 +889,62 @@ async function cargarPedidos() {
 function renderPedidos(pedidos) {
   if (!pedidos.length) {
     document.getElementById('tbody-pedidos').innerHTML =
-      '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--muted)">Sin pedidos aún</td></tr>';
+      '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">Sin pedidos aún</td></tr>';
     return;
   }
   document.getElementById('tbody-pedidos').innerHTML = pedidos.map(p => {
     const prods = Array.isArray(p.productos) ? p.productos : (typeof p.productos === 'string' ? JSON.parse(p.productos) : []);
     const lista = prods.map(pr => `<li>• ${escHtml(pr.nombre||'?')} x${pr.cantidad} — L.${fmtNum((pr.precio||0)*(pr.cantidad||1))}</li>`).join('');
     const fecha = p.creado_en ? new Date(p.creado_en).toLocaleString('es-HN') : '—';
-    const estadoBadge = p.estado === 'pagado' ? 'badge-green' : 'badge-orange';
+    const estadoMap = {
+      en_proceso: { cls: 'badge-orange', label: '🔄 En proceso' },
+      completado:  { cls: 'badge-green',  label: '💎 Completado' },
+      cancelado:   { cls: 'badge-red',    label: '❌ Cancelado'  },
+      pagado:      { cls: 'badge-green',  label: '✅ Pagado'     }
+    };
+    const est = estadoMap[p.estado] || { cls: 'badge-orange', label: p.estado || 'pendiente' };
+    const codigo = p.codigo_seguimiento || p.id;
+    const trackUrl = `https://officell-hn.github.io/seguimiento.html?codigo=${encodeURIComponent(codigo)}`;
     return `
       <tr>
-        <td><strong>${escHtml(p.id)}</strong></td>
+        <td>
+          <strong style="font-family:monospace;font-size:.9rem">${escHtml(codigo)}</strong><br>
+          <a href="${trackUrl}" target="_blank" style="font-size:.75rem;color:var(--accent)">Ver seguimiento ↗</a>
+        </td>
         <td>${escHtml(p.nombre_cliente||'—')}</td>
         <td>${escHtml(p.telefono_cliente||'—')}</td>
-        <td style="color:var(--muted);font-size:.82rem">${escHtml(p.email_cliente||'—')}</td>
+        <td style="font-family:monospace;color:#a855f7;font-weight:700">${escHtml(p.game_id||'—')}</td>
         <td><ul class="order-products">${lista}</ul></td>
         <td><strong style="color:var(--naranja)">L.${fmtNum(p.total)}</strong></td>
-        <td><span class="badge ${estadoBadge}">${escHtml(p.estado||'pendiente')}</span></td>
-        <td style="color:var(--muted);font-size:.78rem">${escHtml(p.paypal_order_id||'—')}</td>
+        <td style="font-size:.82rem;color:var(--muted)">${escHtml(p.metodo_pago||p.paypal_order_id||'—')}</td>
+        <td><span class="badge ${est.cls}">${est.label}</span></td>
         <td style="color:var(--muted);font-size:.82rem;white-space:nowrap">${fecha}</td>
+        <td>
+          ${p.estado !== 'completado' ? `<button class="btn btn-success btn-sm" onclick="cambiarEstadoPedido('${escHtml(p.id)}','completado')" title="Marcar como completado">💎 Completado</button>` : ''}
+          ${p.estado !== 'cancelado'  ? `<button class="btn btn-sm" style="margin-top:4px" onclick="cambiarEstadoPedido('${escHtml(p.id)}','cancelado')" title="Cancelar pedido">✕ Cancelar</button>` : ''}
+          ${p.estado !== 'en_proceso' && p.estado !== 'completado' && p.estado !== 'cancelado' ? `<button class="btn btn-sm" onclick="cambiarEstadoPedido('${escHtml(p.id)}','en_proceso')">🔄 En proceso</button>` : ''}
+        </td>
       </tr>
     `;
   }).join('');
+}
+
+async function cambiarEstadoPedido(id, estado) {
+  const labels = { completado: '¿Marcar como COMPLETADO? Se notificará al cliente.', cancelado: '¿Cancelar este pedido?' };
+  if (!confirm(labels[estado] || `¿Cambiar a ${estado}?`)) return;
+  try {
+    const r = await fetch(`${API}/admin/pedido/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': TOKEN },
+      body: JSON.stringify({ estado })
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error);
+    toast(`Estado actualizado → ${estado} ✓`, 'ok');
+    await cargarPedidos();
+  } catch(e) {
+    toast(e.message, 'err');
+  }
 }
 
 function filtrarPedidos() {

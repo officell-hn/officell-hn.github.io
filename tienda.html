@@ -275,6 +275,15 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
       <label>Email (opcional)</label>
       <input type="email" id="clienteEmail" placeholder="tu@email.com">
     </div>
+    <!-- CAMPO ID DE JUEGO — solo aparece si hay diamantes en el carrito -->
+    <div class="form-group" id="gameIdGroup" style="display:none">
+      <label style="color:#a855f7;font-weight:700">🎮 ID de jugador Free Fire *</label>
+      <input type="text" id="clienteGameId" placeholder="Ej: 123456789" inputmode="numeric"
+             style="border-color:#a855f7">
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:0.4rem">
+        💡 Abre Free Fire → Perfil → copia el número de ID bajo tu nombre
+      </div>
+    </div>
     <div class="resumen-pedido">
       <h3>Resumen del pedido</h3>
       <div id="resumenItems"></div>
@@ -299,8 +308,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
         <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/></svg>
         Pagar con PayPal.me
       </button>
-      <button onclick="enviarPedidoPaypal()" style="width:100%;padding:0.75rem;background:transparent;border:1px solid #0070ba;color:#0070ba;border-radius:10px;font-weight:600;font-size:0.88rem;cursor:pointer;font-family:'DM Sans',sans-serif">
-        ✅ Ya pagué — Enviar comprobante por WhatsApp
+      <button onclick="confirmarPedido('paypal')" style="width:100%;padding:0.75rem;background:transparent;border:1px solid #0070ba;color:#0070ba;border-radius:10px;font-weight:600;font-size:0.88rem;cursor:pointer;font-family:'DM Sans',sans-serif">
+        ✅ Ya pagué — Confirmar pedido y enviar comprobante
       </button>
     </div>
 
@@ -340,17 +349,42 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
           <button class="copy-btn" onclick="copiar('94931979',this)">Copiar</button>
         </div>
       </div>
-      <p class="banco-nota">Después de realizar el depósito, envía el comprobante por WhatsApp al <strong>+504 9332-3393</strong> indicando tu nombre y el pedido.</p>
-      <button class="btn-wa-pago" onclick="enviarPedidoWhatsApp('deposito')">📸 Enviar comprobante por WhatsApp</button>
+      <p class="banco-nota">Realiza el depósito y luego presiona el botón para confirmar tu pedido y enviar el comprobante.</p>
+      <button class="btn-wa-pago" onclick="confirmarPedido('deposito')">📸 Confirmar pedido y enviar comprobante</button>
     </div>
 
     <!-- PANEL WHATSAPP -->
     <div id="pago-whatsapp" class="pago-panel">
       <p style="color:var(--muted);font-size:0.9rem;text-align:center;margin-bottom:1rem;line-height:1.6">Coordina tu pago directamente con nosotros por WhatsApp. Te atendemos de <strong>Lunes a Sábado 8AM–6PM</strong>.</p>
-      <button class="btn-wa-pago" onclick="enviarPedidoWhatsApp('whatsapp')">💬 Coordinar pago por WhatsApp</button>
+      <button class="btn-wa-pago" onclick="confirmarPedido('whatsapp')">💬 Confirmar pedido por WhatsApp</button>
     </div>
 
     <button class="btn-cancelar" onclick="cerrarCheckout()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMACIÓN PEDIDO -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="text-align:center;max-width:440px">
+    <div style="font-size:3rem;margin-bottom:0.5rem">🎉</div>
+    <h2 style="margin-bottom:0.5rem">¡Pedido confirmado!</h2>
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:1.5rem">
+      Te enviamos tu código y QR por WhatsApp. Guárdalos para rastrear tu pedido.
+    </p>
+    <div style="background:var(--card);border-radius:12px;padding:1.2rem;margin-bottom:1.2rem">
+      <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.4rem">Tu código de seguimiento</div>
+      <div id="confirmCodigo" style="font-family:'Courier New',monospace;font-size:1.6rem;font-weight:900;color:var(--accent);letter-spacing:2px">—</div>
+    </div>
+    <img id="confirmQR" src="" alt="QR" style="width:160px;height:160px;border-radius:10px;margin-bottom:1rem;display:none">
+    <div style="display:flex;gap:0.75rem;flex-direction:column">
+      <a id="confirmTrackLink" href="#" target="_blank"
+         style="display:block;padding:0.75rem;background:var(--gradient);color:#000;border-radius:10px;font-weight:700;font-size:0.9rem;text-decoration:none">
+        🔍 Ver estado de mi pedido
+      </a>
+      <button onclick="cerrarConfirm()" style="padding:0.7rem;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif">
+        Cerrar
+      </button>
+    </div>
   </div>
 </div>
 
@@ -637,13 +671,14 @@ function eliminarItem(idx) {
 // ══════════════════════════════════════════════
 function abrirCheckout() {
   cerrarCarrito();
-  // Renderizar resumen
   const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
   document.getElementById('resumenItems').innerHTML =
     carrito.map(i => `<div class="resumen-item"><span>${i.nombre} x${i.cantidad}</span><span>L.${(i.precio * i.cantidad).toLocaleString()}</span></div>`).join('') +
     `<div class="resumen-item"><span>TOTAL</span><span>L.${total.toLocaleString()}</span></div>`;
+  // Mostrar campo Game ID solo si hay diamantes Free Fire en el carrito
+  const tieneFF = carrito.some(i => i.id && i.id.startsWith('ff-'));
+  document.getElementById('gameIdGroup').style.display = tieneFF ? 'block' : 'none';
   document.getElementById('checkoutModal').classList.add('open');
-  // PayPal se carga solo si el usuario hace clic en esa pestaña
 }
 
 function cerrarCheckout() {
@@ -703,16 +738,6 @@ function copiar(texto, btn) {
   });
 }
 
-function enviarPedidoWhatsApp(tipo) {
-  const nombre = document.getElementById('clienteNombre').value.trim() || 'Cliente';
-  const tel = document.getElementById('clienteTel').value.trim() || '';
-  const items = carrito.map(i => `• ${i.nombre} x${i.cantidad} — L.${(i.precio*i.cantidad).toLocaleString('es-HN')}`).join('\n');
-  const total = carrito.reduce((s,i) => s + i.precio*i.cantidad, 0);
-  const metodo = tipo === 'deposito' ? 'depósito bancario' : 'WhatsApp';
-  const msg = `*Pedido OFFICELL Web*\n\n👤 ${nombre}\n📞 ${tel}\n\n📦 *Productos:*\n${items}\n\n💰 *TOTAL: L.${total.toLocaleString('es-HN')}*\n\n💳 Método de pago: ${metodo}`;
-  window.open(`https://wa.me/50493323393?text=${encodeURIComponent(msg)}`, '_blank');
-}
-
 function pagarConPaypalMe() {
   const nombre = document.getElementById('clienteNombre').value.trim();
   const tel = document.getElementById('clienteTel').value.trim();
@@ -722,49 +747,80 @@ function pagarConPaypalMe() {
   window.open(`https://www.paypal.me/officelldanli/${totalUSD}`, '_blank');
 }
 
-function enviarPedidoPaypal() {
-  const nombre = document.getElementById('clienteNombre').value.trim() || 'Cliente';
-  const tel = document.getElementById('clienteTel').value.trim() || '';
+// ── Confirmar pedido: registrar en DB + abrir WA + mostrar modal ──
+async function confirmarPedido(metodo) {
+  const nombre  = document.getElementById('clienteNombre').value.trim();
+  const tel     = document.getElementById('clienteTel').value.trim();
+  const email   = document.getElementById('clienteEmail').value.trim();
+  const gameId  = document.getElementById('clienteGameId').value.trim();
+  const tieneFF = carrito.some(i => i.id && i.id.startsWith('ff-'));
+
+  if (!nombre) { alert('Por favor ingresa tu nombre completo'); return; }
+  if (!tel)    { alert('Por favor ingresa tu número de WhatsApp'); return; }
+  if (tieneFF && !gameId) { alert('Por favor ingresa tu ID de jugador de Free Fire 🎮'); document.getElementById('clienteGameId').focus(); return; }
+
   const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
-  const totalUSD = (total / tasaCambioHNL).toFixed(2);
   const items = carrito.map(i => `• ${i.nombre} x${i.cantidad} — L.${(i.precio*i.cantidad).toLocaleString('es-HN')}`).join('\n');
-  const msg = `*Pedido OFFICELL Web — Pago PayPal*\n\n👤 ${nombre}\n📞 ${tel}\n\n📦 *Productos:*\n${items}\n\n💰 *TOTAL: L.${total.toLocaleString('es-HN')} (USD $${totalUSD})*\n\n✅ Pagué por PayPal.me — adjunto comprobante`;
-  window.open(`https://wa.me/50493323393?text=${encodeURIComponent(msg)}`, '_blank');
-}
 
-async function registrarPedido(paypalOrderId) {
-  const nombre = document.getElementById('clienteNombre').value.trim();
-  const tel = document.getElementById('clienteTel').value.trim();
-  const email = document.getElementById('clienteEmail').value.trim();
-  const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
-
+  // 1. Registrar pedido en DB
+  let codigo = null, trackUrl = null;
   try {
-    await fetch(`${API}/pedido`, {
+    const r = await fetch(`${API}/pedido`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        nombre_cliente: nombre,
-        telefono_cliente: tel,
-        email_cliente: email,
+        nombre_cliente: nombre, telefono_cliente: tel,
+        email_cliente: email || null, game_id: gameId || null,
+        metodo_pago: metodo,
         productos: carrito.map(i => ({ id: i.id, nombre: i.nombre, precio: i.precio, cantidad: i.cantidad })),
-        total,
-        paypal_order_id: paypalOrderId
+        total
       })
     });
+    const d = await r.json();
+    if (d.ok) { codigo = d.codigo_seguimiento; trackUrl = d.tracking_url; }
   } catch(e) { console.error('Error registrando pedido:', e); }
 
-  // Limpiar carrito y mostrar éxito
+  // 2. Abrir WhatsApp con mensaje + código
+  const metodosLabel = { paypal: 'PayPal', deposito: 'Depósito bancario', whatsapp: 'WhatsApp' };
+  const msgParts = [
+    `*Pedido OFFICELL Web*`, ``,
+    `👤 ${nombre}`, `📞 ${tel}`,
+    gameId ? `🎮 ID Free Fire: ${gameId}` : null,
+    ``, `📦 *Productos:*`, items, ``,
+    `💰 *TOTAL: L.${total.toLocaleString('es-HN')}*`,
+    `💳 Método: ${metodosLabel[metodo] || metodo}`,
+    codigo ? `🔑 Código: *${codigo}*` : null,
+    trackUrl ? `🔗 Seguimiento: ${trackUrl}` : null,
+    metodo === 'deposito' ? `📸 Adjunto comprobante de pago` : null,
+    metodo === 'paypal'   ? `✅ Pagué por PayPal.me — adjunto comprobante` : null
+  ].filter(l => l !== null).join('\n');
+
+  window.open(`https://wa.me/50493323393?text=${encodeURIComponent(msgParts)}`, '_blank');
+
+  // 3. Mostrar modal de confirmación con QR
+  document.getElementById('checkoutModal').classList.remove('open');
+  document.getElementById('confirmCodigo').textContent = codigo || '—';
+  const qrImg = document.getElementById('confirmQR');
+  const trackLink = document.getElementById('confirmTrackLink');
+  if (trackUrl) {
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(trackUrl)}`;
+    qrImg.style.display = 'block';
+    trackLink.href = trackUrl;
+    trackLink.style.display = 'block';
+  } else {
+    qrImg.style.display = 'none';
+    trackLink.style.display = 'none';
+  }
+  document.getElementById('confirmModal').classList.add('open');
+
+  // Limpiar carrito
   carrito = [];
   guardarCarrito();
   actualizarContador();
-  document.getElementById('checkoutContent').innerHTML = `
-    <div class="success-modal">
-      <div class="success-icon">✅</div>
-      <h2>¡Pedido Confirmado!</h2>
-      <p>Gracias <strong>${nombre}</strong>. Nos comunicaremos contigo al <strong>${tel}</strong> para coordinar la entrega.</p>
-      <p style="margin-bottom:1.5rem">ID de pago: <code style="color:var(--accent)">${paypalOrderId}</code></p>
-      <button class="btn-success" onclick="cerrarCheckout();location.reload()">Seguir comprando</button>
-    </div>`;
+}
+
+function cerrarConfirm() {
+  document.getElementById('confirmModal').classList.remove('open');
 }
 
 // ══════════════════════════════════════════════
