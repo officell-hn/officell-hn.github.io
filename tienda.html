@@ -771,7 +771,19 @@ async function registrarPedido(paypalOrderId) {
 // INIT
 // ══════════════════════════════════════════════
 actualizarContador();
-cargarProductos();
+cargarProductos().then(() => {
+  // Soporte de URL param: ?cat=diamantes-ff
+  const params = new URLSearchParams(window.location.search);
+  const catParam = params.get('cat');
+  if (catParam) {
+    categoriaActiva = catParam;
+    renderProductos();
+    setTimeout(() => {
+      const el = document.getElementById('productosContainer');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
+  }
+});
 </script>
 </body>
 </html>
