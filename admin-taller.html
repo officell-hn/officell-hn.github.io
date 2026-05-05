@@ -287,7 +287,7 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
 
 <!-- MODAL CAMBIAR ESTADO -->
 <div class="overlay" id="overlayEstado">
-  <div class="modal" style="max-width:420px">
+  <div class="modal" style="max-width:480px">
     <div class="modal-header">
       <div class="modal-title">Actualizar Orden</div>
       <button class="btn-close" onclick="cerrarModalEstado()">✕</button>
@@ -296,6 +296,49 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
       <strong id="estadoEquipo">—</strong>
       <div style="color:var(--muted);font-size:0.82rem;margin-top:0.25rem" id="estadoCodigo">—</div>
     </div>
+
+    <!-- Datos del cliente -->
+    <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:0.6rem">Datos del Cliente</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Cliente Nombre</label>
+        <input type="text" id="fClienteNombre" placeholder="Nombre del cliente">
+      </div>
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input type="tel" id="fClienteTel" placeholder="+504 XXXX-XXXX">
+      </div>
+    </div>
+
+    <!-- Datos del equipo -->
+    <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:0.6rem;margin-top:0.25rem">Datos del Equipo</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Equipo (marca + modelo) *</label>
+        <input type="text" id="fEquipoEd" placeholder="Ej: Samsung Galaxy A54">
+      </div>
+      <div class="form-group">
+        <label>Tipo de Servicio</label>
+        <select id="fTipoServicioEd">
+          <option value="reparacion">Reparación General</option>
+          <option value="pantalla">Cambio de Pantalla</option>
+          <option value="bateria">Cambio de Batería</option>
+          <option value="software">Software / Flasheo</option>
+          <option value="desbloqueo">Desbloqueo</option>
+          <option value="agua">Daño por Agua</option>
+          <option value="puerto">Puerto de Carga</option>
+          <option value="computadora">Computadora</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Problema reportado</label>
+      <textarea id="fProblemaEd" placeholder="Descripción del problema..."></textarea>
+    </div>
+
+    <!-- Estado y técnico -->
+    <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:0.6rem;margin-top:0.25rem">Estado y Reparación</div>
     <div class="form-group">
       <label>Nuevo Estado</label>
       <select id="fEstado">
@@ -537,11 +580,19 @@ function abrirEditarEstado(id) {
   ordenActualId = id;
   document.getElementById('estadoEquipo').textContent = o.equipo;
   document.getElementById('estadoCodigo').textContent = o.codigo_seguimiento || o.id;
-  document.getElementById('fEstado').value    = o.estado || 'recibido';
-  document.getElementById('fDiag').value      = o.diagnostico || '';
-  document.getElementById('fPrecioEst').value = o.precio || '';
-  document.getElementById('fFechaEstEd').value= o.fecha_estimada || '';
-  document.getElementById('fNotasEd').value   = o.notas || '';
+  // Datos cliente
+  document.getElementById('fClienteNombre').value   = (o.cliente_nombre === 'Pendiente' ? '' : o.cliente_nombre) || '';
+  document.getElementById('fClienteTel').value      = o.cliente_telefono || '';
+  // Datos equipo
+  document.getElementById('fEquipoEd').value        = (o.equipo === 'Por definir' ? '' : o.equipo) || '';
+  document.getElementById('fTipoServicioEd').value  = o.tipo_servicio || 'reparacion';
+  document.getElementById('fProblemaEd').value      = o.problema || '';
+  // Estado y reparación
+  document.getElementById('fEstado').value          = o.estado || 'recibido';
+  document.getElementById('fDiag').value            = o.diagnostico || '';
+  document.getElementById('fPrecioEst').value       = o.precio || '';
+  document.getElementById('fFechaEstEd').value      = o.fecha_estimada ? o.fecha_estimada.substring(0,10) : '';
+  document.getElementById('fNotasEd').value         = (o.notas === 'Orden creada desde plantilla manual' ? '' : o.notas) || '';
   document.getElementById('overlayEstado').classList.add('open');
 }
 function cerrarModalEstado() {
@@ -549,12 +600,19 @@ function cerrarModalEstado() {
 }
 async function actualizarEstado() {
   if (!ordenActualId) return;
+  const equipoVal = document.getElementById('fEquipoEd').value.trim();
+  if (!equipoVal) { alert('El campo Equipo es obligatorio'); document.getElementById('fEquipoEd').focus(); return; }
   const body = {
-    estado:         document.getElementById('fEstado').value,
-    diagnostico:    document.getElementById('fDiag').value.trim()||null,
-    precio:         parseFloat(document.getElementById('fPrecioEst').value)||null,
-    fecha_estimada: document.getElementById('fFechaEstEd').value||null,
-    notas:          document.getElementById('fNotasEd').value.trim()||null
+    estado:           document.getElementById('fEstado').value,
+    diagnostico:      document.getElementById('fDiag').value.trim()||null,
+    precio:           parseFloat(document.getElementById('fPrecioEst').value)||null,
+    fecha_estimada:   document.getElementById('fFechaEstEd').value||null,
+    notas:            document.getElementById('fNotasEd').value.trim()||null,
+    cliente_nombre:   document.getElementById('fClienteNombre').value.trim()||null,
+    cliente_telefono: document.getElementById('fClienteTel').value.trim()||null,
+    equipo:           equipoVal,
+    problema:         document.getElementById('fProblemaEd').value.trim()||null,
+    tipo_servicio:    document.getElementById('fTipoServicioEd').value||null
   };
   try {
     const r = await fetch(`${API}/taller/orden/${ordenActualId}`, {
