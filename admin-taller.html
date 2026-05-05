@@ -158,6 +158,7 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
   <header>
     <div class="header-brand">OFFICE<span>LL</span> — Taller</div>
     <div class="header-actions">
+      <button class="btn-sm" onclick="imprimirPlantilla()" title="Imprimir hoja en blanco para llenar a mano">🖨️ Plantilla</button>
       <button class="btn-primary" onclick="abrirNuevaOrden()">+ Nueva Orden</button>
       <button class="btn-sm danger" onclick="logout()">Salir</button>
     </div>
@@ -612,6 +613,150 @@ function verDetalle(id) {
 function cerrarDetalle() {
   document.getElementById('overlayDetalle').classList.remove('open');
 }
+// ── Imprimir plantilla en blanco ──────────────────────────
+async function imprimirPlantilla() {
+  const btn = document.querySelector('button[onclick="imprimirPlantilla()"]');
+  const orig = btn.textContent;
+  btn.textContent = '⏳ Generando...';
+  btn.disabled = true;
+  try {
+    const r = await fetch(`${API}/taller/plantilla`, {
+      method: 'POST',
+      headers: { 'x-admin-token': TOKEN }
+    });
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error);
+
+    const { codigo_seguimiento, fecha } = data;
+    const qrUrl = `https://officell-hn.github.io/taller.html?codigo=${encodeURIComponent(codigo_seguimiento)}`;
+
+    QRCode.toDataURL(qrUrl, { width: 160, margin: 1, errorCorrectionLevel: 'M' })
+      .then(qrDataUrl => {
+        const hoy = new Date().toLocaleDateString('es-HN', { timeZone: 'America/Tegucigalpa' });
+        const css = `
+          @page { size: A4; margin: 12mm 15mm; }
+          body  { font-family: Arial, sans-serif; color: #000; margin: 0; font-size: 12px; }
+          .cabecera { text-align: center; border-bottom: 3px solid #000; padding-bottom: 4mm; margin-bottom: 5mm; }
+          .nombre-empresa { font-size: 22px; font-weight: 900; letter-spacing: 2px; }
+          .sub-empresa { font-size: 11px; color: #333; margin-top: 1mm; }
+          .titulo { font-size: 16px; font-weight: 900; text-align: center; text-transform: uppercase;
+                    letter-spacing: 2px; margin: 4mm 0; border: 2px solid #000; padding: 3mm; }
+          .cod-box { text-align: center; font-size: 26px; font-weight: 900; letter-spacing: 4px;
+                     font-family: 'Courier New', monospace; margin-bottom: 5mm; }
+          .aviso { background: #f5f5f5; border: 1px solid #ccc; border-radius: 3mm;
+                   padding: 3mm 4mm; font-size: 11px; margin-bottom: 5mm; line-height: 1.6; }
+          .aviso strong { font-size: 12px; }
+          .seccion { font-size: 11px; font-weight: 900; text-transform: uppercase;
+                     border-bottom: 2px solid #000; padding-bottom: 1mm; margin: 5mm 0 3mm; letter-spacing: 1px; }
+          .campo { display: flex; align-items: flex-end; margin-bottom: 5mm; gap: 3mm; }
+          .campo .etiqueta { font-size: 11px; font-weight: 700; white-space: nowrap; min-width: 38mm; }
+          .campo .linea { flex: 1; border-bottom: 1px solid #000; height: 5mm; }
+          .campo-grande { margin-bottom: 4mm; }
+          .campo-grande .etiqueta { font-size: 11px; font-weight: 700; margin-bottom: 1mm; }
+          .campo-grande .lineas { border-bottom: 1px solid #000; min-height: 6mm; margin-bottom: 2mm; }
+          .fila2 { display: flex; gap: 5mm; }
+          .fila2 .campo { flex: 1; }
+          .pie { display: flex; justify-content: space-between; align-items: flex-start;
+                 margin-top: 6mm; border-top: 2px solid #000; padding-top: 4mm; gap: 5mm; }
+          .pie-texto { font-size: 10px; color: #333; line-height: 1.6; flex: 1; }
+          .pie-qr { text-align: center; }
+          .pie-qr img { width: 35mm; height: 35mm; display: block; }
+          .pie-qr .qr-lbl { font-size: 10px; margin-top: 1mm; font-weight: bold; }
+          .firma { display: flex; gap: 10mm; margin-top: 6mm; }
+          .firma-bloque { flex: 1; text-align: center; }
+          .firma-linea { border-bottom: 1px solid #000; height: 12mm; margin-bottom: 1mm; }
+          .firma-lbl { font-size: 10px; color: #333; }
+          .fecha-imp { font-size: 10px; color: #666; text-align: right; margin-bottom: 2mm; }
+        `;
+
+        const body = `
+          <div class="fecha-imp">Fecha de impresión: ${hoy}</div>
+          <div class="cabecera">
+            <div class="nombre-empresa">OFFICELL</div>
+            <div class="sub-empresa">Servicio Técnico &amp; Banca · Danlí, El Paraíso, Honduras · WhatsApp: 9332-3393</div>
+          </div>
+
+          <div class="titulo">📋 Hoja de Recepción de Equipo</div>
+          <div class="cod-box">${codigo_seguimiento}</div>
+
+          <div class="aviso">
+            <strong>📌 Instrucciones:</strong> Por favor llene esta hoja con letra clara. Su equipo quedará registrado con el código
+            de arriba. Guarde esta hoja para retirar su equipo. Puede escanear el QR o visitar
+            <strong>officell-hn.github.io/taller.html</strong> para consultar el estado de su reparación.
+          </div>
+
+          <div class="seccion">Datos del Cliente</div>
+          <div class="fila2">
+            <div class="campo"><span class="etiqueta">Nombre:</span><span class="linea"></span></div>
+            <div class="campo"><span class="etiqueta">Teléfono:</span><span class="linea"></span></div>
+          </div>
+
+          <div class="seccion">Datos del Equipo</div>
+          <div class="fila2">
+            <div class="campo"><span class="etiqueta">Marca / Modelo:</span><span class="linea"></span></div>
+            <div class="campo"><span class="etiqueta">Tipo de Servicio:</span><span class="linea"></span></div>
+          </div>
+          <div class="campo-grande">
+            <div class="etiqueta">Problema que presenta:</div>
+            <div class="lineas"></div>
+            <div class="lineas"></div>
+          </div>
+
+          <div class="seccion">Presupuesto y Fechas</div>
+          <div class="fila2">
+            <div class="campo"><span class="etiqueta">Precio estimado: L.</span><span class="linea"></span></div>
+            <div class="campo"><span class="etiqueta">Fecha de entrada:</span><span class="linea"></span></div>
+            <div class="campo"><span class="etiqueta">Entrega estimada:</span><span class="linea"></span></div>
+          </div>
+
+          <div class="campo-grande">
+            <div class="etiqueta">Observaciones / Notas adicionales:</div>
+            <div class="lineas"></div>
+          </div>
+
+          <div class="firma">
+            <div class="firma-bloque">
+              <div class="firma-linea"></div>
+              <div class="firma-lbl">Firma del Cliente</div>
+            </div>
+            <div class="firma-bloque">
+              <div class="firma-linea"></div>
+              <div class="firma-lbl">Atendido por (OFFICELL)</div>
+            </div>
+          </div>
+
+          <div class="pie">
+            <div class="pie-texto">
+              <strong>Términos y Condiciones:</strong> Garantía según tipo de servicio
+              (pantallas: 30 días · baterías: 90 días · software: 15 días).
+              El equipo debe retirarse dentro de los 30 días siguientes a que esté listo.
+              Pasado este plazo, OFFICELL no se responsabiliza por el equipo.<br><br>
+              Código de seguimiento: <strong>${codigo_seguimiento}</strong>
+            </div>
+            <div class="pie-qr">
+              <img src="${qrDataUrl}">
+              <div class="qr-lbl">Consulta tu reparación</div>
+            </div>
+          </div>
+        `;
+
+        const win = window.open('', '_blank', 'width=800,height=1000');
+        win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Plantilla ${codigo_seguimiento}</title><style>${css}</style></head><body>${body}</body></html>`);
+        win.document.close();
+        win.focus();
+        setTimeout(() => { win.print(); win.close(); }, 500);
+
+        // Recargar lista para que aparezca la orden nueva
+        cargarOrdenes();
+      });
+  } catch (err) {
+    alert('Error generando plantilla: ' + err.message);
+  } finally {
+    btn.textContent = orig;
+    btn.disabled = false;
+  }
+}
+
 // ── Imprimir recibo ───────────────────────────────────────
 function imprimir(id, formato) {
   const o = ORDENES.find(x => x.id === id);
