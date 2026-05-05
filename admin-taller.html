@@ -624,20 +624,21 @@ function imprimir(id, formato) {
     .then(qrDataUrl => {
       const css = es80 ? `
         @page { size: 80mm auto; margin: 3mm 4mm; }
-        body      { font-family: Arial, sans-serif; font-size: 10px; color: #000; margin: 0; padding: 0; }
-        .logo-img { display: block; margin: 0 auto 2mm; width: 38mm; }
-        .sub      { text-align: center; font-size: 10px; color: #333; margin-bottom: 3mm; line-height: 1.4; }
-        .tit      { font-size: 13px; font-weight: 900; text-align: center; border-bottom: 2px solid #000; padding-bottom: 2mm; margin-bottom: 3mm; text-transform: uppercase; }
-        .cod      { text-align: center; font-size: 16px; font-weight: 900; letter-spacing: .1em; color: #000; background: #f0f0f0; padding: 2mm; border-radius: 2mm; margin-bottom: 3mm; font-family: 'Courier New', monospace; }
-        h3        { font-size: 10px; font-weight: 900; text-transform: uppercase; border-bottom: 1px solid #999; padding-bottom: 1mm; margin: 3mm 0 1mm; }
+        body      { font-family: Arial, sans-serif; font-size: 11px; color: #000; margin: 0; padding: 0; }
+        .logo-img { display: none; }
+        .logo-txt { font-size: 22px; font-weight: 900; text-align: center; letter-spacing: 2px; margin-bottom: 1mm; }
+        .sub      { text-align: center; font-size: 11px; color: #000; margin-bottom: 3mm; line-height: 1.5; }
+        .tit      { font-size: 14px; font-weight: 900; text-align: center; border-bottom: 2px solid #000; padding-bottom: 2mm; margin-bottom: 3mm; text-transform: uppercase; }
+        .cod      { text-align: center; font-size: 16px; font-weight: 900; letter-spacing: .1em; color: #000; border: 2px solid #000; padding: 2mm; margin-bottom: 3mm; font-family: 'Courier New', monospace; }
+        h3        { font-size: 11px; font-weight: 900; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 1mm; margin: 3mm 0 1mm; }
         table     { width: 100%; border-collapse: collapse; margin-bottom: 2mm; }
-        th        { background: #eee; padding: 1.5mm 2mm; text-align: left; font-size: 10px; text-transform: uppercase; border: 1px solid #bbb; }
-        td        { padding: 1.5mm 2mm; font-size: 10px; border: 1px solid #bbb; }
-        .terms    { font-size: 9px; color: #444; border-top: 1px solid #bbb; padding-top: 2mm; margin-top: 2mm; line-height: 1.4; }
+        th        { background: #ddd; padding: 1.5mm 2mm; text-align: left; font-size: 10px; text-transform: uppercase; border: 1px solid #000; }
+        td        { padding: 1.5mm 2mm; font-size: 11px; border: 1px solid #000; }
+        .terms    { font-size: 10px; color: #000; border-top: 1px solid #000; padding-top: 2mm; margin-top: 2mm; line-height: 1.5; }
         .qr       { text-align: center; margin: 3mm 0 1mm; }
         .qr img   { width: 34mm; height: 34mm; }
-        .qr-lbl   { font-size: 9px; color: #333; text-align: center; margin-top: 1mm; }
-        .foot     { font-size: 9px; text-align: center; color: #555; margin-top: 2mm; line-height: 1.4; }
+        .qr-lbl   { font-size: 11px; color: #000; text-align: center; margin-top: 1mm; font-weight: bold; }
+        .foot     { font-size: 10px; text-align: center; color: #000; margin-top: 2mm; line-height: 1.5; }
       ` : `
         @page { size: A4; margin: 10mm; }
         body  { font-family: Arial, sans-serif; color: #000; margin: 0; padding: 0; }
@@ -657,7 +658,7 @@ function imprimir(id, formato) {
       `;
 
       const body = `
-        <img class="logo-img" src="https://officell-hn.github.io/LOGO_OFFICELL.png" alt="OFFICELL">
+        ${es80 ? '<div class="logo-txt">OFFICELL</div>' : '<img class="logo-img" src="https://officell-hn.github.io/LOGO_OFFICELL.png" alt="OFFICELL">'}
         <div class="sub">Servicio Técnico &amp; Banca · Danlí, El Paraíso, Honduras · WhatsApp: 9332-3393</div>
         <div class="tit">Recibo de Reparación</div>
         <div class="cod">${codigo}</div>
