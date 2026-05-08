@@ -417,53 +417,56 @@ let editandoId = null;
 let todosProductos = [];
 let todosPedidos = [];
 
-// ─── LOGIN ──────────────────────────────────────────────────────
-function doLogin() {
+// ─── LOGIN CON JWT ──────────────────────────────────────────────
+function authHeaders() {
+  return TOKEN ? { 'Authorization': 'Bearer ' + TOKEN } : {};
+}
+async function doLogin() {
   const t = document.getElementById('token-input').value.trim();
   if (!t) return;
-  TOKEN = t;
-  // Verificar token haciendo un request real
-  fetch(`${API}/admin/productos`, { headers: { 'x-admin-token': TOKEN } })
-    .then(r => r.json())
-    .then(d => {
-      if (d.ok) {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        sessionStorage.setItem('oc_admin_token', TOKEN);
-        cargarProductos();
-      } else {
-        document.getElementById('login-error').textContent = 'Contraseña incorrecta.';
-        TOKEN = '';
-      }
-    })
-    .catch(() => {
-      document.getElementById('login-error').textContent = 'Error de conexión con el servidor.';
-      TOKEN = '';
+  try {
+    const r = await fetch(`${API}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: t })
     });
+    const d = await r.json();
+    if (!d.ok) {
+      document.getElementById('login-error').textContent = d.error || 'Contraseña incorrecta.';
+      return;
+    }
+    TOKEN = d.jwt;
+    sessionStorage.setItem('oc_admin_jwt', TOKEN);
+    document.getElementById('login-error').textContent = '';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    cargarProductos();
+  } catch(e) {
+    document.getElementById('login-error').textContent = 'Error de conexión con el servidor.';
+  }
 }
 
 function doLogout() {
-  sessionStorage.removeItem('oc_admin_token');
+  sessionStorage.removeItem('oc_admin_jwt');
   TOKEN = '';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
   document.getElementById('token-input').value = '';
 }
 
-// Auto-login con token guardado
+// Auto-login con JWT guardado
 window.onload = () => {
-  const saved = sessionStorage.getItem('oc_admin_token');
+  const saved = sessionStorage.getItem('oc_admin_jwt');
   if (saved) {
-    document.getElementById('token-input').value = saved;
     TOKEN = saved;
-    fetch(`${API}/admin/productos`, { headers: { 'x-admin-token': TOKEN } })
+    fetch(`${API}/admin/productos`, { headers: authHeaders() })
       .then(r => r.json())
       .then(d => {
         if (d.ok) {
           document.getElementById('login-screen').style.display = 'none';
           document.getElementById('app').style.display = 'block';
           cargarProductos();
-        } else { TOKEN = ''; sessionStorage.removeItem('oc_admin_token'); }
+        } else { TOKEN = ''; sessionStorage.removeItem('oc_admin_jwt'); }
       })
       .catch(() => { TOKEN = ''; });
   }
@@ -483,7 +486,7 @@ async function cargarProductos() {
   document.getElementById('tbody-productos').innerHTML =
     '<tr><td colspan="10" class="loading"><div class="spinner"></div></td></tr>';
   try {
-    const r = await fetch(`${API}/admin/productos`, { headers: { 'x-admin-token': TOKEN } });
+    const r = await fetch(`${API}/admin/productos`, { headers: authHeaders() });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
     todosProductos = d.productos;
@@ -700,7 +703,7 @@ async function toggleCampo(id, campo, valor) {
     body[campo] = valor;
     const r = await fetch(`${API}/admin/producto/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'x-admin-token': TOKEN },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(body)
     });
     const d = await r.json();
@@ -718,7 +721,7 @@ async function eliminarProducto(id, btn) {
   btn.disabled = true;
   try {
     const r = await fetch(`${API}/admin/producto/${id}`, {
-      method: 'DELETE', headers: { 'x-admin-token': TOKEN }
+      method: 'DELETE', headers: authHeaders()
     });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
@@ -854,7 +857,7 @@ async function guardarProducto() {
       method = 'POST';
     }
     const r = await fetch(url, {
-      method, headers: { 'Content-Type': 'application/json', 'x-admin-token': TOKEN },
+      method, headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(body)
     });
     const d = await r.json();
@@ -876,7 +879,7 @@ async function cargarPedidos() {
   document.getElementById('tbody-pedidos').innerHTML =
     '<tr><td colspan="9" class="loading"><div class="spinner"></div></td></tr>';
   try {
-    const r = await fetch(`${API}/admin/pedidos`, { headers: { 'x-admin-token': TOKEN } });
+    const r = await fetch(`${API}/admin/pedidos`, { headers: authHeaders() });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
     todosPedidos = d.pedidos;
@@ -936,7 +939,7 @@ async function cambiarEstadoPedido(id, estado) {
   try {
     const r = await fetch(`${API}/admin/pedido/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'x-admin-token': TOKEN },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ estado })
     });
     const d = await r.json();

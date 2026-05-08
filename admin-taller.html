@@ -402,27 +402,49 @@ let filtroActual = '';
 let ordenActualId = null;
 let ordenDetalleActual = null;
 
-// ── Auth ──────────────────────────────────────────────────
-function login() {
+// ── Auth con JWT ──────────────────────────────────────────
+function authHeaders() {
+  return TOKEN ? { 'Authorization': 'Bearer ' + TOKEN } : {};
+}
+async function login() {
   const pwd = document.getElementById('pwdInput').value;
   if (!pwd) return;
-  TOKEN = pwd;
-  sessionStorage.setItem('oc_admin_token', pwd);
-  verificarToken();
+  try {
+    const r = await fetch(`${API}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: pwd })
+    });
+    const d = await r.json();
+    if (!d.ok) {
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('loginError').textContent = d.error || 'Contraseña incorrecta';
+      return;
+    }
+    TOKEN = d.jwt;
+    sessionStorage.setItem('oc_admin_jwt', TOKEN);
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    cargarOrdenes();
+  } catch(e) {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('loginError').textContent = 'Error de conexión';
+  }
 }
 function logout() {
   TOKEN = '';
-  sessionStorage.removeItem('oc_admin_token');
+  sessionStorage.removeItem('oc_admin_jwt');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('pwdInput').value = '';
 }
 async function verificarToken() {
   try {
-    const r = await fetch(`${API}/taller/ordenes`, { headers: { 'x-admin-token': TOKEN } });
+    const r = await fetch(`${API}/taller/ordenes`, { headers: authHeaders() });
     if (r.status === 401) {
+      TOKEN = ''; sessionStorage.removeItem('oc_admin_jwt');
       document.getElementById('loginError').style.display = 'block';
-      TOKEN = '';
       return;
     }
     document.getElementById('loginError').style.display = 'none';
@@ -438,9 +460,9 @@ async function verificarToken() {
   }
 }
 
-// Auto login si hay token guardado
+// Auto login si hay JWT guardado
 window.addEventListener('DOMContentLoaded', () => {
-  const saved = sessionStorage.getItem('oc_admin_token');
+  const saved = sessionStorage.getItem('oc_admin_jwt');
   if (saved) { TOKEN = saved; verificarToken(); }
 });
 
@@ -450,7 +472,7 @@ async function cargarOrdenes() {
     '<tr><td colspan="7"><div class="loading"><div class="spinner"></div>Cargando...</div></td></tr>';
   try {
     const url = filtroActual ? `${API}/taller/ordenes?estado=${filtroActual}` : `${API}/taller/ordenes`;
-    const r = await fetch(url, { headers: { 'x-admin-token': TOKEN } });
+    const r = await fetch(url, { headers: authHeaders() });
     const d = await r.json();
     ORDENES = d.ordenes || [];
     renderTabla(ORDENES);
@@ -559,7 +581,7 @@ async function guardarOrden() {
   try {
     const r = await fetch(`${API}/taller/orden`, {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', 'x-admin-token': TOKEN },
+      headers: { 'Content-Type':'application/json', ...authHeaders() },
       body: JSON.stringify(body)
     });
     const d = await r.json();
@@ -619,7 +641,7 @@ async function actualizarEstado() {
   try {
     const r = await fetch(`${API}/taller/orden/${ordenActualId}`, {
       method: 'PUT',
-      headers: { 'Content-Type':'application/json', 'x-admin-token': TOKEN },
+      headers: { 'Content-Type':'application/json', ...authHeaders() },
       body: JSON.stringify(body)
     });
     const d = await r.json();
