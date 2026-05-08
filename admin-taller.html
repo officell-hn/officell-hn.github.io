@@ -660,7 +660,7 @@ async function cancelarOrden(id) {
   try {
     await fetch(`${API}/taller/orden/${id}`, {
       method: 'DELETE',
-      headers: { 'x-admin-token': TOKEN }
+      headers: authHeaders()
     });
     await cargarOrdenes();
   } catch(e) {
@@ -704,7 +704,7 @@ async function imprimirPlantilla() {
   try {
     const r = await fetch(`${API}/taller/plantilla`, {
       method: 'POST',
-      headers: { 'x-admin-token': TOKEN }
+      headers: authHeaders()
     });
     const data = await r.json();
     if (!data.ok) throw new Error(data.error);
