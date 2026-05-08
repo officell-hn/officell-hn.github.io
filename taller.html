@@ -291,8 +291,15 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
 <!-- WA FLOTANTE -->
 <a href="https://wa.me/50493323393" target="_blank" class="wa-float" title="WhatsApp OFFICELL">💬</a>
 
+<script src="config.js"></script>
 <script>
-const API = 'https://officell-ia-production.up.railway.app/api/tienda';
+const API = (typeof OFFICELL_CONFIG !== 'undefined') ? OFFICELL_CONFIG.API : 'https://officell-ia-production.up.railway.app/api/tienda';
+
+// Escape HTML para prevenir XSS al insertar datos del servidor via innerHTML
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 // ── Servicios ──────────────────────────────────────────────
 async function cargarServicios() {
@@ -303,9 +310,9 @@ async function cargarServicios() {
     const grid = document.getElementById('serviciosGrid');
     grid.innerHTML = d.servicios.map(s => `
       <div class="servicio-card">
-        <span class="servicio-emoji">${s.emoji}</span>
-        <div class="servicio-nombre">${s.nombre}</div>
-        <p class="servicio-desc">${s.descripcion}</p>
+        <span class="servicio-emoji">${esc(s.emoji)}</span>
+        <div class="servicio-nombre">${esc(s.nombre)}</div>
+        <p class="servicio-desc">${esc(s.descripcion)}</p>
         ${s.precio_desde > 0
           ? `<div class="servicio-precio">L.${s.precio_desde.toLocaleString()} <span>desde</span></div>`
           : `<div class="servicio-precio" style="color:var(--green)">Gratis <span>consulta</span></div>`}
@@ -340,7 +347,7 @@ async function buscarOrden() {
         <div class="error-card">
           <div class="error-icon">🔍</div>
           <h3>Código no encontrado</h3>
-          <p>${d.error || 'Verifica que el código esté escrito correctamente tal como aparece en tu recibo.'}</p>
+          <p>${esc(d.error) || 'Verifica que el código esté escrito correctamente tal como aparece en tu recibo.'}</p>
         </div>`;
       return;
     }
@@ -371,13 +378,13 @@ async function buscarOrden() {
       <div class="resultado-card">
         <div class="resultado-header">
           <div>
-            <div class="resultado-equipo">${o.equipo}</div>
-            ${o.cliente_nombre ? `<div class="resultado-cliente">Cliente: ${o.cliente_nombre}</div>` : ''}
+            <div class="resultado-equipo">${esc(o.equipo)}</div>
+            ${o.cliente_nombre ? `<div class="resultado-cliente">Cliente: ${esc(o.cliente_nombre)}</div>` : ''}
           </div>
-          <div class="resultado-codigo">${o.codigo_seguimiento}</div>
+          <div class="resultado-codigo">${esc(o.codigo_seguimiento)}</div>
         </div>
         <div style="text-align:center">
-          <span class="badge-estado badge-${o.estado}">${o.estado_desc}</span>
+          <span class="badge-estado badge-${esc(o.estado)}">${esc(o.estado_desc)}</span>
         </div>
         ${progressHTML}
         <div class="resultado-grid">
@@ -397,7 +404,7 @@ async function buscarOrden() {
         ${o.notas ? `
         <div class="notas-box">
           <div class="notas-label">📝 Notas del técnico</div>
-          <div class="notas-text">${o.notas}</div>
+          <div class="notas-text">${esc(o.notas)}</div>
         </div>` : ''}
         <a href="https://wa.me/50493323393?text=Hola%2C+consulto+por+mi+equipo+con+c%C3%B3digo+${encodeURIComponent(o.codigo_seguimiento)}" target="_blank" class="resultado-wa">
           💬 Consultar por WhatsApp

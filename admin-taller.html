@@ -393,8 +393,9 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
 <!-- ÁREA DE IMPRESIÓN (oculta normalmente) -->
 <div id="print-area"></div>
 
+<script src="config.js"></script>
 <script>
-const API = 'https://officell-ia-production.up.railway.app/api/tienda';
+const API = (typeof OFFICELL_CONFIG !== 'undefined') ? OFFICELL_CONFIG.API : 'https://officell-ia-production.up.railway.app/api/tienda';
 let TOKEN = '';
 let ORDENES = [];
 let filtroActual = '';
@@ -406,12 +407,12 @@ function login() {
   const pwd = document.getElementById('pwdInput').value;
   if (!pwd) return;
   TOKEN = pwd;
-  localStorage.setItem('oc_admin_token', pwd);
+  sessionStorage.setItem('oc_admin_token', pwd);
   verificarToken();
 }
 function logout() {
   TOKEN = '';
-  localStorage.removeItem('oc_admin_token');
+  sessionStorage.removeItem('oc_admin_token');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('pwdInput').value = '';
@@ -439,7 +440,7 @@ async function verificarToken() {
 
 // Auto login si hay token guardado
 window.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('oc_admin_token');
+  const saved = sessionStorage.getItem('oc_admin_token');
   if (saved) { TOKEN = saved; verificarToken(); }
 });
 

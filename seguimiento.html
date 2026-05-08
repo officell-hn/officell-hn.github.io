@@ -79,8 +79,15 @@ main { max-width: 600px; margin: 0 auto; padding: 2rem 1rem; }
   <div id="resultado"></div>
 </main>
 
+<script src="config.js"></script>
 <script>
-const API = 'https://officell-ia-production.up.railway.app/api/tienda';
+const API = (typeof OFFICELL_CONFIG !== 'undefined') ? OFFICELL_CONFIG.API : 'https://officell-ia-production.up.railway.app/api/tienda';
+
+// Escape HTML para prevenir XSS al insertar datos del servidor via innerHTML
+function esc(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
 
 // Autocargar si viene código en la URL
 window.addEventListener('DOMContentLoaded', () => {
@@ -105,7 +112,7 @@ async function buscar() {
     const data = await r.json();
 
     if (!data.ok) {
-      el.innerHTML = `<div class="error-box">❌ ${data.error || 'Código no encontrado.'}<br><br><small>Verifica el código en tu comprobante de WhatsApp.</small></div>`;
+      el.innerHTML = `<div class="error-box">❌ ${esc(data.error) || 'Código no encontrado.'}<br><br><small>Verifica el código en tu comprobante de WhatsApp.</small></div>`;
       return;
     }
 
@@ -118,21 +125,21 @@ async function buscar() {
     el.innerHTML = `
       <div class="estado-card">
         <div class="seccion-label">Código de pedido</div>
-        <div class="codigo-disp">${p.codigo}</div>
-        <div class="fecha-disp">📅 Pedido realizado: ${fecha}</div>
+        <div class="codigo-disp">${esc(p.codigo)}</div>
+        <div class="fecha-disp">📅 Pedido realizado: ${esc(fecha)}</div>
 
         <div class="seccion-label" style="margin-bottom:0.5rem">Estado actual</div>
-        <div class="estado-badge ${badgeClass}">${p.estado_desc}</div>
+        <div class="estado-badge ${badgeClass}">${esc(p.estado_desc)}</div>
 
         ${p.game_id ? `
-        <div class="game-id-badge">🎮 ID de jugador: <span>${p.game_id}</span></div>` : ''}
+        <div class="game-id-badge">🎮 ID de jugador: <span>${esc(p.game_id)}</span></div>` : ''}
       </div>
 
       <div class="estado-card">
         <div class="seccion-label">Resumen del pedido</div>
         ${items.map(i => `
           <div class="item-lista">
-            <span>${i.nombre} x${i.cantidad}</span>
+            <span>${esc(i.nombre)} x${esc(i.cantidad)}</span>
             <span>L.${(parseFloat(i.precio||0)*parseInt(i.cantidad||1)).toLocaleString('es-HN')}</span>
           </div>`).join('')}
         <div class="total-row">

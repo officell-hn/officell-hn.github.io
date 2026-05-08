@@ -409,8 +409,9 @@
 <!-- ═══════════════════════════ TOAST ═══════════════════════════ -->
 <div id="toast"></div>
 
+<script src="config.js"></script>
 <script>
-const API = 'https://officell-ia-production.up.railway.app/api/tienda';
+const API = (typeof OFFICELL_CONFIG !== 'undefined') ? OFFICELL_CONFIG.API : 'https://officell-ia-production.up.railway.app/api/tienda';
 let TOKEN = '';
 let editandoId = null;
 let todosProductos = [];
@@ -428,7 +429,7 @@ function doLogin() {
       if (d.ok) {
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
-        localStorage.setItem('oc_admin_token', TOKEN);
+        sessionStorage.setItem('oc_admin_token', TOKEN);
         cargarProductos();
       } else {
         document.getElementById('login-error').textContent = 'Contraseña incorrecta.';
@@ -442,7 +443,7 @@ function doLogin() {
 }
 
 function doLogout() {
-  localStorage.removeItem('oc_admin_token');
+  sessionStorage.removeItem('oc_admin_token');
   TOKEN = '';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
@@ -451,7 +452,7 @@ function doLogout() {
 
 // Auto-login con token guardado
 window.onload = () => {
-  const saved = localStorage.getItem('oc_admin_token');
+  const saved = sessionStorage.getItem('oc_admin_token');
   if (saved) {
     document.getElementById('token-input').value = saved;
     TOKEN = saved;
@@ -462,7 +463,7 @@ window.onload = () => {
           document.getElementById('login-screen').style.display = 'none';
           document.getElementById('app').style.display = 'block';
           cargarProductos();
-        } else { TOKEN = ''; localStorage.removeItem('oc_admin_token'); }
+        } else { TOKEN = ''; sessionStorage.removeItem('oc_admin_token'); }
       })
       .catch(() => { TOKEN = ''; });
   }

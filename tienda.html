@@ -391,11 +391,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
 <!-- WA FLOTANTE -->
 <a href="https://wa.me/50493323393" target="_blank" class="wa-float" title="WhatsApp OFFICELL">💬</a>
 
+<script src="config.js"></script>
 <script>
 // ══════════════════════════════════════════════
 // CONFIGURACIÓN
 // ══════════════════════════════════════════════
-const API = 'https://officell-ia-production.up.railway.app/api/tienda';
+const API = (typeof OFFICELL_CONFIG !== 'undefined') ? OFFICELL_CONFIG.API : 'https://officell-ia-production.up.railway.app/api/tienda';
 let todosProductos = [];
 let categoriaActiva = 'todos';
 
