@@ -798,25 +798,30 @@ async function confirmarPedido(metodo) {
   window.open(`https://wa.me/50493323393?text=${encodeURIComponent(msgParts)}`, '_blank');
 
   // 3. Mostrar modal de confirmación con QR
-  document.getElementById('checkoutModal').classList.remove('open');
-  document.getElementById('confirmCodigo').textContent = codigo || '—';
-  const qrImg = document.getElementById('confirmQR');
-  const trackLink = document.getElementById('confirmTrackLink');
-  if (trackUrl) {
-    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(trackUrl)}`;
-    qrImg.style.display = 'block';
-    trackLink.href = trackUrl;
-    trackLink.style.display = 'block';
-  } else {
-    qrImg.style.display = 'none';
-    trackLink.style.display = 'none';
-  }
-  document.getElementById('confirmModal').classList.add('open');
+  if (codigo) {
+    // Solo limpiar carrito si el pedido se guardó correctamente
+    carrito = [];
+    guardarCarrito();
+    actualizarContador();
 
-  // Limpiar carrito
-  carrito = [];
-  guardarCarrito();
-  actualizarContador();
+    document.getElementById('checkoutModal').classList.remove('open');
+    document.getElementById('confirmCodigo').textContent = codigo;
+    const qrImg = document.getElementById('confirmQR');
+    const trackLink = document.getElementById('confirmTrackLink');
+    if (trackUrl) {
+      qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(trackUrl)}`;
+      qrImg.style.display = 'block';
+      trackLink.href = trackUrl;
+      trackLink.style.display = 'block';
+    } else {
+      qrImg.style.display = 'none';
+      trackLink.style.display = 'none';
+    }
+    document.getElementById('confirmModal').classList.add('open');
+  } else {
+    // API falló — avisamos pero el carrito se mantiene intacto
+    alert('⚠️ Tu mensaje de WhatsApp fue enviado, pero no se pudo registrar el pedido en el sistema. Por favor escríbenos directamente al 9332-3393 para confirmar.');
+  }
 }
 
 function cerrarConfirm() {

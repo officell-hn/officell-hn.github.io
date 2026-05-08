@@ -1,6 +1,6 @@
-# OFFICELL Servicio Técnico
+# OFFICELL — Servicio Técnico & Banca
 
-Sitio web oficial de **OFFICELL**, el servicio técnico de referencia en Danlí, El Paraíso, Honduras. Ofrece reparación profesional de celulares y computadoras, venta de equipos, servicios de agentes bancarios y un blog de consejos tecnológicos.
+Sitio web oficial de **OFFICELL**, Danlí, El Paraíso, Honduras. Ofrece reparación profesional de celulares y computadoras, venta de equipos, recargas de diamantes Free Fire, servicios de agentes bancarios y un blog de consejos tecnológicos.
 
 ---
 
@@ -31,13 +31,22 @@ No se requiere ninguna instalación para trabajar en este proyecto.
 ```
 /
 ├── index.html                                  ← Página principal (hero, servicios, ubicación)
-├── tienda.html                                 ← Catálogo de teléfonos y accesorios
-├── agentes-bancarios.html                      ← Servicios de agentes bancarios (Atlántida, BHD, etc.)
+├── tienda.html                                 ← Catálogo + Diamantes Free Fire + carrito + checkout
+├── taller.html                                 ← Rastreo público de órdenes de reparación (por código)
+├── seguimiento.html                            ← Rastreo público de pedidos de tienda web
+├── contacto.html                               ← Página de contacto
+├── agentes-bancarios.html                      ← Servicios de agentes bancarios (Atlántida, BAC, etc.)
 ├── ganar-dinero.html                           ← Ingresos extra / referidos
 ├── blog.html                                   ← Índice del blog
 ├── sobre-nosotros.html                         ← Historia y equipo de OFFICELL
 ├── politica-privacidad.html                    ← Política de privacidad
-├── admin-productos.html                        ← Panel interno de administración (ver sección abajo)
+│
+├── — Paneles admin (requieren contraseña) ———
+├── admin-taller.html                           ← Gestión de órdenes de reparación
+├── admin-productos.html                        ← Gestión de inventario y pedidos de tienda
+│
+├── — Herramientas internas ——————————————————
+├── qr-diamantes-ff.html                        ← Hoja de 30 QR de Free Fire para imprimir
 │
 ├── — Artículos del blog (SEO) ——————————————
 ├── 5-senales-bateria-danada.html
@@ -50,13 +59,12 @@ No se requiere ninguna instalación para trabajar en este proyecto.
 ├── iphone-vs-samsung-reparacion.html
 ├── que-hacer-celular-mojado.html
 │
-├── img/                                        ← Imágenes de productos (19 archivos)
+├── img/                                        ← Imágenes de productos
 ├── sitemap.xml                                 ← Mapa del sitio para motores de búsqueda
 ├── robots.txt                                  ← Directivas para rastreadores
 ├── favicon.ico                                 ← Ícono del sitio (navegador)
 ├── favicon-192.png                             ← Ícono para dispositivos móviles / PWA
-├── LOGO_OFFICELL.png                           ← Logo oficial
-└── OFFICELL_Web.html                           ← Draft / versión de trabajo alternativa (no publicada en nav)
+└── LOGO_OFFICELL.png                           ← Logo oficial
 ```
 
 ---
@@ -89,15 +97,23 @@ No hay dependencias que instalar. Los cambios en `main` se publican solos en Git
 
 ---
 
-## Panel administrativo
+## Paneles administrativos
 
-`admin-productos.html` es un panel interno para gestionar el catálogo de productos y pedidos.
+### `admin-taller.html` — Gestión del taller
+- Crear, actualizar y cancelar órdenes de reparación
+- Imprimir recibos en formato A4 y 80mm térmico (con QR)
+- Imprimir plantillas en blanco para llenar a mano
+- Los recibos incluyen código de seguimiento y QR para el cliente
 
-- **Acceso:** protegido por contraseña. El token se envía como header `x-admin-token` en cada petición.
-- **Backend:** la validación y los datos viven en una API externa en Railway:
-  `https://officell-ia-production.up.railway.app/api/tienda`
-- **Sesión:** el token válido se guarda en `localStorage` (`oc_admin_token`) para mantener la sesión entre visitas.
-- La contraseña **no está almacenada en el código fuente** — la verifica el servidor.
+### `admin-productos.html` — Tienda y pedidos
+- Gestionar inventario de productos (agregar, editar, activar/desactivar)
+- Ver y gestionar pedidos de la tienda web (cambiar estado, ver ID de juego Free Fire)
+
+**Acceso a ambos paneles:**
+- Protegidos por contraseña enviada como header `x-admin-token`
+- **Backend/API:** `https://officell-ia-production.up.railway.app/api/tienda`
+- La contraseña **no está en el código fuente** — la verifica el servidor en Railway
+- La sesión se guarda en `localStorage` (`oc_admin_token`)
 
 ---
 
