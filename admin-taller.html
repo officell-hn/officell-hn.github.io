@@ -367,6 +367,31 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
       <label>Notas</label>
       <textarea id="fNotasEd" placeholder="Notas para el cliente..."></textarea>
     </div>
+
+    <!-- PAGO ADELANTADO -->
+    <div style="background:rgba(0,232,143,0.06);border:1px solid rgba(0,232,143,0.2);border-radius:10px;padding:0.9rem 1rem;margin-bottom:1rem">
+      <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+        <input type="checkbox" id="fPagoAdelantado" onchange="toggleAdelanto()" style="width:16px;height:16px;cursor:pointer">
+        <label for="fPagoAdelantado" style="font-size:0.85rem;font-weight:700;color:var(--green);cursor:pointer;margin:0">💵 Cliente pagó por adelantado</label>
+      </div>
+      <div id="adelantoFields" style="display:none">
+        <div class="form-row" style="margin-bottom:0">
+          <div class="form-group" style="margin-bottom:0">
+            <label>Monto recibido (L.)</label>
+            <input type="number" id="fMontoAdelanto" placeholder="0" min="0" step="1">
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Tipo de pago</label>
+            <select id="fTipoAdelanto">
+              <option value="completo">Pago total completo</option>
+              <option value="parcial">Adelanto parcial</option>
+            </select>
+          </div>
+        </div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-top:0.5rem">⚠️ Se registrará el ingreso ahora. Al entregar, solo se cobrará el saldo pendiente.</div>
+      </div>
+    </div>
+
     <div class="modal-footer">
       <button class="btn-cancel" onclick="cerrarModalEstado()">Cancelar</button>
       <button class="btn-save" onclick="actualizarEstado()">Guardar Cambios</button>
@@ -619,19 +644,45 @@ function abrirEditarEstado(id) {
   document.getElementById('fNotasEd').value         = (o.notas === 'Orden creada desde plantilla manual' ? '' : o.notas) || '';
   document.getElementById('overlayEstado').classList.add('open');
 }
+function toggleAdelanto() {
+  const checked = document.getElementById('fPagoAdelantado').checked;
+  document.getElementById('adelantoFields').style.display = checked ? 'block' : 'none';
+}
 function cerrarModalEstado() {
   document.getElementById('overlayEstado').classList.remove('open');
+  // Reset adelanto fields
+  document.getElementById('fPagoAdelantado').checked = false;
+  document.getElementById('adelantoFields').style.display = 'none';
+  document.getElementById('fMontoAdelanto').value = '';
 }
 async function actualizarEstado() {
   if (!ordenActualId) return;
   const equipoVal = document.getElementById('fEquipoEd').value.trim();
   if (!equipoVal) { alert('El campo Equipo es obligatorio'); document.getElementById('fEquipoEd').focus(); return; }
+
+  // Manejar pago adelantado
+  const pagoAdelantado = document.getElementById('fPagoAdelantado').checked;
+  const montoAdelanto  = parseFloat(document.getElementById('fMontoAdelanto').value) || 0;
+  const tipoAdelanto   = document.getElementById('fTipoAdelanto').value;
+
+  if (pagoAdelantado && montoAdelanto <= 0) {
+    alert('Ingresa el monto recibido por adelantado'); return;
+  }
+
+  // Construir notas incluyendo adelanto si aplica
+  let notasBase = document.getElementById('fNotasEd').value.trim() || null;
+  if (pagoAdelantado && montoAdelanto > 0) {
+    const tipoLabel = tipoAdelanto === 'completo' ? 'Adelanto completo' : 'Adelanto parcial';
+    const notaAdelanto = `${tipoLabel}: L.${montoAdelanto.toFixed(2)}`;
+    notasBase = notasBase ? `${notasBase} | ${notaAdelanto}` : notaAdelanto;
+  }
+
   const body = {
     estado:           document.getElementById('fEstado').value,
     diagnostico:      document.getElementById('fDiag').value.trim()||null,
     precio:           parseFloat(document.getElementById('fPrecioEst').value)||null,
     fecha_estimada:   document.getElementById('fFechaEstEd').value||null,
-    notas:            document.getElementById('fNotasEd').value.trim()||null,
+    notas:            notasBase,
     cliente_nombre:   document.getElementById('fClienteNombre').value.trim()||null,
     cliente_telefono: document.getElementById('fClienteTel').value.trim()||null,
     equipo:           equipoVal,
@@ -646,6 +697,16 @@ async function actualizarEstado() {
     });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
+
+    // Si hay pago adelantado, registrar la venta en el backend
+    if (pagoAdelantado && montoAdelanto > 0) {
+      await fetch(`${API}/taller/adelanto/${ordenActualId}`, {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json', ...authHeaders() },
+        body: JSON.stringify({ monto: montoAdelanto, completo: tipoAdelanto === 'completo' })
+      });
+    }
+
     cerrarModalEstado();
     await cargarOrdenes();
   } catch(e) {
