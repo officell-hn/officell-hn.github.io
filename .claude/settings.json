@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit",
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(git *)",
+      "Bash(grep *)",
+      "Bash(ls *)",
+      "Bash(find *)",
+      "PowerShell"
+    ]
+  }
+}
