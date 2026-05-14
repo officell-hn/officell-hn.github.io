@@ -125,6 +125,9 @@
   .badge-red { background: rgba(231,76,60,.15); color: var(--danger); }
   .badge-blue { background: rgba(24,95,165,.2); color: #5ba3e8; }
   .badge-orange { background: rgba(239,159,39,.15); color: var(--naranja); }
+  .badge-yellow { background: rgba(245,158,11,.2); color: #f59e0b; border: 1px solid #f59e0b; font-weight: 700; }
+  #alerta-pendientes { background: rgba(245,158,11,.12); border: 1px solid #f59e0b; border-radius: 10px; padding: 10px 16px; margin-bottom: 14px; font-size: .9rem; color: #f59e0b; display: none; }
+  #alerta-pendientes strong { color: #fff; }
   .badge-gray { background: rgba(136,136,136,.15); color: var(--muted); }
 
   /* ── TOGGLE ── */
@@ -302,6 +305,7 @@
 
     <!-- ══ PEDIDOS ══ -->
     <div id="sec-pedidos" class="section">
+      <div id="alerta-pendientes">⚠️ <strong id="alerta-pendientes-txt"></strong> — Verifica el pago en PayPal/banco y haz clic en <strong>✅ Confirmar pago</strong></div>
       <div class="toolbar">
         <input type="text" id="buscar-ped" placeholder="🔍  Buscar pedido o cliente…" oninput="filtrarPedidos()">
         <button class="btn btn-success btn-sm" onclick="cargarPedidos()" title="Recargar">↻ Actualizar</button>
@@ -892,20 +896,38 @@ async function cargarPedidos() {
 }
 
 function renderPedidos(pedidos) {
+  // Mostrar banner si hay pedidos pendientes de pago
+  const pendientes = pedidos.filter(p => p.estado === 'pendiente_pago');
+  const alertaEl = document.getElementById('alerta-pendientes');
+  const alertaTxt = document.getElementById('alerta-pendientes-txt');
+  if (pendientes.length > 0) {
+    alertaTxt.textContent = `${pendientes.length} pedido${pendientes.length > 1 ? 's' : ''} pendiente${pendientes.length > 1 ? 's' : ''} de confirmar pago`;
+    alertaEl.style.display = 'block';
+  } else {
+    alertaEl.style.display = 'none';
+  }
+
   if (!pedidos.length) {
     document.getElementById('tbody-pedidos').innerHTML =
       '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">Sin pedidos aún</td></tr>';
     return;
   }
-  document.getElementById('tbody-pedidos').innerHTML = pedidos.map(p => {
+  // Ordenar: pendientes de pago primero
+  const ordenados = [...pedidos].sort((a, b) => {
+    if (a.estado === 'pendiente_pago' && b.estado !== 'pendiente_pago') return -1;
+    if (b.estado === 'pendiente_pago' && a.estado !== 'pendiente_pago') return 1;
+    return 0;
+  });
+  document.getElementById('tbody-pedidos').innerHTML = ordenados.map(p => {
     const prods = Array.isArray(p.productos) ? p.productos : (typeof p.productos === 'string' ? JSON.parse(p.productos) : []);
     const lista = prods.map(pr => `<li>• ${escHtml(pr.nombre||'?')} x${pr.cantidad} — L.${fmtNum((pr.precio||0)*(pr.cantidad||1))}</li>`).join('');
     const fecha = p.creado_en ? new Date(p.creado_en).toLocaleString('es-HN') : '—';
     const estadoMap = {
-      en_proceso: { cls: 'badge-orange', label: '🔄 En proceso' },
-      completado:  { cls: 'badge-green',  label: '💎 Completado' },
-      cancelado:   { cls: 'badge-red',    label: '❌ Cancelado'  },
-      pagado:      { cls: 'badge-green',  label: '✅ Pagado'     }
+      pendiente_pago: { cls: 'badge-yellow', label: '⏳ Pendiente pago' },
+      en_proceso:     { cls: 'badge-orange', label: '🔄 En proceso'     },
+      completado:     { cls: 'badge-green',  label: '💎 Completado'     },
+      cancelado:      { cls: 'badge-red',    label: '❌ Cancelado'      },
+      pagado:         { cls: 'badge-green',  label: '✅ Pagado'         }
     };
     const est = estadoMap[p.estado] || { cls: 'badge-orange', label: p.estado || 'pendiente' };
     const codigo = p.codigo_seguimiento || p.id;
@@ -925,13 +947,30 @@ function renderPedidos(pedidos) {
         <td><span class="badge ${est.cls}">${est.label}</span></td>
         <td style="color:var(--muted);font-size:.82rem;white-space:nowrap">${fecha}</td>
         <td>
-          ${p.estado !== 'completado' ? `<button class="btn btn-success btn-sm" onclick="cambiarEstadoPedido('${escHtml(p.id)}','completado')" title="Marcar como completado">💎 Completado</button>` : ''}
+          ${p.estado === 'pendiente_pago' ? `<button class="btn btn-success btn-sm" style="background:#f59e0b;border-color:#f59e0b" onclick="confirmarPago('${escHtml(p.id)}','${escHtml(p.nombre_cliente||'')}')">✅ Confirmar pago</button>` : ''}
+          ${p.estado !== 'completado' && p.estado !== 'pendiente_pago' ? `<button class="btn btn-success btn-sm" style="margin-top:4px" onclick="cambiarEstadoPedido('${escHtml(p.id)}','completado')" title="Marcar como completado">💎 Completado</button>` : ''}
           ${p.estado !== 'cancelado'  ? `<button class="btn btn-sm" style="margin-top:4px" onclick="cambiarEstadoPedido('${escHtml(p.id)}','cancelado')" title="Cancelar pedido">✕ Cancelar</button>` : ''}
-          ${p.estado !== 'en_proceso' && p.estado !== 'completado' && p.estado !== 'cancelado' ? `<button class="btn btn-sm" onclick="cambiarEstadoPedido('${escHtml(p.id)}','en_proceso')">🔄 En proceso</button>` : ''}
         </td>
       </tr>
     `;
   }).join('');
+}
+
+async function confirmarPago(id, nombre) {
+  if (!confirm(`¿Confirmar que ya recibiste el pago de ${nombre}?\nEsto lo moverá a "En proceso" y notificará al cliente.`)) return;
+  try {
+    const r = await fetch(`${API}/admin/pedido/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ estado: 'en_proceso' })
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error);
+    toast('✅ Pago confirmado — cliente notificado', 'ok');
+    await cargarPedidos();
+  } catch(e) {
+    toast(e.message, 'err');
+  }
 }
 
 async function cambiarEstadoPedido(id, estado) {

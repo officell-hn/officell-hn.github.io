@@ -760,7 +760,10 @@ function pagarConPaypalMe() {
 }
 
 // ── Confirmar pedido: registrar en DB + abrir WA + mostrar modal ──
+let _pedidoEnvio = false; // previene doble submit
 async function confirmarPedido(metodo) {
+  if (_pedidoEnvio) return; // ya hay un envío en curso
+
   const nombre  = document.getElementById('clienteNombre').value.trim();
   const tel     = document.getElementById('clienteTel').value.trim();
   const email   = document.getElementById('clienteEmail').value.trim();
@@ -771,11 +774,19 @@ async function confirmarPedido(metodo) {
   if (!tel)    { alert('Por favor ingresa tu número de WhatsApp'); return; }
   if (tieneFF && !gameId) { alert('Por favor ingresa tu ID de jugador de Free Fire 🎮'); document.getElementById('clienteGameId').focus(); return; }
 
+  // Deshabilitar todos los botones de confirmar pedido para evitar duplicados
+  _pedidoEnvio = true;
+  document.querySelectorAll('[onclick*="confirmarPedido"]').forEach(btn => {
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.textContent = '⏳ Enviando...';
+  });
+
   const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
   const items = carrito.map(i => `• ${i.nombre} x${i.cantidad} — L.${(i.precio*i.cantidad).toLocaleString('es-HN')}`).join('\n');
 
   // 1. Registrar pedido en DB
-  let codigo = null, trackUrl = null;
+  let codigo = null, trackUrl = null, pendientePago = false;
   try {
     const r = await fetch(`${API}/pedido`, {
       method: 'POST',
@@ -789,8 +800,9 @@ async function confirmarPedido(metodo) {
       })
     });
     const d = await r.json();
-    if (d.ok) { codigo = d.codigo_seguimiento; trackUrl = d.tracking_url; }
+    if (d.ok) { codigo = d.codigo_seguimiento; trackUrl = d.tracking_url; pendientePago = d.pendiente_pago || false; }
   } catch(e) { console.error('Error registrando pedido:', e); }
+  finally { _pedidoEnvio = false; }
 
   // 2. Abrir WhatsApp con mensaje + código
   const metodosLabel = { paypal: 'PayPal', deposito: 'Depósito bancario', whatsapp: 'WhatsApp' };
