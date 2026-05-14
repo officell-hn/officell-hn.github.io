@@ -308,6 +308,10 @@
       <div id="alerta-pendientes">⚠️ <strong id="alerta-pendientes-txt"></strong> — Verifica el pago en PayPal/banco y haz clic en <strong>✅ Confirmar pago</strong></div>
       <div class="toolbar">
         <input type="text" id="buscar-ped" placeholder="🔍  Buscar pedido o cliente…" oninput="filtrarPedidos()">
+        <label style="display:flex;align-items:center;gap:6px;font-size:.88rem;color:var(--muted);cursor:pointer;white-space:nowrap">
+          <input type="checkbox" id="chk-cancelados" onchange="filtrarPedidos()" style="width:15px;height:15px;cursor:pointer">
+          Ver cancelados
+        </label>
         <button class="btn btn-success btn-sm" onclick="cargarPedidos()" title="Recargar">↻ Actualizar</button>
       </div>
       <div class="table-wrap">
@@ -896,6 +900,10 @@ async function cargarPedidos() {
 }
 
 function renderPedidos(pedidos) {
+  // Ocultar cancelados a menos que el toggle esté activo
+  const verCancelados = document.getElementById('chk-cancelados')?.checked;
+  if (!verCancelados) pedidos = pedidos.filter(p => p.estado !== 'cancelado');
+
   // Mostrar banner si hay pedidos pendientes de pago
   const pendientes = pedidos.filter(p => p.estado === 'pendiente_pago');
   const alertaEl = document.getElementById('alerta-pendientes');
@@ -949,11 +957,26 @@ function renderPedidos(pedidos) {
         <td>
           ${p.estado === 'pendiente_pago' ? `<button class="btn btn-success btn-sm" style="background:#f59e0b;border-color:#f59e0b" onclick="confirmarPago('${escHtml(p.id)}','${escHtml(p.nombre_cliente||'')}')">✅ Confirmar pago</button>` : ''}
           ${p.estado !== 'completado' && p.estado !== 'pendiente_pago' ? `<button class="btn btn-success btn-sm" style="margin-top:4px" onclick="cambiarEstadoPedido('${escHtml(p.id)}','completado')" title="Marcar como completado">💎 Completado</button>` : ''}
-          ${p.estado !== 'cancelado'  ? `<button class="btn btn-sm" style="margin-top:4px" onclick="cambiarEstadoPedido('${escHtml(p.id)}','cancelado')" title="Cancelar pedido">✕ Cancelar</button>` : ''}
+          ${p.estado !== 'cancelado'  ? `<button class="btn btn-sm" style="margin-top:4px" onclick="cambiarEstadoPedido('${escHtml(p.id)}','cancelado')" title="Cancelar pedido">✕ Cancelar</button>` : `<button class="btn btn-sm" style="margin-top:4px;background:rgba(231,76,60,.15);border-color:#e74c3c;color:#e74c3c" onclick="eliminarPedido('${escHtml(p.id)}','${escHtml(p.codigo_seguimiento||p.id)}')" title="Eliminar definitivamente">🗑️ Eliminar</button>`}
         </td>
       </tr>
     `;
   }).join('');
+}
+
+async function eliminarPedido(id, codigo) {
+  if (!confirm(`¿Eliminar definitivamente el pedido ${codigo}?\n\nEsta acción NO se puede deshacer.`)) return;
+  try {
+    const r = await fetch(`${API}/admin/pedido/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('adminJwt') }
+    });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error);
+    await cargarPedidos();
+  } catch (e) {
+    alert('Error al eliminar: ' + e.message);
+  }
 }
 
 async function confirmarPago(id, nombre) {
