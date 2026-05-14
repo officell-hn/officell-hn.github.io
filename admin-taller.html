@@ -720,10 +720,12 @@ async function cancelarOrden(id) {
   const o = ORDENES.find(x => x.id === id);
   if (!confirm(`¿Cancelar la orden de "${o?.equipo}"?`)) return;
   try {
-    await fetch(`${API}/taller/orden/${id}`, {
+    const r = await fetch(`${API}/taller/orden/${id}`, {
       method: 'DELETE',
       headers: authHeaders()
     });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || 'Error al cancelar la orden');
     await cargarOrdenes();
   } catch(e) {
     alert('Error: ' + e.message);
