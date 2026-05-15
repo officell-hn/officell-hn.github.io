@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2940299212538219"
@@ -404,9 +404,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
 
 <script src="config.js"></script>
 <script>
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 // CONFIGURACIÓN
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 const API = (typeof OFFICELL_CONFIG !== 'undefined') ? OFFICELL_CONFIG.API : 'https://officell-ia-production.up.railway.app/api/tienda';
 let todosProductos = [];
 let categoriaActiva = 'todos';
@@ -424,9 +424,9 @@ let condicionActiva = '';
 let busquedaActiva = '';
 let carrito = JSON.parse(localStorage.getItem('officell_carrito') || '[]');
 
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 // CARGAR PRODUCTOS
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 async function cargarProductos() {
   try {
     const [prodRes, catRes] = await Promise.all([
@@ -443,7 +443,7 @@ async function cargarProductos() {
       const labels = {
         'celulares-nuevos':'📱 Celulares Nuevos','celulares-usados':'🔄 Celulares Usados',
         'accesorios':'🎧 Accesorios','repuestos':'🔧 Repuestos','computadoras':'💻 Computadoras',
-        'tablets':'📟 Tablets','otros':'📦 Otros'
+        'tablets':'📠 Tablets','otros':'📦 Otros'
       };
       const filtrosEl = document.getElementById('filtrosCat');
       filtrosEl.innerHTML = `<button class="filtro-btn active" onclick="filtrarCategoria('todos',this)">🏪 Todos</button>`;
@@ -465,9 +465,9 @@ async function cargarProductos() {
   }
 }
 
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 // RENDERIZAR PRODUCTOS
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 function renderProductos() {
   // Ocultar filtros de condición cuando se ven diamantes
   const condWrap = document.getElementById('condicion-filtros-wrap');
@@ -513,7 +513,7 @@ function renderProductos() {
     return;
   }
 
-  const iconos = {'celulares-nuevos':'📱','celulares-usados':'📲','accesorios':'🎧','repuestos':'🔧','computadoras':'💻','tablets':'📟','otros':'📦'};
+  const iconos = {'celulares-nuevos':'📱','celulares-usados':'📲','accesorios':'🎧','repuestos':'🔧','computadoras':'💻','tablets':'📠','otros':'📦'};
 
   // Registrar todos en el mapa para onclick seguro
   productos.forEach(p => { mapaProductos[p.id] = p; });
@@ -534,7 +534,7 @@ function renderProductos() {
     const imgHtml = imgPrincipal
       ? `<div class="producto-img" id="imgwrap-${pid}">
            <img id="imgmain-${pid}" src="${imgPrincipal}" alt="${p.nombre}" loading="lazy"
-             onerror="this.parentNode.innerHTML='<div style=\\'font-size:3.5rem;width:100%;height:100%;display:flex;align-items:center;justify-content:center\\'>${icono}</div>'">
+             onerror="this.parentNode.innerHTML='<div style=\'font-size:3.5rem;width:100%;height:100%;display:flex;align-items:center;justify-content:center\'>${icono}</div>'">
            ${imagenes.length > 1 ? `<div style="position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:0.65rem;padding:2px 7px;border-radius:10px">📷 ${imagenes.length}</div>` : ''}
          </div>
          ${imagenes.length > 1 ? `<div style="display:flex;gap:4px;padding:6px 10px;background:var(--surface);overflow-x:auto">
@@ -559,9 +559,9 @@ function renderProductos() {
   }).join('')}</div>`;
 }
 
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 // FILTROS
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 function filtrarCategoria(cat, btn) {
   categoriaActiva = cat;
   document.querySelectorAll('#filtrosCat .filtro-btn').forEach(b => b.classList.remove('active'));
@@ -582,9 +582,9 @@ function buscar(val) {
   busquedaTimer = setTimeout(() => { busquedaActiva = val; renderProductos(); }, 300);
 }
 
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 // MAPA DE PRODUCTOS (para onclick seguro)
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 const mapaProductos = {};
 
 function agregarPorId(id) {
@@ -592,9 +592,9 @@ function agregarPorId(id) {
   if (p) agregarCarrito(p);
 }
 
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 // CARRITO
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 function agregarCarrito(producto) {
   const idx = carrito.findIndex(i => i.id === producto.id);
   if (idx >= 0) {
@@ -630,7 +630,7 @@ function cerrarCarrito() {
 function renderCarrito() {
   const container = document.getElementById('carritoItems');
   const footer = document.getElementById('carritoFooter');
-  const iconos = {'celulares-nuevos':'📱','celulares-usados':'📲','accesorios':'🎧','repuestos':'🔧','computadoras':'💻','tablets':'📟','otros':'📦'};
+  const iconos = {'celulares-nuevos':'📱','celulares-usados':'📲','accesorios':'🎧','repuestos':'🔧','computadoras':'💻','tablets':'📠','otros':'📦'};
 
   if (!carrito.length) {
     container.innerHTML = `<div class="carrito-vacio"><div class="icon">🛒</div><p>Tu carrito está vacío</p></div>`;
@@ -641,8 +641,12 @@ function renderCarrito() {
   const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
   container.innerHTML = carrito.map((item, idx) => {
     const icono = iconos[item.categoria_web] || '📦';
-    const imgHtml = item.imagen_url
-      ? `<img src="${item.imagen_url}" alt="${item.nombre}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
+    let imgSrc = item.imagen_url || '';
+    if (imgSrc) {
+      try { const arr = JSON.parse(imgSrc); if (Array.isArray(arr)) imgSrc = arr[0] || ''; } catch(e) {}
+    }
+    const imgHtml = imgSrc
+      ? `<img src="${imgSrc}" alt="${item.nombre}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
       : icono;
     return `<div class="carrito-item">
       <div class="carrito-item-img">${imgHtml}</div>
@@ -678,9 +682,9 @@ function eliminarItem(idx) {
   renderCarrito();
 }
 
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 // CHECKOUT + PAYPAL
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 function abrirCheckout() {
   cerrarCarrito();
   const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
@@ -852,9 +856,9 @@ function cerrarConfirm() {
   document.getElementById('confirmModal').classList.remove('open');
 }
 
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 // INIT
-// ══════════════════════════════════════════════
+// ════════════════════════════════════════════
 actualizarContador();
 cargarProductos().then(() => {
   // Soporte de URL param: ?cat=diamantes-ff
