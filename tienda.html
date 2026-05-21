@@ -646,12 +646,12 @@ function renderCarrito() {
       try { const arr = JSON.parse(imgSrc); if (Array.isArray(arr)) imgSrc = arr[0] || ''; } catch(e) {}
     }
     const imgHtml = imgSrc
-      ? `<img src="${imgSrc}" alt="${item.nombre}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
+      ? `<img src="${imgSrc}" alt="${esc(item.nombre)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
       : icono;
     return `<div class="carrito-item">
       <div class="carrito-item-img">${imgHtml}</div>
       <div class="carrito-item-info">
-        <div class="carrito-item-nombre">${item.nombre}</div>
+        <div class="carrito-item-nombre">${esc(item.nombre)}</div>
         <div class="carrito-item-precio">L.${(item.precio * item.cantidad).toLocaleString()}</div>
         <div class="carrito-item-controles">
           <button class="qty-btn" onclick="cambiarQty(${idx},-1)">−</button>
@@ -689,7 +689,7 @@ function abrirCheckout() {
   cerrarCarrito();
   const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
   document.getElementById('resumenItems').innerHTML =
-    carrito.map(i => `<div class="resumen-item"><span>${i.nombre} x${i.cantidad}</span><span>L.${(i.precio * i.cantidad).toLocaleString()}</span></div>`).join('') +
+    carrito.map(i => `<div class="resumen-item"><span>${esc(i.nombre)} x${i.cantidad}</span><span>L.${(i.precio * i.cantidad).toLocaleString()}</span></div>`).join('') +
     `<div class="resumen-item"><span>TOTAL</span><span>L.${total.toLocaleString()}</span></div>`;
   // Mostrar campo Game ID solo si hay diamantes Free Fire en el carrito
   const tieneFF = carrito.some(i => i.id && i.id.startsWith('ff-'));
@@ -854,6 +854,13 @@ async function confirmarPedido(metodo) {
 
 function cerrarConfirm() {
   document.getElementById('confirmModal').classList.remove('open');
+}
+
+// ════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════
+function esc(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ════════════════════════════════════════════

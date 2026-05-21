@@ -513,8 +513,7 @@ function filtrar(estado, btn) {
   filtroActual = estado;
   document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const lista = estado ? ORDENES.filter(o => o.estado === estado) : ORDENES;
-  renderTabla(lista);
+  cargarOrdenes();
 }
 
 // ── Render tabla ──────────────────────────────────────────
@@ -670,6 +669,9 @@ async function actualizarEstado() {
     alert('Ingresa el monto recibido por adelantado'); return;
   }
 
+  const btnGuardar = document.querySelector('#overlayEstado .btn-save');
+  if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.textContent = 'Guardando...'; }
+
   // Construir notas incluyendo adelanto si aplica
   let notasBase = document.getElementById('fNotasEd').value.trim() || null;
   if (pagoAdelantado && montoAdelanto > 0) {
@@ -712,6 +714,8 @@ async function actualizarEstado() {
     await cargarOrdenes();
   } catch(e) {
     alert('Error: ' + e.message);
+  } finally {
+    if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.textContent = 'Guardar Cambios'; }
   }
 }
 
@@ -887,6 +891,7 @@ async function imprimirPlantilla() {
         `;
 
         const win = window.open('', '_blank', 'width=800,height=1000');
+        if (!win) { alert('Permite las ventanas emergentes para imprimir.'); return; }
         win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Plantilla ${codigo_seguimiento}</title><style>${css}</style></head><body>${body}</body></html>`);
         win.document.close();
         win.focus();
@@ -974,6 +979,7 @@ function imprimir(id, formato) {
       `;
 
       const win = window.open('', '_blank', 'width=700,height=900');
+      if (!win) { alert('Permite las ventanas emergentes para imprimir.'); return; }
       win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo ${codigo}</title><style>${css}</style></head><body>${body}</body></html>`);
       win.document.close();
       win.focus();
@@ -1002,7 +1008,7 @@ function copiarCodigo(c) {
 }
 
 function esc(str) {
-  return String(str||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function fmtDate(d) {

@@ -1,5 +1,5 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Revisión semanal: 2026-05-14
+> Revisión semanal: 2026-05-21
 
 ---
 
@@ -7,11 +7,13 @@
 
 | Archivo | Línea aprox. | Problema | Fix aplicado |
 |---|---|---|---|
-| `admin-productos.html` | 971 | **CRÍTICO**: `eliminarPedido` usaba `localStorage.getItem('adminJwt')` → siempre enviaba `null` como Bearer token, causando 401 en todas las eliminaciones de pedidos | Reemplazado por `authHeaders()` |
-| `admin-productos.html` | 489, 257–258 | `showTab()` usaba `event.currentTarget` implícito (deprecated, falla en Firefox strict mode) | Pasado `this` desde onclick; función acepta `btn` como parámetro |
-| `admin-taller.html` | 723–731 | `cancelarOrden()` no verificaba respuesta de la API; fallaba silenciosamente si el servidor devolvía error | Agregado `r.json()` + `if (!d.ok) throw` |
-| `admin-productos.html` | 889 | `colspan="9"` en tabla de pedidos que tiene 10 columnas (celda de carga no ocupaba todo el ancho) | Corregido a `colspan="10"` |
-| `tienda.html` | 644 | `renderCarrito()` usaba `item.imagen_url` directamente como `src`; si el campo es JSON array `["url1","url2"]`, la imagen del carrito se rompía | Parseo de JSON array para extraer primera URL |
+| `admin-taller.html` | 512–518 | **CRÍTICO**: `filtrar()` filtraba localmente sobre `ORDENES`, pero `ORDENES` podía estar ya reducido a un subconjunto por el último `cargarOrdenes()` (que usa `filtroActual` al hacer el fetch). Ejemplo: filtrar "Recibido" → clic "Actualizar" → `ORDENES` ahora solo tiene recibidos → filtrar "Todos" → tabla mostraba solo recibidos. | `filtrar()` ahora llama a `cargarOrdenes()` directamente; el filtro del servidor siempre parte del estado fresco |
+| `admin-taller.html` | 1004 | `esc()` no escapaba `&` → nombres con `&` (ej. "Baterías & Repuestos") generaban HTML roto en la tabla y los recibos de impresión | Agregado `.replace(/&/g,'&amp;')` como primer paso, igual que `escHtml()` en admin-productos |
+| `admin-taller.html` | 889, 976 | `imprimirPlantilla()` e `imprimir()` no verificaban si la ventana popup fue bloqueada → crash de JS `"Cannot set property of null"` cuando el navegador bloquea popups | Agregado `if (!win) { alert(...); return; }` en ambas funciones |
+| `admin-taller.html` | 659 | **`actualizarEstado()` sin protección contra doble submit**: el botón "Guardar Cambios" no se deshabilitaba durante el fetch → doble clic enviaba la actualización dos veces (pendiente semana anterior) | Botón se deshabilita al iniciar y se restaura en `finally` |
+| `admin-productos.html` | 1017 | `filtrarPedidos()` no buscaba por `codigo_seguimiento` → buscar "PED-0521-xxxx" no encontraba nada (pendiente semana anterior) | Agregado `(p.codigo_seguimiento\|\|'').toLowerCase().includes(q)` al filtro |
+| `admin-productos.html` | 930 | `JSON.parse(p.productos)` sin try-catch → si la DB devuelve un string JSON malformado, `renderPedidos()` lanzaba excepción y la tabla quedaba en estado de carga permanente | Envuelto en try/catch, `prods` queda `[]` si falla |
+| `tienda.html` | 649, 656, 692 | **XSS**: `item.nombre` se insertaba directo en `innerHTML` (`renderCarrito()`, `abrirCheckout()`) y en atributo `alt` sin escapar → un nombre con `<`, `>` o `"` podía romper el HTML o ejecutar JS (self-XSS vía datos del admin) | Agregada función `esc()` al archivo; usada en todas las interpolaciones de nombre en el carrito y resumen de pedido |
 
 ---
 
@@ -19,15 +21,15 @@
 
 ### 1. Manejo de sesión expirada (401) en todas las páginas admin
 **Archivos:** `admin-taller.html`, `admin-productos.html`  
-**Problema:** Cuando el JWT expira, los fetch protegidos devuelven 401 pero solo se muestra "Error: undefined" o se redirige sin mensaje claro. El `verificarToken()` de admin-taller solo cubre el auto-login inicial; las llamadas posteriores (guardar orden, actualizar estado, etc.) no interceptan 401 de forma centralizada.  
-**Solución propuesta:** Crear un wrapper `apiFetch()` que reemplace a `fetch()` en todas las llamadas autenticadas. Si recibe 401, llama automáticamente a `logout()` mostrando "Sesión expirada — vuelve a ingresar".
+**Problema:** Cuando el JWT expira, los fetch protegidos devuelven 401 pero solo se muestra "Error: undefined" o la operación falla silenciosamente. No hay redirección al login ni mensaje claro de "sesión expirada".  
+**Solución propuesta:** Crear un wrapper `apiFetch()` que reemplace a `fetch()` en todas las llamadas autenticadas. Si recibe 401, llama a `logout()` mostrando mensaje.
 
 ```javascript
 async function apiFetch(url, opts = {}) {
   const r = await fetch(url, opts);
   if (r.status === 401) {
     logout(); // o doLogout()
-    throw new Error('Sesión expirada');
+    throw new Error('Sesión expirada — vuelve a ingresar');
   }
   return r;
 }
@@ -37,8 +39,8 @@ async function apiFetch(url, opts = {}) {
 
 ### 2. Campo de búsqueda en tabla de órdenes del taller
 **Archivo:** `admin-taller.html`  
-**Problema:** No existe campo de búsqueda por texto. Con muchas órdenes, encontrar una por nombre de cliente o equipo requiere scroll manual o usar el filtro de estado (que es por categoría, no por texto).  
-**Solución propuesta:** Agregar `<input>` de búsqueda en el toolbar que filtre localmente sobre `ORDENES` por `equipo`, `cliente_nombre`, `cliente_telefono` y `codigo_seguimiento`.
+**Problema:** No existe campo de búsqueda por texto. Con muchas órdenes, encontrar una por nombre de cliente, equipo o código requiere scroll manual o filtro por estado.  
+**Solución propuesta:** Agregar `<input>` en el toolbar que filtre localmente sobre `ORDENES` por `equipo`, `cliente_nombre`, `cliente_telefono` y `codigo_seguimiento`. El filtro de texto y el de estado deben ser combinables.
 
 ```html
 <input type="text" id="buscarOrden" placeholder="🔍 Buscar cliente, equipo o código..."
@@ -46,75 +48,93 @@ async function apiFetch(url, opts = {}) {
   style="padding:0.45rem 1rem;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);min-width:220px">
 ```
 
----
-
-### 3. `filtrarPedidos()` no busca por `codigo_seguimiento`
-**Archivo:** `admin-productos.html`, línea ~1018  
-**Problema:** La búsqueda de pedidos filtra por `p.id`, `nombre_cliente`, `telefono_cliente` y `email_cliente`, pero **no** por `p.codigo_seguimiento`. Cuando el admin busca por código (ej. "PED-0514-1234"), no encuentra nada.  
-**Solución propuesta:** Agregar `(p.codigo_seguimiento||'').toLowerCase().includes(q)` al filtro.
+```javascript
+let textoBusqueda = '';
+function buscarEnOrdenes(val) {
+  textoBusqueda = val.toLowerCase();
+  const lista = ORDENES.filter(o =>
+    (!filtroActual || o.estado === filtroActual) &&
+    (!textoBusqueda ||
+      (o.equipo||'').toLowerCase().includes(textoBusqueda) ||
+      (o.cliente_nombre||'').toLowerCase().includes(textoBusqueda) ||
+      (o.cliente_telefono||'').toLowerCase().includes(textoBusqueda) ||
+      (o.codigo_seguimiento||'').toLowerCase().includes(textoBusqueda))
+  );
+  renderTabla(lista);
+}
+```
 
 ---
 
 ## 🟡 Media prioridad (mejora de usabilidad significativa)
 
-### 4. Botón "Guardar" no se deshabilita durante `actualizarEstado()`
-**Archivo:** `admin-taller.html`, función `actualizarEstado()` (~línea 659)  
-**Problema:** El botón "Guardar Cambios" del modal de estado no se deshabilita durante el fetch. Si el admin hace doble click puede enviar la actualización dos veces.  
-**Solución propuesta:** Mismo patrón que `guardarOrden()`: deshabilitar botón al inicio, rehabilitar en `finally`.
-
----
-
-### 5. Paginación en tabla de órdenes del taller
+### 3. Paginación en tabla de órdenes del taller
 **Archivo:** `admin-taller.html`  
-**Problema:** Si el taller acumula 200+ órdenes, la tabla renderiza todo en DOM de una vez. Puede volverse lenta.  
-**Solución propuesta:** Paginación simple de 25 órdenes por página con botones Anterior/Siguiente. Alternativa más simple: limitar la carga a las últimas 100 órdenes por defecto y agregar botón "Ver todas".
+**Problema:** Con 200+ órdenes la tabla renderiza todo en DOM de una vez; puede volverse lenta y difícil de navegar.  
+**Solución propuesta:** Paginación simple de 25 órdenes por página con botones Anterior/Siguiente, o limitar carga a las últimas 100 por defecto con botón "Ver todas".
 
 ---
 
-### 6. Exportar órdenes del taller a CSV
+### 4. Exportar órdenes del taller a CSV
 **Archivo:** `admin-taller.html`  
-**Problema:** Solo existe impresión de recibo individual o plantilla. No hay forma de exportar el listado de órdenes (ej. para reportes semanales en Excel).  
-**Solución propuesta:** Botón "⬇️ CSV" en el toolbar que genere un CSV del listado actual (respetando el filtro activo) y lo descargue vía `Blob` + `URL.createObjectURL`.
+**Problema:** No hay forma de exportar el listado de órdenes para reportes semanales en Excel.  
+**Solución propuesta:** Botón "⬇️ CSV" en el toolbar que descargue el listado actual (respetando filtro activo) vía `Blob` + `URL.createObjectURL`.
 
 ---
 
-### 7. Imagen en miniatura del carrito usa `imagen_url` sin `alt` escapado
-**Archivo:** `tienda.html`, función `renderCarrito()` (~línea 645)  
-**Problema:** `alt="${item.nombre}"` no escapa HTML. Si el nombre del producto contiene `"` o `>`, puede romper el atributo o causar XSS menor.  
-**Solución propuesta:** Usar una función `esc()` (ya existe en otros archivos del sitio) para escapar `item.nombre` antes de insertarlo en atributos HTML de carrito.
-
----
-
-### 8. Thumbnails de miniaturas en `renderProductos` tienen XSS potencial en onclick
+### 5. XSS en thumbnails de miniaturas de productos en tienda.html
 **Archivo:** `tienda.html`, ~línea 541  
-**Problema:** Las URLs de imágenes se insertan directamente en `onclick="document.getElementById(...).src='${u}'"`. Si una URL contiene comilla simple, rompe el atributo onclick o puede usarse para inyección JS.  
-**Solución propuesta:** Usar `mapaProductos` para almacenar los arreglos de imágenes por ID y referenciar índice en onclick, en lugar de embed directo de URL.
+**Problema:** Las URLs de imágenes secundarias se insertan en `onclick="document.getElementById(...).src='${u}'"`. Una URL con comilla simple puede romper el handler o ejecutar código.  
+**Solución propuesta:** Almacenar los arrays de imágenes en `mapaProductos` y referenciar por `[pid][índice]` en onclick, evitando embed de URLs en atributos.
+
+---
+
+### 6. `cancelarOrden()` sin protección contra doble-click
+**Archivo:** `admin-taller.html`, ~línea 719  
+**Problema:** El botón `✕` no se deshabilita mientras el DELETE está en vuelo; doble clic puede enviar dos solicitudes de cancelación.  
+**Solución propuesta:** Deshabilitar el botón antes del fetch y rehabilitar en `finally`. Como el botón se genera en `renderTabla()`, la forma más limpia es pasar una referencia:
+
+```javascript
+async function cancelarOrden(id, btn) {
+  const o = ORDENES.find(x => x.id === id);
+  if (!confirm(`¿Cancelar la orden de "${o?.equipo}"?`)) return;
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  try {
+    // ...fetch DELETE...
+    await cargarOrdenes();
+  } catch(e) {
+    alert('Error: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '✕'; }
+  }
+}
+```
+Y en `renderTabla()`: `onclick="cancelarOrden('${o.id}',this)"`.
 
 ---
 
 ## 🟢 Baja prioridad (nice to have)
 
-### 9. Ordenación de columnas en tablas admin
+### 7. Ordenación de columnas en tablas admin
 **Archivos:** `admin-taller.html`, `admin-productos.html`  
-Actualmente las tablas no tienen ordenación por columna. Agregar click en `<th>` para ordenar por ese campo mejoraría la navegación para el administrador.
+Agregar click en `<th>` para ordenar por ese campo mejoraría la navegación.
 
 ---
 
-### 10. Confirmación antes de logout
+### 8. Confirmación antes de logout
 **Archivos:** `admin-taller.html`, `admin-productos.html`  
 Si el admin hace click en "Salir" accidentalmente mientras edita, pierde el trabajo sin confirmación. Agregar `if (!confirm('¿Cerrar sesión?')) return;` en `logout()` / `doLogout()`.
 
 ---
 
-### 11. Filtro de rango de fechas en órdenes del taller
+### 9. Filtro de rango de fechas en órdenes del taller
 **Archivo:** `admin-taller.html`  
 Actualmente solo se filtra por estado. Un filtro de fecha de entrada (ej. "esta semana", "este mes") ayudaría para reportes rápidos.
 
 ---
 
-### 12. `auto-login` de admin-productos verifica consultando la lista de productos
+### 10. `auto-login` de admin-productos verifica consultando la lista de productos
 **Archivo:** `admin-productos.html`, ~línea 471  
-El auto-login hace un fetch a `${API}/admin/productos` solo para verificar el JWT. Si la lista de productos es grande esto es costoso. Sería más eficiente tener un endpoint `/admin/ping` o `/admin/me` que solo devuelva `{ok: true}`.  
+El auto-login hace un fetch a `${API}/admin/productos` para verificar el JWT. Si hay muchos productos, esto es innecesariamente costoso. Sería más eficiente un endpoint `/admin/ping` o `/admin/me`.  
 *(Requiere cambio en backend Railway.)*
 
 ---

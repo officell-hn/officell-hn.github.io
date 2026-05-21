@@ -927,7 +927,8 @@ function renderPedidos(pedidos) {
     return 0;
   });
   document.getElementById('tbody-pedidos').innerHTML = ordenados.map(p => {
-    const prods = Array.isArray(p.productos) ? p.productos : (typeof p.productos === 'string' ? JSON.parse(p.productos) : []);
+    let prods = [];
+    try { prods = Array.isArray(p.productos) ? p.productos : (typeof p.productos === 'string' ? JSON.parse(p.productos) : []); } catch(e) {}
     const lista = prods.map(pr => `<li>• ${escHtml(pr.nombre||'?')} x${pr.cantidad} — L.${fmtNum((pr.precio||0)*(pr.cantidad||1))}</li>`).join('');
     const fecha = p.creado_en ? new Date(p.creado_en).toLocaleString('es-HN') : '—';
     const estadoMap = {
@@ -1020,7 +1021,8 @@ function filtrarPedidos() {
     !q || p.id.toLowerCase().includes(q) ||
     (p.nombre_cliente||'').toLowerCase().includes(q) ||
     (p.telefono_cliente||'').toLowerCase().includes(q) ||
-    (p.email_cliente||'').toLowerCase().includes(q)
+    (p.email_cliente||'').toLowerCase().includes(q) ||
+    (p.codigo_seguimiento||'').toLowerCase().includes(q)
   );
   renderPedidos(filtrados);
 }
