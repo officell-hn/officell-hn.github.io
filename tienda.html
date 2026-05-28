@@ -422,7 +422,7 @@ const DIAMANTES_FF = [
 ];
 let condicionActiva = '';
 let busquedaActiva = '';
-let carrito = JSON.parse(localStorage.getItem('officell_carrito') || '[]');
+let carrito = (() => { try { return JSON.parse(localStorage.getItem('officell_carrito') || '[]'); } catch(e) { return []; } })();
 
 // ════════════════════════════════════════════
 // CARGAR PRODUCTOS
