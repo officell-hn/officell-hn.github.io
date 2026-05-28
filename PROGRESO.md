@@ -5,7 +5,7 @@
 
 ---
 
-## Estado actual (2026-05-17)
+## Estado actual (2026-05-28)
 
 ### Páginas principales
 | Página | Estado |
@@ -39,9 +39,11 @@
 ## Pendientes conocidos
 
 - [ ] Revisar rendimiento en móvil (imágenes pesadas en tienda)
-- [ ] Validar que todos los links de Hondubet apuntan a deporte (no casino)
+- [x] Validar que todos los links de Hondubet apuntan a deporte (no casino) — corregido 2026-05
 - [ ] SEO: continuar con más artículos de blog para AdSense
 - [ ] Evaluar si agregar más categorías a la tienda
+- [ ] Implementar búsqueda de texto en tabla de órdenes del taller
+- [ ] Exportar órdenes del taller a CSV
 
 ---
 

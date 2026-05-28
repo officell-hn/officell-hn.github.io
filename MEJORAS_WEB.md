@@ -1,9 +1,9 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Revisión semanal: 2026-05-14
+> Revisión semanal: 2026-05-28
 
 ---
 
-## ✅ Bugs corregidos esta semana
+## ✅ Bugs corregidos (al 2026-05-28)
 
 | Archivo | Línea aprox. | Problema | Fix aplicado |
 |---|---|---|---|
@@ -12,6 +12,8 @@
 | `admin-taller.html` | 723–731 | `cancelarOrden()` no verificaba respuesta de la API; fallaba silenciosamente si el servidor devolvía error | Agregado `r.json()` + `if (!d.ok) throw` |
 | `admin-productos.html` | 889 | `colspan="9"` en tabla de pedidos que tiene 10 columnas (celda de carga no ocupaba todo el ancho) | Corregido a `colspan="10"` |
 | `tienda.html` | 644 | `renderCarrito()` usaba `item.imagen_url` directamente como `src`; si el campo es JSON array `["url1","url2"]`, la imagen del carrito se rompía | Parseo de JSON array para extraer primera URL |
+| `tienda.html` | `renderCarrito()` | Segunda pasada de fix: confirmado que parseo JSON array funciona en producción tras commit `f7f617f` | Fix verificado y en producción |
+| Todo el sitio (20 páginas) | — | Links de Hondubet apuntaban a sección casino en lugar de sección deporte | Todos los hrefs actualizados a la sección deporte (commit `2695368`) |
 
 ---
 
