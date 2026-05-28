@@ -199,6 +199,9 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
         <button class="filtro-btn" onclick="filtrar('listo',this)">🎉 Listo</button>
         <button class="filtro-btn" onclick="filtrar('entregado',this)">✅ Entregado</button>
       </div>
+      <input type="text" id="buscarOrden" placeholder="🔍 Buscar cliente, equipo o código..."
+        oninput="buscarEnOrdenes(this.value)"
+        style="padding:0.45rem 1rem;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);min-width:220px;font-size:0.85rem">
       <button class="btn-sm" onclick="cargarOrdenes()" style="margin-left:auto">🔄 Actualizar</button>
     </div>
 
@@ -395,7 +398,7 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
 
     <div class="modal-footer">
       <button class="btn-cancel" onclick="cerrarModalEstado()">Cancelar</button>
-      <button class="btn-save" onclick="actualizarEstado()">Guardar Cambios</button>
+      <button class="btn-save" id="btnGuardarEstado" onclick="actualizarEstado()">Guardar Cambios</button>
     </div>
   </div>
 </div>
@@ -432,6 +435,15 @@ let ordenDetalleActual = null;
 function authHeaders() {
   return TOKEN ? { 'Authorization': 'Bearer ' + TOKEN } : {};
 }
+async function apiFetch(url, opts = {}) {
+  const r = await fetch(url, opts);
+  if (r.status === 401) {
+    alert('⏱️ Sesión expirada — vuelve a ingresar');
+    doLogout();
+    throw new Error('Sesión expirada');
+  }
+  return r;
+}
 async function login() {
   const pwd = document.getElementById('pwdInput').value;
   if (!pwd) return;
@@ -458,12 +470,16 @@ async function login() {
     document.getElementById('loginError').textContent = 'Error de conexión';
   }
 }
-function logout() {
+function doLogout() {
   TOKEN = '';
   sessionStorage.removeItem('oc_admin_jwt');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('pwdInput').value = '';
+}
+function logout() {
+  if (!confirm('¿Cerrar sesión?')) return;
+  doLogout();
 }
 async function verificarToken() {
   try {
@@ -497,12 +513,11 @@ async function cargarOrdenes() {
   document.getElementById('tablaBody').innerHTML =
     '<tr><td colspan="7"><div class="loading"><div class="spinner"></div>Cargando...</div></td></tr>';
   try {
-    const r = await fetch(`${API}/taller/ordenes`, { headers: authHeaders() });
+    const r = await apiFetch(`${API}/taller/ordenes`, { headers: authHeaders() });
     const d = await r.json();
     ORDENES = d.ordenes || [];
     // Aplicar filtro activo en el cliente (no en la URL) para que ORDENES siempre tenga el set completo
-    const lista = filtroActual ? ORDENES.filter(o => o.estado === filtroActual) : ORDENES;
-    renderTabla(lista);
+    aplicarFiltros();
     renderStats(ORDENES);
   } catch(e) {
     document.getElementById('tablaBody').innerHTML =
@@ -510,12 +525,28 @@ async function cargarOrdenes() {
   }
 }
 
+let textoBusqueda = '';
+function buscarEnOrdenes(q) {
+  textoBusqueda = q.toLowerCase().trim();
+  aplicarFiltros();
+}
+function aplicarFiltros() {
+  let lista = filtroActual ? ORDENES.filter(o => o.estado === filtroActual) : ORDENES;
+  if (textoBusqueda) {
+    lista = lista.filter(o =>
+      (o.equipo||'').toLowerCase().includes(textoBusqueda) ||
+      (o.cliente_nombre||'').toLowerCase().includes(textoBusqueda) ||
+      (o.cliente_telefono||'').toLowerCase().includes(textoBusqueda) ||
+      (o.codigo_seguimiento||'').toLowerCase().includes(textoBusqueda)
+    );
+  }
+  renderTabla(lista);
+}
 function filtrar(estado, btn) {
   filtroActual = estado;
   document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  const lista = estado ? ORDENES.filter(o => o.estado === estado) : ORDENES;
-  renderTabla(lista);
+  aplicarFiltros();
 }
 
 // ── Render tabla ──────────────────────────────────────────
@@ -606,7 +637,7 @@ async function guardarOrden() {
     notas:           document.getElementById('fNotas').value.trim()
   };
   try {
-    const r = await fetch(`${API}/taller/orden`, {
+    const r = await apiFetch(`${API}/taller/orden`, {
       method: 'POST',
       headers: { 'Content-Type':'application/json', ...authHeaders() },
       body: JSON.stringify(body)
@@ -661,6 +692,8 @@ async function actualizarEstado() {
   if (!ordenActualId) return;
   const equipoVal = document.getElementById('fEquipoEd').value.trim();
   if (!equipoVal) { alert('El campo Equipo es obligatorio'); document.getElementById('fEquipoEd').focus(); return; }
+  const btnGuardar = document.getElementById('btnGuardarEstado');
+  if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.textContent = '⏳ Guardando...'; }
 
   // Manejar pago adelantado
   const pagoAdelantado = document.getElementById('fPagoAdelantado').checked;
@@ -692,7 +725,7 @@ async function actualizarEstado() {
     tipo_servicio:    document.getElementById('fTipoServicioEd').value||null
   };
   try {
-    const r = await fetch(`${API}/taller/orden/${ordenActualId}`, {
+    const r = await apiFetch(`${API}/taller/orden/${ordenActualId}`, {
       method: 'PUT',
       headers: { 'Content-Type':'application/json', ...authHeaders() },
       body: JSON.stringify(body)
@@ -702,7 +735,7 @@ async function actualizarEstado() {
 
     // Si hay pago adelantado, registrar la venta en el backend
     if (pagoAdelantado && montoAdelanto > 0) {
-      const ra = await fetch(`${API}/taller/adelanto/${ordenActualId}`, {
+      const ra = await apiFetch(`${API}/taller/adelanto/${ordenActualId}`, {
         method: 'POST',
         headers: { 'Content-Type':'application/json', ...authHeaders() },
         body: JSON.stringify({ monto: montoAdelanto, completo: tipoAdelanto === 'completo' })
@@ -715,6 +748,8 @@ async function actualizarEstado() {
     await cargarOrdenes();
   } catch(e) {
     alert('Error: ' + e.message);
+  } finally {
+    if (btnGuardar) { btnGuardar.disabled = false; btnGuardar.textContent = 'Guardar Cambios'; }
   }
 }
 
@@ -723,7 +758,7 @@ async function cancelarOrden(id) {
   const o = ORDENES.find(x => x.id === id);
   if (!confirm(`¿Cancelar la orden de "${o?.equipo}"?`)) return;
   try {
-    const r = await fetch(`${API}/taller/orden/${id}`, {
+    const r = await apiFetch(`${API}/taller/orden/${id}`, {
       method: 'DELETE',
       headers: authHeaders()
     });
@@ -769,7 +804,7 @@ async function imprimirPlantilla() {
   btn.textContent = '⏳ Generando...';
   btn.disabled = true;
   try {
-    const r = await fetch(`${API}/taller/plantilla`, {
+    const r = await apiFetch(`${API}/taller/plantilla`, {
       method: 'POST',
       headers: authHeaders()
     });

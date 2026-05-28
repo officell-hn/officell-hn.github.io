@@ -257,7 +257,7 @@
       <button class="tab-btn active" onclick="showTab('productos', this)">📦 Productos</button>
       <button class="tab-btn" onclick="showTab('pedidos', this)">🛒 Pedidos</button>
     </div>
-    <button class="btn-logout" onclick="doLogout()">Salir</button>
+    <button class="btn-logout" onclick="logout()">Salir</button>
   </header>
 
   <main>
@@ -429,6 +429,19 @@ let todosPedidos = [];
 // ─── LOGIN CON JWT ──────────────────────────────────────────────
 function authHeaders() {
   return TOKEN ? { 'Authorization': 'Bearer ' + TOKEN } : {};
+}
+async function apiFetch(url, opts = {}) {
+  const r = await fetch(url, opts);
+  if (r.status === 401) {
+    alert('⏱️ Sesión expirada — vuelve a ingresar');
+    doLogout();
+    throw new Error('Sesión expirada');
+  }
+  return r;
+}
+function logout() {
+  if (!confirm('¿Cerrar sesión?')) return;
+  doLogout();
 }
 async function doLogin() {
   const t = document.getElementById('token-input').value.trim();
@@ -710,7 +723,7 @@ async function toggleCampo(id, campo, valor) {
   try {
     const body = {};
     body[campo] = valor;
-    const r = await fetch(`${API}/admin/producto/${id}`, {
+    const r = await apiFetch(`${API}/admin/producto/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(body)
@@ -729,7 +742,7 @@ async function eliminarProducto(id, btn) {
   if (!confirm('¿Eliminar este producto? No se puede deshacer.')) return;
   btn.disabled = true;
   try {
-    const r = await fetch(`${API}/admin/producto/${id}`, {
+    const r = await apiFetch(`${API}/admin/producto/${id}`, {
       method: 'DELETE', headers: authHeaders()
     });
     const d = await r.json();
@@ -888,7 +901,7 @@ async function cargarPedidos() {
   document.getElementById('tbody-pedidos').innerHTML =
     '<tr><td colspan="10" class="loading"><div class="spinner"></div></td></tr>';
   try {
-    const r = await fetch(`${API}/admin/pedidos`, { headers: authHeaders() });
+    const r = await apiFetch(`${API}/admin/pedidos`, { headers: authHeaders() });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
     todosPedidos = d.pedidos;
@@ -967,7 +980,7 @@ function renderPedidos(pedidos) {
 async function eliminarPedido(id, codigo) {
   if (!confirm(`¿Eliminar definitivamente el pedido ${codigo}?\n\nEsta acción NO se puede deshacer.`)) return;
   try {
-    const r = await fetch(`${API}/admin/pedido/${id}`, {
+    const r = await apiFetch(`${API}/admin/pedido/${id}`, {
       method: 'DELETE',
       headers: authHeaders()
     });
@@ -982,7 +995,7 @@ async function eliminarPedido(id, codigo) {
 async function confirmarPago(id, nombre) {
   if (!confirm(`¿Confirmar que ya recibiste el pago de ${nombre}?\nEsto lo moverá a "En proceso" y notificará al cliente.`)) return;
   try {
-    const r = await fetch(`${API}/admin/pedido/${id}`, {
+    const r = await apiFetch(`${API}/admin/pedido/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ estado: 'en_proceso' })
@@ -1000,7 +1013,7 @@ async function cambiarEstadoPedido(id, estado) {
   const labels = { completado: '¿Marcar como COMPLETADO? Se notificará al cliente.', cancelado: '¿Cancelar este pedido?' };
   if (!confirm(labels[estado] || `¿Cambiar a ${estado}?`)) return;
   try {
-    const r = await fetch(`${API}/admin/pedido/${id}`, {
+    const r = await apiFetch(`${API}/admin/pedido/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ estado })
@@ -1020,7 +1033,8 @@ function filtrarPedidos() {
     !q || p.id.toLowerCase().includes(q) ||
     (p.nombre_cliente||'').toLowerCase().includes(q) ||
     (p.telefono_cliente||'').toLowerCase().includes(q) ||
-    (p.email_cliente||'').toLowerCase().includes(q)
+    (p.email_cliente||'').toLowerCase().includes(q) ||
+    (p.codigo_seguimiento||'').toLowerCase().includes(q)
   );
   renderPedidos(filtrados);
 }
