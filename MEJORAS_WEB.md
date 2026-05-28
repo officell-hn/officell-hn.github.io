@@ -32,48 +32,17 @@
 
 ## 🔴 Alta prioridad (funcionalidad crítica o UX muy afectada)
 
-### 0. [SEGURIDAD] XSS almacenado en `tienda.html` — nombres y descripciones de productos sin escapar
-**Archivo:** `tienda.html`, líneas ~550–552  
-**Problema:** En `renderProductos()`, los campos `p.nombre`, `p.descripcion` y `p.categoria_web` se insertan directamente en `container.innerHTML` sin escapar:
-```js
-<div class="producto-nombre">${p.nombre}</div>
-<div class="producto-desc">${p.descripcion}</div>
-```
-Si la base de datos contiene HTML malicioso en esos campos (por compromiso del backend o del panel admin), se ejecuta JS en el browser de cualquier visitante. El admin panel (`admin-productos.html`) sí usa `escHtml()` para los mismos campos — hay inconsistencia.  
-**Solución:** Aplicar la función `escHtml` (ya existe en admin-productos.html, replicarla en tienda.html o importarla) a todos los campos interpolados en `renderProductos()`.
+### ~~0. [SEGURIDAD] XSS almacenado en `tienda.html` — nombres y descripciones de productos sin escapar~~ ✅ APLICADO
+**Fix 2026-05-28:** `escHtml()` agregada a tienda.html y aplicada a `p.nombre`, `p.descripcion`, `p.categoria_web` en `renderProductos()` (ambas secciones: Diamantes FF y productos normales).
 
-### 0b. [SEGURIDAD] XSS por inyección en atributo `onclick` de categorías (`tienda.html`)
-**Archivo:** `tienda.html`, línea ~452  
-**Problema:** Los botones de filtro de categoría se generan como:
-```js
-onclick="filtrarCategoria('${c.categoria}',this)"
-```
-`c.categoria` viene de la API sin escapar. Una comilla simple en el valor rompe el atributo JS (error de sintaxis). Un valor como `x',this);maliciousCode();//` ejecutaría código arbitrario.  
-**Solución:** Usar `escHtml(c.categoria)` y almacenar el valor real en `data-cat`, leyéndolo con `this.dataset.cat` desde la función.
+### ~~0b. [SEGURIDAD] XSS por inyección en atributo `onclick` de categorías (`tienda.html`)~~ ✅ APLICADO
+**Fix 2026-05-28:** botones de categoría usan `data-cat="${escHtml(c.categoria)}"` y `onclick="filtrarCategoria(this.dataset.cat,this)"` — valor nunca interpolado directamente en JS.
 
-### 0c. [SEGURIDAD] XSS por URL de imagen en `onclick` de thumbnails (`tienda.html`)
-**Archivo:** `tienda.html`, línea ~541  
-**Problema:** El switcher de miniaturas genera:
-```js
-onclick="document.getElementById('imgmain-${pid}').src='${u}'"
-```
-Si la URL contiene `'` (raro pero posible en URLs mal formadas del backend), rompe el atributo o permite inyección JS.  
-**Solución:** Almacenar las URLs en `mapaProductos[p.id].imagenes` e indexar por posición: `onclick="switchImg('${pid}',${i})"`, leyendo la URL desde el mapa en la función.
+### ~~0c. [SEGURIDAD] XSS por URL de imagen en `onclick` de thumbnails (`tienda.html`)~~ ✅ APLICADO
+**Fix 2026-05-28:** thumbnails usan `onclick="switchImg('${pid}',${i})"` — función nueva que lee la URL desde `mapaProductos` por índice. URL nunca aparece en el HTML. Además `src="${escHtml(u)}"` para atributo img.
 
-### 0d. Botones de "Confirmar pedido" quedan permanentemente deshabilitados si la API falla
-**Archivo:** `tienda.html`, línea ~783  
-**Problema:** En `confirmarPedido()`, los botones se deshabilitan antes del fetch. El flag `_pedidoEnvio` se resetea en `finally`, pero los botones (`btn.disabled = true; btn.textContent = '⏳ Enviando...'`) nunca se rehabilitan si la API retorna error. El usuario debe recargar la página.  
-**Solución:** En el bloque `finally`, rehabilitar los botones:
-```js
-finally {
-  _pedidoEnvio = false;
-  document.querySelectorAll('[onclick*="confirmarPedido"]').forEach(btn => {
-    btn.disabled = false;
-    btn.style.opacity = '';
-    // restaurar texto original según contexto
-  });
-}
-```
+### ~~0d. Botones de "Confirmar pedido" quedan permanentemente deshabilitados si la API falla~~ ✅ APLICADO
+**Fix 2026-05-28:** bloque `finally` en `confirmarPedido()` re-habilita botones si `!codigo` (pedido no completado): `btn.disabled=false`, `btn.style.opacity=''`, `btn.textContent='✅ Confirmar pedido'`.
 
 ### 1. Manejo de sesión expirada (401) en todas las páginas admin
 **Archivos:** `admin-taller.html`, `admin-productos.html`  

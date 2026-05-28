@@ -448,8 +448,8 @@ async function cargarProductos() {
       const filtrosEl = document.getElementById('filtrosCat');
       filtrosEl.innerHTML = `<button class="filtro-btn active" onclick="filtrarCategoria('todos',this)">🏪 Todos</button>`;
       catData.categorias.forEach(c => {
-        const label = labels[c.categoria] || c.categoria;
-        filtrosEl.innerHTML += `<button class="filtro-btn" onclick="filtrarCategoria('${c.categoria}',this)">${label} <small style="opacity:0.6">(${c.cantidad})</small></button>`;
+        const label = labels[c.categoria] || escHtml(c.categoria);
+        filtrosEl.innerHTML += `<button class="filtro-btn" data-cat="${escHtml(c.categoria)}" onclick="filtrarCategoria(this.dataset.cat,this)">${label} <small style="opacity:0.6">(${c.cantidad})</small></button>`;
       });
       // Botón Diamantes FF — siempre al final
       filtrosEl.innerHTML += `<button class="filtro-btn" onclick="filtrarCategoria('diamantes-ff',this)" style="background:linear-gradient(135deg,#a855f7,#6d28d9);border-color:transparent;color:#fff;font-weight:700">💎 Diamantes Free Fire</button>`;
@@ -488,8 +488,8 @@ function renderProductos() {
           <div class="producto-img" style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(109,40,217,0.25));display:flex;align-items:center;justify-content:center;font-size:4.5rem">💎</div>
           <div class="producto-info">
             <div class="producto-categoria" style="color:#a855f7">Producto Virtual</div>
-            <div class="producto-nombre">${p.nombre}</div>
-            <div class="producto-desc">${p.descripcion}</div>
+            <div class="producto-nombre">${escHtml(p.nombre)}</div>
+            <div class="producto-desc">${escHtml(p.descripcion)}</div>
             <div class="producto-precio" style="color:#a855f7">L.${p.precio.toLocaleString()} <span>HNL</span></div>
             <button class="btn-agregar" onclick="agregarPorId('${p.id}')" style="background:linear-gradient(135deg,#a855f7,#6d28d9)">
               💎 Agregar al carrito
@@ -538,7 +538,7 @@ function renderProductos() {
            ${imagenes.length > 1 ? `<div style="position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:0.65rem;padding:2px 7px;border-radius:10px">📷 ${imagenes.length}</div>` : ''}
          </div>
          ${imagenes.length > 1 ? `<div style="display:flex;gap:4px;padding:6px 10px;background:var(--surface);overflow-x:auto">
-           ${imagenes.map((u,i) => `<img src="${u}" loading="lazy" onclick="document.getElementById('imgmain-${pid}').src='${u}'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid ${i===0?'var(--accent)':'transparent'};flex-shrink:0;transition:border 0.2s" onerror="this.style.display='none'">`).join('')}
+           ${imagenes.map((u,i) => `<img src="${escHtml(u)}" loading="lazy" onclick="switchImg('${pid}',${i})" style="width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid ${i===0?'var(--accent)':'transparent'};flex-shrink:0;transition:border 0.2s" onerror="this.style.display='none'">`).join('')}
          </div>` : ''}`
       : `<div class="producto-img-placeholder">${icono}</div>`;
 
@@ -547,9 +547,9 @@ function renderProductos() {
       <span class="badge-condicion ${badgeCond}">${condLabel}</span>
       ${imgHtml}
       <div class="producto-info">
-        <div class="producto-categoria">${p.categoria_web || 'Producto'}</div>
-        <div class="producto-nombre">${p.nombre}</div>
-        ${p.descripcion ? `<div class="producto-desc">${p.descripcion}</div>` : ''}
+        <div class="producto-categoria">${escHtml(p.categoria_web || 'Producto')}</div>
+        <div class="producto-nombre">${escHtml(p.nombre)}</div>
+        ${p.descripcion ? `<div class="producto-desc">${escHtml(p.descripcion)}</div>` : ''}
         <div class="producto-precio">L.${parseFloat(p.precio).toLocaleString()} <span>HNL</span></div>
         <button class="btn-agregar" onclick="agregarPorId('${p.id}')" ${p.cantidad < 1 ? 'disabled' : ''}>
           ${p.cantidad < 1 ? 'Sin stock' : '🛒 Agregar al carrito'}
@@ -583,9 +583,30 @@ function buscar(val) {
 }
 
 // ════════════════════════════════════════════
+// UTILIDADES SEGURIDAD
+// ════════════════════════════════════════════
+function escHtml(str) {
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ════════════════════════════════════════════
 // MAPA DE PRODUCTOS (para onclick seguro)
 // ════════════════════════════════════════════
 const mapaProductos = {};
+
+// S3 fix: switchImg usa el mapa en lugar de URL inline en onclick
+function switchImg(pid, idx) {
+  const id = pid.replace(/^p/, '');
+  const p = mapaProductos[id];
+  if (!p) return;
+  let imagenes = [];
+  if (p.imagen_url) {
+    try { const arr = JSON.parse(p.imagen_url); if (Array.isArray(arr)) imagenes = arr; else imagenes = [p.imagen_url]; }
+    catch(e) { imagenes = [p.imagen_url]; }
+  }
+  const img = document.getElementById('imgmain-' + pid);
+  if (img && imagenes[idx]) img.src = imagenes[idx];
+}
 
 function agregarPorId(id) {
   const p = mapaProductos[id];
@@ -806,7 +827,17 @@ async function confirmarPedido(metodo) {
     const d = await r.json();
     if (d.ok) { codigo = d.codigo_seguimiento; trackUrl = d.tracking_url; pendientePago = d.pendiente_pago || false; }
   } catch(e) { console.error('Error registrando pedido:', e); }
-  finally { _pedidoEnvio = false; }
+  finally {
+    _pedidoEnvio = false;
+    // S4 fix: re-habilitar botones si el pedido no se completó (API falló)
+    if (!codigo) {
+      document.querySelectorAll('[onclick*="confirmarPedido"]').forEach(btn => {
+        btn.disabled = false;
+        btn.style.opacity = '';
+        btn.textContent = '✅ Confirmar pedido';
+      });
+    }
+  }
 
   // 2. Abrir WhatsApp con mensaje + código
   const metodosLabel = { paypal: 'PayPal', deposito: 'Depósito bancario', whatsapp: 'WhatsApp' };
