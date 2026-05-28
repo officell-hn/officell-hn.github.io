@@ -497,11 +497,12 @@ async function cargarOrdenes() {
   document.getElementById('tablaBody').innerHTML =
     '<tr><td colspan="7"><div class="loading"><div class="spinner"></div>Cargando...</div></td></tr>';
   try {
-    const url = filtroActual ? `${API}/taller/ordenes?estado=${filtroActual}` : `${API}/taller/ordenes`;
-    const r = await fetch(url, { headers: authHeaders() });
+    const r = await fetch(`${API}/taller/ordenes`, { headers: authHeaders() });
     const d = await r.json();
     ORDENES = d.ordenes || [];
-    renderTabla(ORDENES);
+    // Aplicar filtro activo en el cliente (no en la URL) para que ORDENES siempre tenga el set completo
+    const lista = filtroActual ? ORDENES.filter(o => o.estado === filtroActual) : ORDENES;
+    renderTabla(lista);
     renderStats(ORDENES);
   } catch(e) {
     document.getElementById('tablaBody').innerHTML =
@@ -553,10 +554,10 @@ function renderTabla(ordenes) {
 }
 
 function renderStats(ordenes) {
-  const all = ORDENES.length;
-  const enTaller = ORDENES.filter(o => o.estado === 'recibido' || o.estado === 'en_reparacion').length;
-  const listas   = ORDENES.filter(o => o.estado === 'listo').length;
-  const entregadas = ORDENES.filter(o => o.estado === 'entregado').length;
+  const all = ordenes.length;
+  const enTaller = ordenes.filter(o => o.estado === 'recibido' || o.estado === 'en_reparacion').length;
+  const listas   = ordenes.filter(o => o.estado === 'listo').length;
+  const entregadas = ordenes.filter(o => o.estado === 'entregado').length;
   document.getElementById('statTotal').textContent    = all;
   document.getElementById('statEnTaller').textContent = enTaller;
   document.getElementById('statListas').textContent   = listas;
@@ -701,11 +702,13 @@ async function actualizarEstado() {
 
     // Si hay pago adelantado, registrar la venta en el backend
     if (pagoAdelantado && montoAdelanto > 0) {
-      await fetch(`${API}/taller/adelanto/${ordenActualId}`, {
+      const ra = await fetch(`${API}/taller/adelanto/${ordenActualId}`, {
         method: 'POST',
         headers: { 'Content-Type':'application/json', ...authHeaders() },
         body: JSON.stringify({ monto: montoAdelanto, completo: tipoAdelanto === 'completo' })
       });
+      const da = await ra.json();
+      if (!da.ok) alert(`⚠️ Orden guardada pero el adelanto no pudo registrarse: ${da.error || 'error desconocido'}`);
     }
 
     cerrarModalEstado();
@@ -887,6 +890,7 @@ async function imprimirPlantilla() {
         `;
 
         const win = window.open('', '_blank', 'width=800,height=1000');
+        if (!win) { alert('Activa las ventanas emergentes en el navegador para imprimir la plantilla.'); return; }
         win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Plantilla ${codigo_seguimiento}</title><style>${css}</style></head><body>${body}</body></html>`);
         win.document.close();
         win.focus();
@@ -974,6 +978,7 @@ function imprimir(id, formato) {
       `;
 
       const win = window.open('', '_blank', 'width=700,height=900');
+      if (!win) { alert('Activa las ventanas emergentes en el navegador para imprimir.'); return; }
       win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibo ${codigo}</title><style>${css}</style></head><body>${body}</body></html>`);
       win.document.close();
       win.focus();

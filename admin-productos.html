@@ -538,7 +538,7 @@ function renderProductos(prods) {
     <tr data-id="${p.id}">
       <td>
         ${p.imagen_url
-          ? `<img src="${escHtml(p.imagen_url)}" class="thumb" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="">`
+          ? (() => { let u=p.imagen_url; try{const a=JSON.parse(u);if(Array.isArray(a)&&a[0])u=a[0];}catch(e){} return `<img src="${escHtml(u)}" class="thumb" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="">`; })()
           : ''}
         <div class="thumb-ph" style="${p.imagen_url?'display:none':''}">📷</div>
       </td>
@@ -927,7 +927,7 @@ function renderPedidos(pedidos) {
     return 0;
   });
   document.getElementById('tbody-pedidos').innerHTML = ordenados.map(p => {
-    const prods = Array.isArray(p.productos) ? p.productos : (typeof p.productos === 'string' ? JSON.parse(p.productos) : []);
+    let prods = []; try { prods = Array.isArray(p.productos) ? p.productos : (typeof p.productos === 'string' ? JSON.parse(p.productos) : []); } catch(e) {}
     const lista = prods.map(pr => `<li>• ${escHtml(pr.nombre||'?')} x${pr.cantidad} — L.${fmtNum((pr.precio||0)*(pr.cantidad||1))}</li>`).join('');
     const fecha = p.creado_en ? new Date(p.creado_en).toLocaleString('es-HN') : '—';
     const estadoMap = {
