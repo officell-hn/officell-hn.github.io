@@ -692,10 +692,8 @@ async function actualizarEstado() {
   if (!ordenActualId) return;
   const equipoVal = document.getElementById('fEquipoEd').value.trim();
   if (!equipoVal) { alert('El campo Equipo es obligatorio'); document.getElementById('fEquipoEd').focus(); return; }
-  const btnGuardar = document.getElementById('btnGuardarEstado');
-  if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.textContent = '⏳ Guardando...'; }
 
-  // Manejar pago adelantado
+  // Manejar pago adelantado — validar ANTES de deshabilitar el botón
   const pagoAdelantado = document.getElementById('fPagoAdelantado').checked;
   const montoAdelanto  = parseFloat(document.getElementById('fMontoAdelanto').value) || 0;
   const tipoAdelanto   = document.getElementById('fTipoAdelanto').value;
@@ -703,6 +701,9 @@ async function actualizarEstado() {
   if (pagoAdelantado && montoAdelanto <= 0) {
     alert('Ingresa el monto recibido por adelantado'); return;
   }
+
+  const btnGuardar = document.getElementById('btnGuardarEstado');
+  if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.textContent = '⏳ Guardando...'; }
 
   // Construir notas incluyendo adelanto si aplica
   let notasBase = document.getElementById('fNotasEd').value.trim() || null;
@@ -1042,7 +1043,7 @@ function copiarCodigo(c) {
 }
 
 function esc(str) {
-  return String(str||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function fmtDate(d) {

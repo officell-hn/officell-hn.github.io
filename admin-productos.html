@@ -508,7 +508,7 @@ async function cargarProductos() {
   document.getElementById('tbody-productos').innerHTML =
     '<tr><td colspan="10" class="loading"><div class="spinner"></div></td></tr>';
   try {
-    const r = await fetch(`${API}/admin/productos`, { headers: authHeaders() });
+    const r = await apiFetch(`${API}/admin/productos`, { headers: authHeaders() });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
     todosProductos = d.productos;
@@ -878,7 +878,7 @@ async function guardarProducto() {
       url = `${API}/admin/producto`;
       method = 'POST';
     }
-    const r = await fetch(url, {
+    const r = await apiFetch(url, {
       method, headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(body)
     });

@@ -802,6 +802,7 @@ async function confirmarPedido(metodo) {
   // Deshabilitar todos los botones de confirmar pedido para evitar duplicados
   _pedidoEnvio = true;
   document.querySelectorAll('[onclick*="confirmarPedido"]').forEach(btn => {
+    btn.dataset.originalText = btn.textContent;
     btn.disabled = true;
     btn.style.opacity = '0.5';
     btn.textContent = '⏳ Enviando...';
@@ -829,14 +830,11 @@ async function confirmarPedido(metodo) {
   } catch(e) { console.error('Error registrando pedido:', e); }
   finally {
     _pedidoEnvio = false;
-    // S4 fix: re-habilitar botones si el pedido no se completó (API falló)
-    if (!codigo) {
-      document.querySelectorAll('[onclick*="confirmarPedido"]').forEach(btn => {
-        btn.disabled = false;
-        btn.style.opacity = '';
-        btn.textContent = '✅ Confirmar pedido';
-      });
-    }
+    document.querySelectorAll('[onclick*="confirmarPedido"]').forEach(btn => {
+      btn.disabled = false;
+      btn.style.opacity = '';
+      if (btn.dataset.originalText) btn.textContent = btn.dataset.originalText;
+    });
   }
 
   // 2. Abrir WhatsApp con mensaje + código

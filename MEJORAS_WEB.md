@@ -1,5 +1,17 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-05-28
+> Última revisión: 2026-06-04
+
+---
+
+## ✅ Bugs corregidos — revisión 2026-06-04
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-taller.html` | 696 | **CRÍTICO**: `actualizarEstado()` deshabilitaba el botón "Guardar Cambios" ANTES de validar el monto de pago adelantado. Si la validación fallaba, el `return` dejaba el botón bloqueado permanentemente (sin `finally`). El admin no podía guardar sin recargar la página. | Movidas las lecturas y validación de pago adelantado ANTES de la línea que deshabilita el botón. Ahora el `return` temprano es seguro. |
+| `admin-taller.html` | 1044 | **BUG**: `esc()` no escapaba el carácter `&`. Nombres como "Pedro & María" podían renderizar mal en la tabla o en la vista de detalle. | Agregado `.replace(/&/g,'&amp;')` como primer paso en la cadena de reemplazos (debe ir primero para no re-escapar los `&` ya generados). |
+| `admin-productos.html` | 511 | **BUG AUTH**: `cargarProductos()` usaba `fetch()` directamente en lugar de `apiFetch()`. Si el JWT expiraba mientras el admin tenía la pestaña abierta y hacía refresh manual, el 401 mostraba "Error" genérico en la tabla sin cerrar sesión automáticamente. | Reemplazado `fetch()` por `apiFetch()`. |
+| `admin-productos.html` | 881 | **BUG AUTH**: `guardarProducto()` (crear/editar producto) usaba `fetch()` directamente. Un 401 mostraba el error por toast pero no forzaba logout. | Reemplazado `fetch()` por `apiFetch()`. |
+| `tienda.html` | 803–838 | **BUG UX**: Al completar un pedido exitosamente, los botones "Confirmar pedido" quedaban deshabilitados y con texto "⏳ Enviando...". Si el cliente agregaba productos y abría el checkout nuevamente en la misma sesión, todos los botones de confirmación estaban bloqueados. | Los botones ahora guardan su texto original en `data-originalText` antes de deshabilitarse. El bloque `finally` siempre (no solo en fallo) re-habilita y restaura el texto de cada botón. |
 
 ---
 
@@ -75,10 +87,8 @@ async function apiFetch(url, opts = {}) {
 
 ---
 
-### 3. `filtrarPedidos()` no busca por `codigo_seguimiento`
-**Archivo:** `admin-productos.html`, línea ~1018  
-**Problema:** La búsqueda de pedidos filtra por `p.id`, `nombre_cliente`, `telefono_cliente` y `email_cliente`, pero **no** por `p.codigo_seguimiento`. Cuando el admin busca por código (ej. "PED-0514-1234"), no encuentra nada.  
-**Solución propuesta:** Agregar `(p.codigo_seguimiento||'').toLowerCase().includes(q)` al filtro.
+### ~~3. `filtrarPedidos()` no busca por `codigo_seguimiento`~~ ✅ YA RESUELTO
+**Fix verificado 2026-06-04:** El código actual en `filtrarPedidos()` ya incluye `(p.codigo_seguimiento||'').toLowerCase().includes(q)` en el filtro. La búsqueda por código funciona correctamente.
 
 ---
 
@@ -143,6 +153,40 @@ Actualmente solo se filtra por estado. Un filtro de fecha de entrada (ej. "esta 
 **Archivo:** `admin-productos.html`, ~línea 471  
 El auto-login hace un fetch a `${API}/admin/productos` solo para verificar el JWT. Si la lista de productos es grande esto es costoso. Sería más eficiente tener un endpoint `/admin/ping` o `/admin/me` que solo devuelva `{ok: true}`.  
 *(Requiere cambio en backend Railway.)*
+
+---
+
+## 🟢 Hallazgos 2026-06-04 (baja prioridad / código muerto)
+
+### 13. Variable CSS `--azul` no definida en `tienda.html`
+**Archivo:** `tienda.html`, ~línea 155  
+**Problema:** `.pago-tab.active` usa `var(--azul,#185FA5)` pero `--azul` no está en el `:root` de tienda.html (sí está en admin-productos.html). El CSS usa siempre el valor de fallback `#185FA5`, por lo que funciona visualmente, pero es confuso y frágil.  
+**Solución:** Agregar `--azul: #185FA5;` al bloque `:root` de tienda.html, o reemplazar `var(--azul,#185FA5)` por el literal.
+
+---
+
+### 14. `previewImg()` es un wrapper trivial innecesario en `admin-productos.html`
+**Archivo:** `admin-productos.html`, ~línea 847  
+```javascript
+function previewImg() { actualizarPreviews(); }
+```
+Esta función solo llama a `actualizarPreviews()`. El único lugar donde se llama es `abrirModalEditar()`. Puede reemplazarse directamente por `actualizarPreviews()` para eliminar indirección.
+
+---
+
+### 15. Regla CSS vacía `.cat-datalist {}` en `admin-productos.html`
+**Archivo:** `admin-productos.html`, ~línea 226  
+```css
+.cat-datalist { }
+```
+Regla vacía sin propiedades — residuo de una clase que se planificó y no se implementó. Puede eliminarse sin efecto.
+
+---
+
+### 16. `esc()` de `admin-taller.html` y `escHtml()` de `admin-productos.html` son inconsistentes
+**Archivos:** Ambos admin  
+**Problema:** Existen dos funciones de escape con nombres distintos y comportamientos ligeramente distintos en el proyecto. `taller.html` (público) tiene la versión más completa (escapa `&`, `<`, `>`, `"`, `'`). La de admin-taller.html ahora escapa `&` (fix 2026-06-04) pero sigue sin escapar `'`.  
+**Solución a largo plazo:** Unificar en un solo `config.js` o un archivo `utils.js` compartido con la función completa.
 
 ---
 
