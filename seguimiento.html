@@ -79,6 +79,7 @@ main { max-width: 600px; margin: 0 auto; padding: 2rem 1rem; }
   <div id="resultado"></div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="config.js"></script>
 <script>
 const API = (typeof OFFICELL_CONFIG !== 'undefined') ? OFFICELL_CONFIG.API : 'https://officell-ia-production.up.railway.app/api/tienda';
@@ -150,7 +151,7 @@ async function buscar() {
 
       <div class="qr-section">
         <div class="seccion-label" style="text-align:center;margin-bottom:0.75rem">QR de seguimiento</div>
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(trackUrl)}" alt="QR">
+        <canvas id="qr-canvas" style="border-radius:8px;background:#fff;padding:4px;width:150px;height:150px"></canvas>
         <p>Guarda este QR para consultar tu pedido en cualquier momento</p>
       </div>
 
@@ -158,6 +159,10 @@ async function buscar() {
         💬 Consultar por WhatsApp
       </a>
     `;
+    // Generar QR localmente (sin dependencia externa)
+    QRCode.toCanvas(document.getElementById('qr-canvas'), trackUrl, { width: 150, margin: 1, errorCorrectionLevel: 'M' })
+      .catch(() => {});
+
   } catch(e) {
     el.innerHTML = `<div class="error-box">⚠️ Error de conexión. Intenta de nuevo.</div>`;
   }

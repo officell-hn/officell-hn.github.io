@@ -535,10 +535,11 @@ function populateCatFilter(prods) {
   const cur = sel.value;
   sel.innerHTML = '<option value="">Todas las categorías</option>' +
     cats.map(c => `<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
-  // También actualizar datalist del modal
+  // También actualizar datalist del modal — sin duplicar las opciones base
   const dl = document.getElementById('cats-list');
-  dl.innerHTML = cats.map(c => `<option value="${c}">`).join('') +
-    '<option value="otros"><option value="accesorios"><option value="cargadores"><option value="carcasas"><option value="cables">';
+  const base = ['otros','accesorios','cargadores','carcasas','cables'];
+  const todas = [...new Set([...cats, ...base])].sort();
+  dl.innerHTML = todas.map(c => `<option value="${c}">`).join('');
 }
 
 function renderProductos(prods) {
@@ -574,7 +575,7 @@ function renderProductos(prods) {
         </label>
       </td>
       <td style="white-space:nowrap">
-        <button class="btn btn-warning btn-sm" onclick="abrirModalEditar(${JSON.stringify(p).replace(/"/g,'&quot;')})">✏️</button>
+        <button class="btn btn-warning btn-sm" data-id="${p.id}" onclick="abrirModalEditarPorId(this.dataset.id)">✏️</button>
         <button class="btn btn-danger btn-sm" onclick="eliminarProducto('${p.id}',this)" style="margin-left:6px">🗑️</button>
       </td>
     </tr>
@@ -763,6 +764,11 @@ function abrirModalCrear() {
   limpiarModal();
   document.getElementById('modal-producto').classList.add('open');
   document.getElementById('f-nombre').focus();
+}
+
+function abrirModalEditarPorId(id) {
+  const p = todosProductos.find(x => String(x.id) === String(id));
+  if (p) abrirModalEditar(p);
 }
 
 function abrirModalEditar(p) {

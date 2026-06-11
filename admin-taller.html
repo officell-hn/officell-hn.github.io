@@ -1017,6 +1017,10 @@ function imprimir(id, formato) {
       win.document.close();
       win.focus();
       setTimeout(() => { win.print(); win.close(); }, 400);
+    })
+    .catch(err => {
+      console.error('[imprimir] Error generando QR:', err);
+      alert('Error al generar el QR del recibo. Intenta de nuevo.');
     });
 }
 

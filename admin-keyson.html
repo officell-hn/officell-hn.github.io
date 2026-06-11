@@ -193,6 +193,9 @@ let clienteActivo = null;
 
 // ── AUTH ────────────────────────────────────────────────────
 function authHeaders() {
+  return { 'Authorization': `Bearer ${TOKEN}` };
+}
+function authHeadersPost() {
   return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` };
 }
 
