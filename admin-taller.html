@@ -815,8 +815,7 @@ async function imprimirPlantilla() {
     const { codigo_seguimiento, fecha } = data;
     const qrUrl = `https://officell-hn.github.io/taller.html?codigo=${encodeURIComponent(codigo_seguimiento)}`;
 
-    QRCode.toDataURL(qrUrl, { width: 160, margin: 1, errorCorrectionLevel: 'M' })
-      .then(qrDataUrl => {
+    const qrDataUrl = await QRCode.toDataURL(qrUrl, { width: 160, margin: 1, errorCorrectionLevel: 'M' });
         const hoy = new Date().toLocaleDateString('es-HN', { timeZone: 'America/Tegucigalpa' });
         const css = `
           @page { size: A4; margin: 12mm 15mm; }
@@ -934,7 +933,6 @@ async function imprimirPlantilla() {
 
         // Recargar lista para que aparezca la orden nueva
         cargarOrdenes();
-      });
   } catch (err) {
     alert('Error generando plantilla: ' + err.message);
   } finally {
@@ -1052,10 +1050,14 @@ function fmtDate(d) {
 }
 
 // Cerrar modales al click fuera
-['overlayOrden','overlayEstado','overlayDetalle'].forEach(id => {
+['overlayOrden','overlayDetalle'].forEach(id => {
   document.getElementById(id).addEventListener('click', function(e) {
     if (e.target === this) this.classList.remove('open');
   });
+});
+// overlayEstado necesita cerrar via cerrarModalEstado() para resetear campos de adelanto
+document.getElementById('overlayEstado').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModalEstado();
 });
 </script>
 </body>

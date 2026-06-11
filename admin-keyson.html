@@ -401,9 +401,7 @@ function esc(str) {
   return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// Cargar si hay sesión guardada
-const savedToken = sessionStorage.getItem('oc_admin_jwt');
-if (savedToken) { TOKEN = savedToken; init(); }
+// Sesión restaurada por window.addEventListener('load') arriba — no duplicar
 </script>
 </body>
 </html>

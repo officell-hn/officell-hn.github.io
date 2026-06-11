@@ -1,5 +1,15 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-06-04
+> Última revisión: 2026-06-11
+
+---
+
+## ✅ Bugs corregidos — revisión 2026-06-11
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-taller.html` | 818 | **CRÍTICO**: `imprimirPlantilla()` usaba `.then()` en `QRCode.toDataURL(...)` dentro de un bloque `async/try/finally`. El `finally` corría inmediatamente después de registrar el callback `.then()`, antes de que el QR se generara. Resultado: el botón volvía a "🖨️ Plantilla" y se rehabilitaba mientras la ventana de impresión aún no había abierto. El usuario podía creer que falló y clickear de nuevo, creando órdenes dobles. | Convertido a `const qrDataUrl = await QRCode.toDataURL(...)`. El `finally` ahora corre después de que todo el flujo de impresión completa. |
+| `admin-taller.html` | 1059 | **BUG**: El listener de "cerrar al click fuera" para `overlayEstado` solo hacía `this.classList.remove('open')`, sin llamar a `cerrarModalEstado()`. Si el admin abría un modal de estado con pago adelantado, marcaba el checkbox y el monto, luego cerraba clickeando fuera: al abrir la siguiente orden, el checkbox y el monto del adelanto anterior seguían activos. Podía registrar un pago adelantado sin querer en la orden equivocada. | Separado el listener de `overlayEstado` del loop. Ahora llama directamente a `cerrarModalEstado()` que resetea todos los campos de adelanto. |
+| `admin-keyson.html` | 404 | **BUG**: `init()` se llamaba dos veces al cargar la página: una vez por `window.addEventListener('load', ...)` y otra vez por código inline al final del script. Resultado: `cargarStats()` y `cargarClientes()` se ejecutaban dos veces en cada carga, causando doble consumo de API. | Removida la llamada inline duplicada; el listener `load` es suficiente. |
 
 ---
 
@@ -44,46 +54,13 @@
 
 ## 🔴 Alta prioridad (funcionalidad crítica o UX muy afectada)
 
-### ~~0. [SEGURIDAD] XSS almacenado en `tienda.html` — nombres y descripciones de productos sin escapar~~ ✅ APLICADO
-**Fix 2026-05-28:** `escHtml()` agregada a tienda.html y aplicada a `p.nombre`, `p.descripcion`, `p.categoria_web` en `renderProductos()` (ambas secciones: Diamantes FF y productos normales).
-
-### ~~0b. [SEGURIDAD] XSS por inyección en atributo `onclick` de categorías (`tienda.html`)~~ ✅ APLICADO
-**Fix 2026-05-28:** botones de categoría usan `data-cat="${escHtml(c.categoria)}"` y `onclick="filtrarCategoria(this.dataset.cat,this)"` — valor nunca interpolado directamente en JS.
-
-### ~~0c. [SEGURIDAD] XSS por URL de imagen en `onclick` de thumbnails (`tienda.html`)~~ ✅ APLICADO
-**Fix 2026-05-28:** thumbnails usan `onclick="switchImg('${pid}',${i})"` — función nueva que lee la URL desde `mapaProductos` por índice. URL nunca aparece en el HTML. Además `src="${escHtml(u)}"` para atributo img.
-
-### ~~0d. Botones de "Confirmar pedido" quedan permanentemente deshabilitados si la API falla~~ ✅ APLICADO
-**Fix 2026-05-28:** bloque `finally` en `confirmarPedido()` re-habilita botones si `!codigo` (pedido no completado): `btn.disabled=false`, `btn.style.opacity=''`, `btn.textContent='✅ Confirmar pedido'`.
-
-### 1. Manejo de sesión expirada (401) en todas las páginas admin
-**Archivos:** `admin-taller.html`, `admin-productos.html`  
-**Problema:** Cuando el JWT expira, los fetch protegidos devuelven 401 pero solo se muestra "Error: undefined" o se redirige sin mensaje claro. El `verificarToken()` de admin-taller solo cubre el auto-login inicial; las llamadas posteriores (guardar orden, actualizar estado, etc.) no interceptan 401 de forma centralizada.  
-**Solución propuesta:** Crear un wrapper `apiFetch()` que reemplace a `fetch()` en todas las llamadas autenticadas. Si recibe 401, llama automáticamente a `logout()` mostrando "Sesión expirada — vuelve a ingresar".
-
-```javascript
-async function apiFetch(url, opts = {}) {
-  const r = await fetch(url, opts);
-  if (r.status === 401) {
-    logout(); // o doLogout()
-    throw new Error('Sesión expirada');
-  }
-  return r;
-}
-```
+### ~~1. Manejo de sesión expirada (401) en todas las páginas admin~~ ✅ IMPLEMENTADO
+**Verificado 2026-06-11:** `apiFetch()` existe y funciona en `admin-taller.html` (línea 438) y `admin-productos.html` (línea 433). Todas las llamadas autenticadas usan el wrapper. Cuando hay 401, muestra "Sesión expirada" y llama a `doLogout()`.
 
 ---
 
-### 2. Campo de búsqueda en tabla de órdenes del taller
-**Archivo:** `admin-taller.html`  
-**Problema:** No existe campo de búsqueda por texto. Con muchas órdenes, encontrar una por nombre de cliente o equipo requiere scroll manual o usar el filtro de estado (que es por categoría, no por texto).  
-**Solución propuesta:** Agregar `<input>` de búsqueda en el toolbar que filtre localmente sobre `ORDENES` por `equipo`, `cliente_nombre`, `cliente_telefono` y `codigo_seguimiento`.
-
-```html
-<input type="text" id="buscarOrden" placeholder="🔍 Buscar cliente, equipo o código..."
-  oninput="buscarEnOrdenes(this.value)"
-  style="padding:0.45rem 1rem;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);min-width:220px">
-```
+### ~~2. Campo de búsqueda en tabla de órdenes del taller~~ ✅ IMPLEMENTADO
+**Verificado 2026-06-11:** El toolbar de `admin-taller.html` ya tiene el campo `#buscarOrden` con `oninput="buscarEnOrdenes()"` y la función `buscarEnOrdenes()` / `aplicarFiltros()` filtra por equipo, cliente, teléfono y código de seguimiento. Funciona correctamente.
 
 ---
 
@@ -94,10 +71,8 @@ async function apiFetch(url, opts = {}) {
 
 ## 🟡 Media prioridad (mejora de usabilidad significativa)
 
-### 4. Botón "Guardar" no se deshabilita durante `actualizarEstado()`
-**Archivo:** `admin-taller.html`, función `actualizarEstado()` (~línea 659)  
-**Problema:** El botón "Guardar Cambios" del modal de estado no se deshabilita durante el fetch. Si el admin hace doble click puede enviar la actualización dos veces.  
-**Solución propuesta:** Mismo patrón que `guardarOrden()`: deshabilitar botón al inicio, rehabilitar en `finally`.
+### ~~4. Botón "Guardar" no se deshabilita durante `actualizarEstado()`~~ ✅ IMPLEMENTADO
+**Verificado 2026-06-11:** Línea ~706 de `admin-taller.html`: `if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.textContent = '⏳ Guardando...'; }` y el `finally` lo rehabilita. El patrón anti-doble-click está implementado.
 
 ---
 
@@ -115,31 +90,41 @@ async function apiFetch(url, opts = {}) {
 
 ---
 
-### 7. Imagen en miniatura del carrito usa `imagen_url` sin `alt` escapado
-**Archivo:** `tienda.html`, función `renderCarrito()` (~línea 645)  
-**Problema:** `alt="${item.nombre}"` no escapa HTML. Si el nombre del producto contiene `"` o `>`, puede romper el atributo o causar XSS menor.  
-**Solución propuesta:** Usar una función `esc()` (ya existe en otros archivos del sitio) para escapar `item.nombre` antes de insertarlo en atributos HTML de carrito.
+### 7. `imprimir()` en admin-taller no tiene `.catch()` en QRCode.toDataURL
+**Archivo:** `admin-taller.html`, función `imprimir()` (~línea 954)  
+**Problema:** `imprimir()` usa `QRCode.toDataURL(...).then(qrDataUrl => { ... })` sin `.catch()`. Si la librería QRCode falla (por ej. código muy largo), la promesa rechaza silenciosamente y la ventana de impresión nunca se abre. No hay feedback al usuario.  
+**Solución:** Agregar `.catch(err => alert('Error generando QR: ' + err.message))` al final de la cadena de promesas, o convertir a `async function imprimir(...)` con try/catch como ya se hizo con `imprimirPlantilla`.
 
 ---
 
-### 8. Thumbnails de miniaturas en `renderProductos` tienen XSS potencial en onclick
-**Archivo:** `tienda.html`, ~línea 541  
-**Problema:** Las URLs de imágenes se insertan directamente en `onclick="document.getElementById(...).src='${u}'"`. Si una URL contiene comilla simple, rompe el atributo onclick o puede usarse para inyección JS.  
-**Solución propuesta:** Usar `mapaProductos` para almacenar los arreglos de imágenes por ID y referenciar índice en onclick, en lugar de embed directo de URL.
+### 8. `populateCatFilter` duplica opciones en el datalist del modal
+**Archivo:** `admin-productos.html`, función `populateCatFilter()` (~línea 539)  
+**Problema:** El datalist `#cats-list` se reconstruye concatenando las categorías del backend con opciones hardcodeadas fijas (`otros`, `accesorios`, `cargadores`, etc.). Si el backend ya tiene esas categorías, aparecen duplicadas en el autocompletado.  
+**Solución:** Usar `new Set([...cats, 'otros', 'accesorios', 'cargadores', 'carcasas', 'cables'])` para deduplicar antes de generar las `<option>`.
+
+---
+
+### 9. `abrirModalEditar` serializa producto completo en atributo onclick
+**Archivo:** `admin-productos.html`, `renderProductos()` (~línea 577)  
+**Problema:** `onclick="abrirModalEditar(${JSON.stringify(p).replace(/"/g,'&quot;')})"` embeds el objeto completo del producto en el HTML. Aunque `JSON.stringify` escapa la mayoría de caracteres especiales, este patrón es frágil y puede romperse con descripciones largas o caracteres exóticos. Es difícil de mantener.  
+**Solución:** Guardar el ID en `data-id` y buscar el producto en `todosProductos`:
+```html
+onclick="abrirModalEditar('${escHtml(p.id)}')"
+```
+```javascript
+function abrirModalEditar(id) {
+  const p = todosProductos.find(x => x.id === id);
+  if (!p) return;
+  // resto del código igual
+}
+```
 
 ---
 
 ## 🟢 Baja prioridad (nice to have)
 
-### 9. Ordenación de columnas en tablas admin
-**Archivos:** `admin-taller.html`, `admin-productos.html`  
-Actualmente las tablas no tienen ordenación por columna. Agregar click en `<th>` para ordenar por ese campo mejoraría la navegación para el administrador.
-
----
-
-### 10. Confirmación antes de logout
-**Archivos:** `admin-taller.html`, `admin-productos.html`  
-Si el admin hace click en "Salir" accidentalmente mientras edita, pierde el trabajo sin confirmación. Agregar `if (!confirm('¿Cerrar sesión?')) return;` en `logout()` / `doLogout()`.
+### ~~10. Confirmación antes de logout~~ ✅ IMPLEMENTADO
+**Verificado 2026-06-11:** Ambos archivos tienen `if (!confirm('¿Cerrar sesión?')) return;` en la función `logout()`.
 
 ---
 
@@ -155,8 +140,6 @@ El auto-login hace un fetch a `${API}/admin/productos` solo para verificar el JW
 *(Requiere cambio en backend Railway.)*
 
 ---
-
-## 🟢 Hallazgos 2026-06-04 (baja prioridad / código muerto)
 
 ### 13. Variable CSS `--azul` no definida en `tienda.html`
 **Archivo:** `tienda.html`, ~línea 155  
@@ -185,8 +168,30 @@ Regla vacía sin propiedades — residuo de una clase que se planificó y no se 
 
 ### 16. `esc()` de `admin-taller.html` y `escHtml()` de `admin-productos.html` son inconsistentes
 **Archivos:** Ambos admin  
-**Problema:** Existen dos funciones de escape con nombres distintos y comportamientos ligeramente distintos en el proyecto. `taller.html` (público) tiene la versión más completa (escapa `&`, `<`, `>`, `"`, `'`). La de admin-taller.html ahora escapa `&` (fix 2026-06-04) pero sigue sin escapar `'`.  
+**Problema:** Existen dos funciones de escape con nombres distintos y comportamientos ligeramente distintos en el proyecto. `taller.html` (público) tiene la versión más completa (escapa `&`, `<`, `>`, `"`, `'`). La de admin-taller.html escapa `&`, `<`, `>`, `"` pero no `'`.  
 **Solución a largo plazo:** Unificar en un solo `config.js` o un archivo `utils.js` compartido con la función completa.
+
+---
+
+### 17. `admin-keyson.html` — `authHeaders()` incluye Content-Type en todas las peticiones
+**Archivo:** `admin-keyson.html`, ~línea 195  
+```javascript
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` };
+}
+```
+Los requests GET (cargarStats, cargarClientes, abrirConversacion) no tienen body, por lo que incluir `Content-Type: application/json` es innecesario. No causa errores pero es semánticamente incorrecto.  
+**Solución:** Separar los headers según el tipo de request, o solo devolver `Authorization` y agregar `Content-Type` manualmente en los requests POST/PUT.
+
+---
+
+### 18. `seguimiento.html` — QR de seguimiento usa servicio externo
+**Archivo:** `seguimiento.html`, ~línea 153  
+```html
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=...">
+```
+El QR se genera enviando la URL de seguimiento a un servicio de terceros (qrserver.com). Depende de disponibilidad externa y comparte la URL con ese servidor.  
+**Solución:** Incluir la librería `qrcode.min.js` (ya disponible en admin-taller.html vía CDN) y generar el QR localmente con `QRCode.toDataURL()`.
 
 ---
 
