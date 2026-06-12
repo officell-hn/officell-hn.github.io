@@ -222,9 +222,6 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── CATEGORY INPUT ── */
-  .cat-datalist { }
-
   @media (max-width: 600px) {
     .form-grid { grid-template-columns: 1fr; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -785,7 +782,7 @@ function abrirModalEditar(p) {
   document.getElementById('f-descripcion').value = p.descripcion || '';
   document.getElementById('f-enweb').checked = !!p.en_web;
   document.getElementById('f-destacado').checked = !!p.destacado;
-  previewImg();
+  actualizarPreviews();
   document.getElementById('modal-producto').classList.add('open');
   document.getElementById('f-nombre').focus();
 }
@@ -849,8 +846,6 @@ function setImagenesValue(val) {
   } catch(e) {}
   agregarCampoImagen(val); // URL simple
 }
-
-function previewImg() { actualizarPreviews(); }
 
 async function guardarProducto() {
   const nombre = document.getElementById('f-nombre').value.trim();

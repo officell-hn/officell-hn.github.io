@@ -91,27 +91,13 @@
 
 ---
 
-### 8. `populateCatFilter` duplica opciones en el datalist del modal
-**Archivo:** `admin-productos.html`, función `populateCatFilter()` (~línea 539)  
-**Problema:** El datalist `#cats-list` se reconstruye concatenando las categorías del backend con opciones hardcodeadas fijas (`otros`, `accesorios`, `cargadores`, etc.). Si el backend ya tiene esas categorías, aparecen duplicadas en el autocompletado.  
-**Solución:** Usar `new Set([...cats, 'otros', 'accesorios', 'cargadores', 'carcasas', 'cables'])` para deduplicar antes de generar las `<option>`.
+### ~~8. `populateCatFilter` duplica opciones en el datalist del modal~~ ✅ YA RESUELTO
+**Verificado 2026-06-12:** La función ya deduplica con `const todas = [...new Set([...cats, ...base])].sort()` antes de regenerar el datalist (~línea 541), con comentario "sin duplicar las opciones base".
 
 ---
 
-### 9. `abrirModalEditar` serializa producto completo en atributo onclick
-**Archivo:** `admin-productos.html`, `renderProductos()` (~línea 577)  
-**Problema:** `onclick="abrirModalEditar(${JSON.stringify(p).replace(/"/g,'&quot;')})"` embeds el objeto completo del producto en el HTML. Aunque `JSON.stringify` escapa la mayoría de caracteres especiales, este patrón es frágil y puede romperse con descripciones largas o caracteres exóticos. Es difícil de mantener.  
-**Solución:** Guardar el ID en `data-id` y buscar el producto en `todosProductos`:
-```html
-onclick="abrirModalEditar('${escHtml(p.id)}')"
-```
-```javascript
-function abrirModalEditar(id) {
-  const p = todosProductos.find(x => x.id === id);
-  if (!p) return;
-  // resto del código igual
-}
-```
+### ~~9. `abrirModalEditar` serializa producto completo en atributo onclick~~ ✅ YA RESUELTO
+**Verificado 2026-06-12:** El botón editar ahora usa `data-id="${p.id}"` con `onclick="abrirModalEditarPorId(this.dataset.id)"` (~línea 578), y `abrirModalEditarPorId(id)` busca el producto en `todosProductos` antes de llamar a `abrirModalEditar(p)`. El objeto ya no se serializa en el HTML.
 
 ---
 
@@ -135,28 +121,18 @@ El auto-login hace un fetch a `${API}/admin/productos` solo para verificar el JW
 
 ---
 
-### 13. Variable CSS `--azul` no definida en `tienda.html`
-**Archivo:** `tienda.html`, ~línea 155  
-**Problema:** `.pago-tab.active` usa `var(--azul,#185FA5)` pero `--azul` no está en el `:root` de tienda.html (sí está en admin-productos.html). El CSS usa siempre el valor de fallback `#185FA5`, por lo que funciona visualmente, pero es confuso y frágil.  
-**Solución:** Agregar `--azul: #185FA5;` al bloque `:root` de tienda.html, o reemplazar `var(--azul,#185FA5)` por el literal.
+### ~~13. Variable CSS `--azul` no definida en `tienda.html`~~ ✅ IMPLEMENTADA 2026-06-12
+**Fix aplicado:** Agregado `--azul:#185FA5;` al bloque `:root` de tienda.html.
 
 ---
 
-### 14. `previewImg()` es un wrapper trivial innecesario en `admin-productos.html`
-**Archivo:** `admin-productos.html`, ~línea 847  
-```javascript
-function previewImg() { actualizarPreviews(); }
-```
-Esta función solo llama a `actualizarPreviews()`. El único lugar donde se llama es `abrirModalEditar()`. Puede reemplazarse directamente por `actualizarPreviews()` para eliminar indirección.
+### ~~14. `previewImg()` es un wrapper trivial innecesario en `admin-productos.html`~~ ✅ IMPLEMENTADA 2026-06-12
+**Fix aplicado:** `abrirModalEditar()` llama directamente a `actualizarPreviews()`; el wrapper `previewImg()` fue eliminado (0 referencias restantes).
 
 ---
 
-### 15. Regla CSS vacía `.cat-datalist {}` en `admin-productos.html`
-**Archivo:** `admin-productos.html`, ~línea 226  
-```css
-.cat-datalist { }
-```
-Regla vacía sin propiedades — residuo de una clase que se planificó y no se implementó. Puede eliminarse sin efecto.
+### ~~15. Regla CSS vacía `.cat-datalist {}` en `admin-productos.html`~~ ✅ IMPLEMENTADA 2026-06-12
+**Fix aplicado:** Regla vacía y su comentario eliminados.
 
 ---
 
@@ -167,25 +143,13 @@ Regla vacía sin propiedades — residuo de una clase que se planificó y no se 
 
 ---
 
-### 17. `admin-keyson.html` — `authHeaders()` incluye Content-Type en todas las peticiones
-**Archivo:** `admin-keyson.html`, ~línea 195  
-```javascript
-function authHeaders() {
-  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` };
-}
-```
-Los requests GET (cargarStats, cargarClientes, abrirConversacion) no tienen body, por lo que incluir `Content-Type: application/json` es innecesario. No causa errores pero es semánticamente incorrecto.  
-**Solución:** Separar los headers según el tipo de request, o solo devolver `Authorization` y agregar `Content-Type` manualmente en los requests POST/PUT.
+### ~~17. `admin-keyson.html` — `authHeaders()` incluye Content-Type en todas las peticiones~~ ✅ YA RESUELTO
+**Verificado 2026-06-12:** Ya existen `authHeaders()` (solo Authorization, usada en los GET) y `authHeadersPost()` (con Content-Type) separadas — la solución propuesta está aplicada.
 
 ---
 
-### 18. `seguimiento.html` — QR de seguimiento usa servicio externo
-**Archivo:** `seguimiento.html`, ~línea 153  
-```html
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=...">
-```
-El QR se genera enviando la URL de seguimiento a un servicio de terceros (qrserver.com). Depende de disponibilidad externa y comparte la URL con ese servidor.  
-**Solución:** Incluir la librería `qrcode.min.js` (ya disponible en admin-taller.html vía CDN) y generar el QR localmente con `QRCode.toDataURL()`.
+### ~~18. `seguimiento.html` — QR de seguimiento usa servicio externo~~ ✅ YA RESUELTO
+**Verificado 2026-06-12:** `seguimiento.html` ya carga `qrcode.min.js` desde CDN (línea 82) y genera el QR localmente con `QRCode.toCanvas()` (línea 163). No queda referencia a qrserver.com.
 
 ---
 
