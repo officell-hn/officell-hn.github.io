@@ -76,24 +76,18 @@
 
 ---
 
-### 5. Paginación en tabla de órdenes del taller
-**Archivo:** `admin-taller.html`  
-**Problema:** Si el taller acumula 200+ órdenes, la tabla renderiza todo en DOM de una vez. Puede volverse lenta.  
-**Solución propuesta:** Paginación simple de 25 órdenes por página con botones Anterior/Siguiente. Alternativa más simple: limitar la carga a las últimas 100 órdenes por defecto y agregar botón "Ver todas".
+### ~~5. Paginación en tabla de órdenes del taller~~ ✅ IMPLEMENTADA 2026-06-12
+**Fix aplicado:** Paginación client-side de 25 órdenes por página. Barra `◀ Anterior · Página X de Y (N órdenes) · Siguiente ▶` bajo la tabla, oculta con ≤25 resultados. `aplicarFiltros()` guarda `listaFiltrada` y resetea a página 1 en cada cambio de filtro/búsqueda; `renderTabla()` renderiza solo el slice de la página actual; `verificarToken()` ahora pasa por `aplicarFiltros()` para mantener el estado sincronizado. Probado con DOM simulado (60 órdenes: navegación, clamp en extremos, reset por búsqueda).
 
 ---
 
-### 6. Exportar órdenes del taller a CSV
-**Archivo:** `admin-taller.html`  
-**Problema:** Solo existe impresión de recibo individual o plantilla. No hay forma de exportar el listado de órdenes (ej. para reportes semanales en Excel).  
-**Solución propuesta:** Botón "⬇️ CSV" en el toolbar que genere un CSV del listado actual (respetando el filtro activo) y lo descargue vía `Blob` + `URL.createObjectURL`.
+### ~~6. Exportar órdenes del taller a CSV~~ ✅ IMPLEMENTADA 2026-06-12
+**Fix aplicado:** Botón "⬇️ CSV" en el toolbar. `exportarCSV()` exporta `listaFiltrada` (respeta filtro de estado y búsqueda activos) vía `Blob` + `URL.createObjectURL`. Escapado RFC-4180 (comas, comillas, saltos de línea), BOM `\uFEFF` para que Excel detecte UTF-8, nombre `ordenes_taller_YYYY-MM-DD.csv` con fecha Honduras. Columnas: Código, Equipo, Cliente, Teléfono, Estado, Fecha Entrada, Entrega Estimada, Precio, Notas. Probado con DOM simulado.
 
 ---
 
-### 7. `imprimir()` en admin-taller no tiene `.catch()` en QRCode.toDataURL
-**Archivo:** `admin-taller.html`, función `imprimir()` (~línea 954)  
-**Problema:** `imprimir()` usa `QRCode.toDataURL(...).then(qrDataUrl => { ... })` sin `.catch()`. Si la librería QRCode falla (por ej. código muy largo), la promesa rechaza silenciosamente y la ventana de impresión nunca se abre. No hay feedback al usuario.  
-**Solución:** Agregar `.catch(err => alert('Error generando QR: ' + err.message))` al final de la cadena de promesas, o convertir a `async function imprimir(...)` con try/catch como ya se hizo con `imprimirPlantilla`.
+### ~~7. `imprimir()` en admin-taller no tiene `.catch()` en QRCode.toDataURL~~ ✅ YA RESUELTO
+**Verificado 2026-06-12:** La cadena de promesas de `imprimir()` (~línea 1021) ya termina con `.catch(err => { console.error(...); alert('Error al generar el QR del recibo. Intenta de nuevo.'); })`. Se corrigió junto con el fix de `imprimirPlantilla` sin registrarse en este MD.
 
 ---
 

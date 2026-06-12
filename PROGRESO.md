@@ -42,8 +42,9 @@
 - [x] Validar que todos los links de Hondubet apuntan a deporte (no casino) — corregido 2026-05
 - [ ] SEO: continuar con más artículos de blog para AdSense
 - [ ] Evaluar si agregar más categorías a la tienda
-- [ ] Implementar búsqueda de texto en tabla de órdenes del taller
-- [ ] Exportar órdenes del taller a CSV
+- [x] Implementar búsqueda de texto en tabla de órdenes del taller — verificado 2026-06-11 (campo `#buscarOrden`)
+- [x] Exportar órdenes del taller a CSV — implementado 2026-06-12 (botón ⬇️ CSV, respeta filtros)
+- [x] Paginación en tabla de órdenes del taller — implementado 2026-06-12 (25 por página)
 
 ---
 
