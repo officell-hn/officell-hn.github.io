@@ -202,6 +202,13 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
       <input type="text" id="buscarOrden" placeholder="🔍 Buscar cliente, equipo o código..."
         oninput="buscarEnOrdenes(this.value)"
         style="padding:0.45rem 1rem;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);min-width:220px;font-size:0.85rem">
+      <select id="filtroFecha" onchange="filtrarFecha(this.value)" title="Filtrar por fecha de entrada"
+        style="padding:0.45rem 0.8rem;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:0.85rem">
+        <option value="">📅 Todas las fechas</option>
+        <option value="hoy">Hoy</option>
+        <option value="7dias">Últimos 7 días</option>
+        <option value="mes">Este mes</option>
+      </select>
       <button class="btn-sm" onclick="exportarCSV()" style="margin-left:auto" title="Exportar listado actual a CSV">⬇️ CSV</button>
       <button class="btn-sm" onclick="cargarOrdenes()">🔄 Actualizar</button>
     </div>
@@ -534,9 +541,18 @@ async function cargarOrdenes() {
 }
 
 let textoBusqueda = '';
+let rangoFecha = '';
 function buscarEnOrdenes(q) {
   textoBusqueda = q.toLowerCase().trim();
   aplicarFiltros();
+}
+function filtrarFecha(v) {
+  rangoFecha = v;
+  aplicarFiltros();
+}
+// Fecha actual de Honduras en formato YYYY-MM-DD
+function hoyHN() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Tegucigalpa' });
 }
 function aplicarFiltros() {
   let lista = filtroActual ? ORDENES.filter(o => o.estado === filtroActual) : ORDENES;
@@ -547,6 +563,22 @@ function aplicarFiltros() {
       (o.cliente_telefono||'').toLowerCase().includes(textoBusqueda) ||
       (o.codigo_seguimiento||'').toLowerCase().includes(textoBusqueda)
     );
+  }
+  if (rangoFecha) {
+    const hoy = hoyHN();
+    let desde = '';
+    if (rangoFecha === 'hoy') desde = hoy;
+    else if (rangoFecha === '7dias') {
+      const d = new Date(hoy + 'T00:00:00');
+      d.setDate(d.getDate() - 6);
+      desde = d.toLocaleDateString('en-CA');
+    }
+    else if (rangoFecha === 'mes') desde = hoy.substring(0, 7) + '-01';
+    // fecha_entrada es YYYY-MM-DD: comparar strings equivale a comparar fechas
+    lista = lista.filter(o => {
+      const f = (o.fecha_entrada||'').substring(0, 10);
+      return f && f >= desde && f <= hoy;
+    });
   }
   listaFiltrada = lista;
   paginaActual = 1; // todo cambio de filtro o búsqueda vuelve a la primera página

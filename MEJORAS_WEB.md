@@ -108,9 +108,8 @@
 
 ---
 
-### 11. Filtro de rango de fechas en órdenes del taller
-**Archivo:** `admin-taller.html`  
-Actualmente solo se filtra por estado. Un filtro de fecha de entrada (ej. "esta semana", "este mes") ayudaría para reportes rápidos.
+### ~~11. Filtro de rango de fechas en órdenes del taller~~ ✅ IMPLEMENTADA 2026-06-12
+**Fix aplicado:** Selector `#filtroFecha` en el toolbar con rangos sobre `fecha_entrada`: Todas / Hoy / Últimos 7 días / Este mes (fechas calculadas en zona horaria Honduras). Se combina con el filtro de estado, la búsqueda, la paginación y el export CSV (todos operan sobre `listaFiltrada`). Probado con DOM simulado incluyendo bordes de rango y órdenes sin fecha.
 
 ---
 
