@@ -5,7 +5,7 @@
 
 ---
 
-## Estado actual (2026-05-28)
+## Estado actual (2026-06-12)
 
 ### Páginas principales
 | Página | Estado |
@@ -24,6 +24,9 @@
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-06-12 | admin-taller: paginación 25/pág + export CSV (respeta filtros) + filtro de fechas Hoy/7días/Mes (commits `9ba63ad`, `4ba228c`) |
+| 2026-06-12 | Limpiezas ítems 13-15 de MEJORAS_WEB: `--azul` en tienda, wrapper `previewImg()` eliminado, regla CSS vacía (commit `28a1002`) |
+| 2026-06-12 | Verificados ya resueltos: #7 catch QR, #8 dedup datalist, #9 editar por data-id, #17 authHeadersPost, #18 QR local — solo quedan #16 (unificar esc) y #12 (backend ping) |
 | 2026-05 | Fix renderCarrito — parsea `imagen_url` como JSON array |
 | 2026-05 | Links Hondubet cambiados de casino → deporte en 20 páginas |
 | 2026-05 | Fix cancelarOrden verifica `d.ok` correctamente |
