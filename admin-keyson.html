@@ -250,6 +250,7 @@ async function recargar() {
 async function cargarStats() {
   try {
     const r = await fetch(`${API}/admin/keyson/stats`, { headers: authHeaders() });
+    if (r.status === 401) { logout(); return; }
     if (!r.ok) return;
     const d = await r.json();
     if (!d.ok) return;
@@ -275,7 +276,7 @@ async function cargarClientes(buscar = '') {
       return;
     }
     list.innerHTML = d.clientes.map(c => `
-      <div class="cliente-item" onclick="abrirConversacion('${esc(c.client_phone)}','${esc(c.nombre||'')}')">
+      <div class="cliente-item" data-phone="${esc(c.client_phone)}" data-nombre="${esc(c.nombre||'')}" onclick="abrirConversacion(this.dataset.phone,this.dataset.nombre)">
         <div class="avatar">${iniciales(c.nombre || c.client_phone)}</div>
         <div class="cliente-info">
           <div class="cliente-nombre">${esc(c.nombre || formatPhone(c.client_phone))}</div>
@@ -310,7 +311,7 @@ async function abrirConversacion(phone, nombre) {
 
   // Marcar activo en sidebar
   document.querySelectorAll('.cliente-item').forEach(el => {
-    el.classList.toggle('active', el.onclick.toString().includes(phone));
+    el.classList.toggle('active', el.dataset.phone === phone);
   });
 
   const empty = document.getElementById('chatEmpty');
@@ -333,6 +334,7 @@ async function abrirConversacion(phone, nombre) {
 
   try {
     const r = await fetch(`${API}/admin/keyson/conversacion/${encodeURIComponent(phone)}`, { headers: authHeaders() });
+    if (r.status === 401) { logout(); return; }
     const d = await r.json();
     if (!d.ok || !d.mensajes.length) {
       msgs.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)">Sin mensajes registrados</div>';

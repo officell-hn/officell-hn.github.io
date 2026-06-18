@@ -1,5 +1,18 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-06-11
+> Última revisión: 2026-06-18
+
+---
+
+## ✅ Bugs corregidos — revisión 2026-06-18
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-keyson.html` | 252 | **BUG AUTH**: `cargarStats()` usaba `fetch()` directo. Un JWT expirado devolvía HTTP 401 pero solo hacía `if (!r.ok) return` sin cerrar sesión. El admin veía stats en blanco sin saber por qué, y el resto de la UI seguía bloqueada. | Agregado `if (r.status === 401) { logout(); return; }` antes del check de `!r.ok`. |
+| `admin-keyson.html` | 335 | **BUG AUTH**: `abrirConversacion()` usaba `fetch()` directo para cargar los mensajes. Misma situación: 401 silencioso, mensajes no cargaban, sesión no cerraba. | Agregado `if (r.status === 401) { logout(); return; }` después del fetch de conversación. |
+| `admin-keyson.html` | 278 | **BUG JS**: `cargarClientes()` construía el onclick como `onclick="abrirConversacion('${esc(c.client_phone)}','${esc(c.nombre||'')}')"`. La función `esc()` no escapa comillas simples (`'`). Un cliente con nombre como "O'Brien" o "Tía María" generaba HTML con onclick roto que arrojaba `SyntaxError` al hacer clic y dejaba ese cliente inaccesible. | Cambiado a atributos `data-*`: `data-phone` y `data-nombre`, con `onclick="abrirConversacion(this.dataset.phone,this.dataset.nombre)"`. El HTML encoda `"` correctamente y `dataset` decodifica el valor original. También corregido el marcado de cliente activo: de `el.onclick.toString().includes(phone)` (frágil) a `el.dataset.phone === phone` (exacto). |
+| `admin-taller.html` | 341–352 | **BUG DATOS**: El select `#fTipoServicioEd` del modal de edición no tenía la opción `"diagnostico"`. Las órdenes creadas con tipo "Solo Diagnóstico" (valor `diagnostico`) al abrirse en edición no encontraban la opción en el select, quedaban en "Reparación General" (primera opción por defecto), y al guardar sobreescribían silenciosamente el tipo de servicio con `"reparacion"`. | Agregado `<option value="diagnostico">Solo Diagnóstico</option>` al select de edición. Agregado también `<option value="otro">Otro</option>` al select de creación para paridad. |
+| `admin-productos.html` | 1033 | **CRASH JS**: `filtrarPedidos()` hacía `p.id.toLowerCase()` sin guardia. Si un pedido de la API llegaba sin campo `id` (NULL en BD o campo ausente), `.toLowerCase()` sobre `undefined` lanzaba `TypeError`, abortaba el `.filter()` completo y dejaba la tabla de pedidos vacía sin mensaje de error. | Cambiado a `(p.id||'').toLowerCase().includes(q)`. |
+| `admin-productos.html` | 490 | **BUG SESIÓN**: El bloque `.catch()` del auto-login solo hacía `TOKEN = ''` pero no llamaba a `sessionStorage.removeItem('oc_admin_jwt')`. Ante un error de red transitorio al cargar la página, el JWT corrupto/inaccesible quedaba en sessionStorage. Al recargar se reintentaba la verificación fallida indefinidamente — el admin no podía entrar al panel sin abrir DevTools y limpiar manualmente. | Agregado `sessionStorage.removeItem('oc_admin_jwt')` en el catch. |
 
 ---
 

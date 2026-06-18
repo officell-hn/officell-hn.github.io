@@ -487,7 +487,7 @@ window.onload = () => {
           cargarProductos();
         } else { TOKEN = ''; sessionStorage.removeItem('oc_admin_jwt'); }
       })
-      .catch(() => { TOKEN = ''; });
+      .catch(() => { TOKEN = ''; sessionStorage.removeItem('oc_admin_jwt'); });
   }
 };
 
@@ -1031,7 +1031,7 @@ async function cambiarEstadoPedido(id, estado) {
 function filtrarPedidos() {
   const q = document.getElementById('buscar-ped').value.toLowerCase();
   const filtrados = todosPedidos.filter(p =>
-    !q || p.id.toLowerCase().includes(q) ||
+    !q || (p.id||'').toLowerCase().includes(q) ||
     (p.nombre_cliente||'').toLowerCase().includes(q) ||
     (p.telefono_cliente||'').toLowerCase().includes(q) ||
     (p.email_cliente||'').toLowerCase().includes(q) ||
