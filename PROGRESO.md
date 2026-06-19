@@ -24,6 +24,7 @@
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-06-18 | SEO/Search Console: vinculada la propiedad de Search Console `https://officell-hn.github.io/` con Google Analytics (`G-Z5D12EC06P`) → reportes de "Consultas" y "Páginas orgánicas" dentro de Analytics. **Diagnóstico sitemap "No se ha podido obtener":** el archivo está OK — responde 200, XML válido (24 URLs), sin BOM, Googlebot permitido, 0 redirecciones, robots.txt apunta bien, páginas públicas sin `noindex`. El error es del lado de Google (propiedad nueva, sitemap en cola con baja prioridad; "Última lectura" vacía = aún no lo ha leído). **No es un problema de código.** Vía recomendada mientras se resuelve solo: indexación manual por "Inspección de URLs" → "Solicitar indexación" de las páginas clave, y revisar Indexación → Páginas para ver el estado real. Reenviar el sitemap repetidamente NO ayuda. |
 | 2026-06-12 | admin-taller: paginación 25/pág + export CSV (respeta filtros) + filtro de fechas Hoy/7días/Mes (commits `9ba63ad`, `4ba228c`) |
 | 2026-06-12 | Limpiezas ítems 13-15 de MEJORAS_WEB: `--azul` en tienda, wrapper `previewImg()` eliminado, regla CSS vacía (commit `28a1002`) |
 | 2026-06-12 | Verificados ya resueltos: #7 catch QR, #8 dedup datalist, #9 editar por data-id, #17 authHeadersPost, #18 QR local — solo quedan #16 (unificar esc) y #12 (backend ping) |
