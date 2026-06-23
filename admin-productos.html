@@ -963,7 +963,7 @@ function renderPedidos(pedidos) {
       <tr>
         <td>
           <strong style="font-family:monospace;font-size:.9rem">${escHtml(codigo)}</strong><br>
-          <a href="${trackUrl}" target="_blank" style="font-size:.75rem;color:var(--azul)">Ver seguimiento ↗</a>
+          <a href="${trackUrl}" target="_blank" style="font-size:.75rem;color:var(--azul)" rel="noopener">Ver seguimiento ↗</a>
         </td>
         <td>${escHtml(p.nombre_cliente||'—')}</td>
         <td>${escHtml(p.telefono_cliente||'—')}</td>

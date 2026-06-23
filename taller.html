@@ -21,7 +21,7 @@ crossorigin="anonymous"></script><!-- Google tag (gtag.js) -->
 <meta property="og:url" content="https://officell-hn.github.io/taller.html" />
 <meta property="og:title" content="Taller de Reparaciones — OFFICELL Danlí" />
 <meta property="og:description" content="Consulta el estado de tu reparación en tiempo real. Pantallas, baterías, software, desbloqueos y más." />
-<meta property="og:image" content="https://officell-hn.github.io/LOGO_OFFICELL.png" />
+<meta property="og:image" content="https://officell-hn.github.io/officell-social.png" />
 <meta name="twitter:card" content="summary_large_image" />
 <script type="application/ld+json">
 {
@@ -241,7 +241,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
     <li><a href="agentes-bancarios.html">🏦 Agentes</a></li>
     <li><a href="contacto.html">Contacto</a></li>
   </ul>
-  <a href="https://wa.me/50493323393" target="_blank" class="nav-cta">💬 WhatsApp</a>
+  <a href="https://wa.me/50493323393" target="_blank" class="nav-cta" rel="noopener">💬 WhatsApp</a>
 </nav>
 
 <!-- HERO + BÚSQUEDA -->
@@ -310,7 +310,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
   <div class="cta-inner">
     <h2>¿Listo para traer<br><span>tu equipo?</span></h2>
     <p>Escríbenos por WhatsApp y cotizamos tu reparación al instante. Diagnóstico gratis para todos los equipos.</p>
-    <a href="https://wa.me/50493323393?text=Hola%2C+quiero+una+cotizaci%C3%B3n+para+reparaci%C3%B3n" target="_blank" class="btn-wa-cta">
+    <a href="https://wa.me/50493323393?text=Hola%2C+quiero+una+cotizaci%C3%B3n+para+reparaci%C3%B3n" target="_blank" class="btn-wa-cta" rel="noopener">
       💬 Cotizar por WhatsApp
     </a>
   </div>
@@ -333,14 +333,14 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
       <a href="agentes-bancarios.html">🏦 Agentes Bancarios</a>
       <a href="contacto.html">Contacto</a>
       <a href="politica-privacidad.html">Privacidad</a>
-      <a href="https://wa.me/50493323393" target="_blank">WhatsApp</a>
+      <a href="https://wa.me/50493323393" target="_blank" rel="noopener">WhatsApp</a>
     </div>
     <div class="footer-copy">© 2026 OFFICELL Servicio Técnico — Danlí, El Paraíso, Honduras. Todos los derechos reservados.</div>
   </div>
 </footer>
 
 <!-- WA FLOTANTE -->
-<a href="https://wa.me/50493323393" target="_blank" class="wa-float" title="WhatsApp OFFICELL">💬</a>
+<a href="https://wa.me/50493323393" target="_blank" class="wa-float" title="WhatsApp OFFICELL" rel="noopener">💬</a>
 
 <script src="config.js"></script>
 <script>
@@ -367,7 +367,7 @@ async function cargarServicios() {
         ${s.precio_desde > 0
           ? `<div class="servicio-precio">L.${s.precio_desde.toLocaleString()} <span>desde</span></div>`
           : `<div class="servicio-precio" style="color:var(--green)">Gratis <span>consulta</span></div>`}
-        <a href="https://wa.me/50493323393?text=Hola%2C+quiero+cotizar%3A+${encodeURIComponent(s.nombre)}" target="_blank" class="btn-cotizar">💬 Cotizar por WhatsApp</a>
+        <a href="https://wa.me/50493323393?text=Hola%2C+quiero+cotizar%3A+${encodeURIComponent(s.nombre)}" target="_blank" class="btn-cotizar" rel="noopener">💬 Cotizar por WhatsApp</a>
       </div>
     `).join('');
   } catch(e) {
@@ -457,7 +457,7 @@ async function buscarOrden() {
           <div class="notas-label">📝 Notas del técnico</div>
           <div class="notas-text">${esc(o.notas)}</div>
         </div>` : ''}
-        <a href="https://wa.me/50493323393?text=Hola%2C+consulto+por+mi+equipo+con+c%C3%B3digo+${encodeURIComponent(o.codigo_seguimiento)}" target="_blank" class="resultado-wa">
+        <a href="https://wa.me/50493323393?text=Hola%2C+consulto+por+mi+equipo+con+c%C3%B3digo+${encodeURIComponent(o.codigo_seguimiento)}" target="_blank" class="resultado-wa" rel="noopener">
           💬 Consultar por WhatsApp
         </a>
       </div>`;
