@@ -1,5 +1,18 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-06-11
+> Última revisión: 2026-06-18
+
+---
+
+## ✅ Bugs corregidos — revisión 2026-06-18
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-keyson.html` | 252 | **BUG AUTH**: `cargarStats()` usaba `fetch()` directo. Un JWT expirado devolvía HTTP 401 pero solo hacía `if (!r.ok) return` sin cerrar sesión. El admin veía stats en blanco sin saber por qué, y el resto de la UI seguía bloqueada. | Agregado `if (r.status === 401) { logout(); return; }` antes del check de `!r.ok`. |
+| `admin-keyson.html` | 335 | **BUG AUTH**: `abrirConversacion()` usaba `fetch()` directo para cargar los mensajes. Misma situación: 401 silencioso, mensajes no cargaban, sesión no cerraba. | Agregado `if (r.status === 401) { logout(); return; }` después del fetch de conversación. |
+| `admin-keyson.html` | 278 | **BUG JS**: `cargarClientes()` construía el onclick como `onclick="abrirConversacion('${esc(c.client_phone)}','${esc(c.nombre||'')}')"`. La función `esc()` no escapa comillas simples (`'`). Un cliente con nombre como "O'Brien" o "Tía María" generaba HTML con onclick roto que arrojaba `SyntaxError` al hacer clic y dejaba ese cliente inaccesible. | Cambiado a atributos `data-*`: `data-phone` y `data-nombre`, con `onclick="abrirConversacion(this.dataset.phone,this.dataset.nombre)"`. El HTML encoda `"` correctamente y `dataset` decodifica el valor original. También corregido el marcado de cliente activo: de `el.onclick.toString().includes(phone)` (frágil) a `el.dataset.phone === phone` (exacto). |
+| `admin-taller.html` | 341–352 | **BUG DATOS**: El select `#fTipoServicioEd` del modal de edición no tenía la opción `"diagnostico"`. Las órdenes creadas con tipo "Solo Diagnóstico" (valor `diagnostico`) al abrirse en edición no encontraban la opción en el select, quedaban en "Reparación General" (primera opción por defecto), y al guardar sobreescribían silenciosamente el tipo de servicio con `"reparacion"`. | Agregado `<option value="diagnostico">Solo Diagnóstico</option>` al select de edición. Agregado también `<option value="otro">Otro</option>` al select de creación para paridad. |
+| `admin-productos.html` | 1033 | **CRASH JS**: `filtrarPedidos()` hacía `p.id.toLowerCase()` sin guardia. Si un pedido de la API llegaba sin campo `id` (NULL en BD o campo ausente), `.toLowerCase()` sobre `undefined` lanzaba `TypeError`, abortaba el `.filter()` completo y dejaba la tabla de pedidos vacía sin mensaje de error. | Cambiado a `(p.id||'').toLowerCase().includes(q)`. |
+| `admin-productos.html` | 490 | **BUG SESIÓN**: El bloque `.catch()` del auto-login solo hacía `TOKEN = ''` pero no llamaba a `sessionStorage.removeItem('oc_admin_jwt')`. Ante un error de red transitorio al cargar la página, el JWT corrupto/inaccesible quedaba en sessionStorage. Al recargar se reintentaba la verificación fallida indefinidamente — el admin no podía entrar al panel sin abrir DevTools y limpiar manualmente. | Agregado `sessionStorage.removeItem('oc_admin_jwt')` en el catch. |
 
 ---
 
@@ -76,48 +89,28 @@
 
 ---
 
-### 5. Paginación en tabla de órdenes del taller
-**Archivo:** `admin-taller.html`  
-**Problema:** Si el taller acumula 200+ órdenes, la tabla renderiza todo en DOM de una vez. Puede volverse lenta.  
-**Solución propuesta:** Paginación simple de 25 órdenes por página con botones Anterior/Siguiente. Alternativa más simple: limitar la carga a las últimas 100 órdenes por defecto y agregar botón "Ver todas".
+### ~~5. Paginación en tabla de órdenes del taller~~ ✅ IMPLEMENTADA 2026-06-12
+**Fix aplicado:** Paginación client-side de 25 órdenes por página. Barra `◀ Anterior · Página X de Y (N órdenes) · Siguiente ▶` bajo la tabla, oculta con ≤25 resultados. `aplicarFiltros()` guarda `listaFiltrada` y resetea a página 1 en cada cambio de filtro/búsqueda; `renderTabla()` renderiza solo el slice de la página actual; `verificarToken()` ahora pasa por `aplicarFiltros()` para mantener el estado sincronizado. Probado con DOM simulado (60 órdenes: navegación, clamp en extremos, reset por búsqueda).
 
 ---
 
-### 6. Exportar órdenes del taller a CSV
-**Archivo:** `admin-taller.html`  
-**Problema:** Solo existe impresión de recibo individual o plantilla. No hay forma de exportar el listado de órdenes (ej. para reportes semanales en Excel).  
-**Solución propuesta:** Botón "⬇️ CSV" en el toolbar que genere un CSV del listado actual (respetando el filtro activo) y lo descargue vía `Blob` + `URL.createObjectURL`.
+### ~~6. Exportar órdenes del taller a CSV~~ ✅ IMPLEMENTADA 2026-06-12
+**Fix aplicado:** Botón "⬇️ CSV" en el toolbar. `exportarCSV()` exporta `listaFiltrada` (respeta filtro de estado y búsqueda activos) vía `Blob` + `URL.createObjectURL`. Escapado RFC-4180 (comas, comillas, saltos de línea), BOM `\uFEFF` para que Excel detecte UTF-8, nombre `ordenes_taller_YYYY-MM-DD.csv` con fecha Honduras. Columnas: Código, Equipo, Cliente, Teléfono, Estado, Fecha Entrada, Entrega Estimada, Precio, Notas. Probado con DOM simulado.
 
 ---
 
-### 7. `imprimir()` en admin-taller no tiene `.catch()` en QRCode.toDataURL
-**Archivo:** `admin-taller.html`, función `imprimir()` (~línea 954)  
-**Problema:** `imprimir()` usa `QRCode.toDataURL(...).then(qrDataUrl => { ... })` sin `.catch()`. Si la librería QRCode falla (por ej. código muy largo), la promesa rechaza silenciosamente y la ventana de impresión nunca se abre. No hay feedback al usuario.  
-**Solución:** Agregar `.catch(err => alert('Error generando QR: ' + err.message))` al final de la cadena de promesas, o convertir a `async function imprimir(...)` con try/catch como ya se hizo con `imprimirPlantilla`.
+### ~~7. `imprimir()` en admin-taller no tiene `.catch()` en QRCode.toDataURL~~ ✅ YA RESUELTO
+**Verificado 2026-06-12:** La cadena de promesas de `imprimir()` (~línea 1021) ya termina con `.catch(err => { console.error(...); alert('Error al generar el QR del recibo. Intenta de nuevo.'); })`. Se corrigió junto con el fix de `imprimirPlantilla` sin registrarse en este MD.
 
 ---
 
-### 8. `populateCatFilter` duplica opciones en el datalist del modal
-**Archivo:** `admin-productos.html`, función `populateCatFilter()` (~línea 539)  
-**Problema:** El datalist `#cats-list` se reconstruye concatenando las categorías del backend con opciones hardcodeadas fijas (`otros`, `accesorios`, `cargadores`, etc.). Si el backend ya tiene esas categorías, aparecen duplicadas en el autocompletado.  
-**Solución:** Usar `new Set([...cats, 'otros', 'accesorios', 'cargadores', 'carcasas', 'cables'])` para deduplicar antes de generar las `<option>`.
+### ~~8. `populateCatFilter` duplica opciones en el datalist del modal~~ ✅ YA RESUELTO
+**Verificado 2026-06-12:** La función ya deduplica con `const todas = [...new Set([...cats, ...base])].sort()` antes de regenerar el datalist (~línea 541), con comentario "sin duplicar las opciones base".
 
 ---
 
-### 9. `abrirModalEditar` serializa producto completo en atributo onclick
-**Archivo:** `admin-productos.html`, `renderProductos()` (~línea 577)  
-**Problema:** `onclick="abrirModalEditar(${JSON.stringify(p).replace(/"/g,'&quot;')})"` embeds el objeto completo del producto en el HTML. Aunque `JSON.stringify` escapa la mayoría de caracteres especiales, este patrón es frágil y puede romperse con descripciones largas o caracteres exóticos. Es difícil de mantener.  
-**Solución:** Guardar el ID en `data-id` y buscar el producto en `todosProductos`:
-```html
-onclick="abrirModalEditar('${escHtml(p.id)}')"
-```
-```javascript
-function abrirModalEditar(id) {
-  const p = todosProductos.find(x => x.id === id);
-  if (!p) return;
-  // resto del código igual
-}
-```
+### ~~9. `abrirModalEditar` serializa producto completo en atributo onclick~~ ✅ YA RESUELTO
+**Verificado 2026-06-12:** El botón editar ahora usa `data-id="${p.id}"` con `onclick="abrirModalEditarPorId(this.dataset.id)"` (~línea 578), y `abrirModalEditarPorId(id)` busca el producto en `todosProductos` antes de llamar a `abrirModalEditar(p)`. El objeto ya no se serializa en el HTML.
 
 ---
 
@@ -128,9 +121,8 @@ function abrirModalEditar(id) {
 
 ---
 
-### 11. Filtro de rango de fechas en órdenes del taller
-**Archivo:** `admin-taller.html`  
-Actualmente solo se filtra por estado. Un filtro de fecha de entrada (ej. "esta semana", "este mes") ayudaría para reportes rápidos.
+### ~~11. Filtro de rango de fechas en órdenes del taller~~ ✅ IMPLEMENTADA 2026-06-12
+**Fix aplicado:** Selector `#filtroFecha` en el toolbar con rangos sobre `fecha_entrada`: Todas / Hoy / Últimos 7 días / Este mes (fechas calculadas en zona horaria Honduras). Se combina con el filtro de estado, la búsqueda, la paginación y el export CSV (todos operan sobre `listaFiltrada`). Probado con DOM simulado incluyendo bordes de rango y órdenes sin fecha.
 
 ---
 
@@ -141,28 +133,18 @@ El auto-login hace un fetch a `${API}/admin/productos` solo para verificar el JW
 
 ---
 
-### 13. Variable CSS `--azul` no definida en `tienda.html`
-**Archivo:** `tienda.html`, ~línea 155  
-**Problema:** `.pago-tab.active` usa `var(--azul,#185FA5)` pero `--azul` no está en el `:root` de tienda.html (sí está en admin-productos.html). El CSS usa siempre el valor de fallback `#185FA5`, por lo que funciona visualmente, pero es confuso y frágil.  
-**Solución:** Agregar `--azul: #185FA5;` al bloque `:root` de tienda.html, o reemplazar `var(--azul,#185FA5)` por el literal.
+### ~~13. Variable CSS `--azul` no definida en `tienda.html`~~ ✅ IMPLEMENTADA 2026-06-12
+**Fix aplicado:** Agregado `--azul:#185FA5;` al bloque `:root` de tienda.html.
 
 ---
 
-### 14. `previewImg()` es un wrapper trivial innecesario en `admin-productos.html`
-**Archivo:** `admin-productos.html`, ~línea 847  
-```javascript
-function previewImg() { actualizarPreviews(); }
-```
-Esta función solo llama a `actualizarPreviews()`. El único lugar donde se llama es `abrirModalEditar()`. Puede reemplazarse directamente por `actualizarPreviews()` para eliminar indirección.
+### ~~14. `previewImg()` es un wrapper trivial innecesario en `admin-productos.html`~~ ✅ IMPLEMENTADA 2026-06-12
+**Fix aplicado:** `abrirModalEditar()` llama directamente a `actualizarPreviews()`; el wrapper `previewImg()` fue eliminado (0 referencias restantes).
 
 ---
 
-### 15. Regla CSS vacía `.cat-datalist {}` en `admin-productos.html`
-**Archivo:** `admin-productos.html`, ~línea 226  
-```css
-.cat-datalist { }
-```
-Regla vacía sin propiedades — residuo de una clase que se planificó y no se implementó. Puede eliminarse sin efecto.
+### ~~15. Regla CSS vacía `.cat-datalist {}` en `admin-productos.html`~~ ✅ IMPLEMENTADA 2026-06-12
+**Fix aplicado:** Regla vacía y su comentario eliminados.
 
 ---
 
@@ -173,25 +155,13 @@ Regla vacía sin propiedades — residuo de una clase que se planificó y no se 
 
 ---
 
-### 17. `admin-keyson.html` — `authHeaders()` incluye Content-Type en todas las peticiones
-**Archivo:** `admin-keyson.html`, ~línea 195  
-```javascript
-function authHeaders() {
-  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` };
-}
-```
-Los requests GET (cargarStats, cargarClientes, abrirConversacion) no tienen body, por lo que incluir `Content-Type: application/json` es innecesario. No causa errores pero es semánticamente incorrecto.  
-**Solución:** Separar los headers según el tipo de request, o solo devolver `Authorization` y agregar `Content-Type` manualmente en los requests POST/PUT.
+### ~~17. `admin-keyson.html` — `authHeaders()` incluye Content-Type en todas las peticiones~~ ✅ YA RESUELTO
+**Verificado 2026-06-12:** Ya existen `authHeaders()` (solo Authorization, usada en los GET) y `authHeadersPost()` (con Content-Type) separadas — la solución propuesta está aplicada.
 
 ---
 
-### 18. `seguimiento.html` — QR de seguimiento usa servicio externo
-**Archivo:** `seguimiento.html`, ~línea 153  
-```html
-<img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=...">
-```
-El QR se genera enviando la URL de seguimiento a un servicio de terceros (qrserver.com). Depende de disponibilidad externa y comparte la URL con ese servidor.  
-**Solución:** Incluir la librería `qrcode.min.js` (ya disponible en admin-taller.html vía CDN) y generar el QR localmente con `QRCode.toDataURL()`.
+### ~~18. `seguimiento.html` — QR de seguimiento usa servicio externo~~ ✅ YA RESUELTO
+**Verificado 2026-06-12:** `seguimiento.html` ya carga `qrcode.min.js` desde CDN (línea 82) y genera el QR localmente con `QRCode.toCanvas()` (línea 163). No queda referencia a qrserver.com.
 
 ---
 

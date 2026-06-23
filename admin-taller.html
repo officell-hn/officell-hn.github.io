@@ -202,7 +202,15 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
       <input type="text" id="buscarOrden" placeholder="🔍 Buscar cliente, equipo o código..."
         oninput="buscarEnOrdenes(this.value)"
         style="padding:0.45rem 1rem;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);min-width:220px;font-size:0.85rem">
-      <button class="btn-sm" onclick="cargarOrdenes()" style="margin-left:auto">🔄 Actualizar</button>
+      <select id="filtroFecha" onchange="filtrarFecha(this.value)" title="Filtrar por fecha de entrada"
+        style="padding:0.45rem 0.8rem;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:0.85rem">
+        <option value="">📅 Todas las fechas</option>
+        <option value="hoy">Hoy</option>
+        <option value="7dias">Últimos 7 días</option>
+        <option value="mes">Este mes</option>
+      </select>
+      <button class="btn-sm" onclick="exportarCSV()" style="margin-left:auto" title="Exportar listado actual a CSV">⬇️ CSV</button>
+      <button class="btn-sm" onclick="cargarOrdenes()">🔄 Actualizar</button>
     </div>
 
     <!-- TABLA -->
@@ -223,6 +231,13 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
           <tr><td colspan="7"><div class="loading"><div class="spinner"></div>Cargando órdenes...</div></td></tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- PAGINACIÓN -->
+    <div id="paginacion" style="display:none;justify-content:center;align-items:center;gap:1rem;margin-top:1rem">
+      <button class="btn-sm" id="pagAnterior" onclick="cambiarPagina(-1)">◀ Anterior</button>
+      <span id="pagInfo" style="font-size:0.85rem;color:var(--muted)"></span>
+      <button class="btn-sm" id="pagSiguiente" onclick="cambiarPagina(1)">Siguiente ▶</button>
     </div>
   </main>
 </div>
@@ -261,6 +276,7 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
           <option value="agua">Daño por Agua</option>
           <option value="computadora">Computadora</option>
           <option value="diagnostico">Solo Diagnóstico</option>
+          <option value="otro">Otro</option>
         </select>
       </div>
       <div class="form-group">
@@ -332,6 +348,7 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
           <option value="agua">Daño por Agua</option>
           <option value="puerto">Puerto de Carga</option>
           <option value="computadora">Computadora</option>
+          <option value="diagnostico">Solo Diagnóstico</option>
           <option value="otro">Otro</option>
         </select>
       </div>
@@ -494,7 +511,7 @@ async function verificarToken() {
     document.getElementById('app').style.display = 'block';
     const d = await r.json();
     ORDENES = d.ordenes || [];
-    renderTabla(ORDENES);
+    aplicarFiltros();
     renderStats(ORDENES);
   } catch(e) {
     document.getElementById('loginError').style.display = 'block';
@@ -526,9 +543,18 @@ async function cargarOrdenes() {
 }
 
 let textoBusqueda = '';
+let rangoFecha = '';
 function buscarEnOrdenes(q) {
   textoBusqueda = q.toLowerCase().trim();
   aplicarFiltros();
+}
+function filtrarFecha(v) {
+  rangoFecha = v;
+  aplicarFiltros();
+}
+// Fecha actual de Honduras en formato YYYY-MM-DD
+function hoyHN() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Tegucigalpa' });
 }
 function aplicarFiltros() {
   let lista = filtroActual ? ORDENES.filter(o => o.estado === filtroActual) : ORDENES;
@@ -540,7 +566,47 @@ function aplicarFiltros() {
       (o.codigo_seguimiento||'').toLowerCase().includes(textoBusqueda)
     );
   }
-  renderTabla(lista);
+  if (rangoFecha) {
+    const hoy = hoyHN();
+    let desde = '';
+    if (rangoFecha === 'hoy') desde = hoy;
+    else if (rangoFecha === '7dias') {
+      const d = new Date(hoy + 'T00:00:00');
+      d.setDate(d.getDate() - 6);
+      desde = d.toLocaleDateString('en-CA');
+    }
+    else if (rangoFecha === 'mes') desde = hoy.substring(0, 7) + '-01';
+    // fecha_entrada es YYYY-MM-DD: comparar strings equivale a comparar fechas
+    lista = lista.filter(o => {
+      const f = (o.fecha_entrada||'').substring(0, 10);
+      return f && f >= desde && f <= hoy;
+    });
+  }
+  listaFiltrada = lista;
+  paginaActual = 1; // todo cambio de filtro o búsqueda vuelve a la primera página
+  renderTabla(listaFiltrada);
+}
+
+// ── Paginación ────────────────────────────────────────────
+const POR_PAGINA = 25;
+let paginaActual = 1;
+let listaFiltrada = [];
+
+function cambiarPagina(delta) {
+  const totalPaginas = Math.max(1, Math.ceil(listaFiltrada.length / POR_PAGINA));
+  paginaActual = Math.min(totalPaginas, Math.max(1, paginaActual + delta));
+  renderTabla(listaFiltrada);
+}
+
+function renderPaginacion(total) {
+  const bar = document.getElementById('paginacion');
+  if (total <= POR_PAGINA) { bar.style.display = 'none'; return; }
+  const totalPaginas = Math.ceil(total / POR_PAGINA);
+  bar.style.display = 'flex';
+  document.getElementById('pagInfo').textContent =
+    `Página ${paginaActual} de ${totalPaginas} (${total} órdenes)`;
+  document.getElementById('pagAnterior').disabled  = paginaActual <= 1;
+  document.getElementById('pagSiguiente').disabled = paginaActual >= totalPaginas;
 }
 function filtrar(estado, btn) {
   filtroActual = estado;
@@ -551,12 +617,15 @@ function filtrar(estado, btn) {
 
 // ── Render tabla ──────────────────────────────────────────
 function renderTabla(ordenes) {
+  renderPaginacion(ordenes.length);
   if (!ordenes.length) {
     document.getElementById('tablaBody').innerHTML =
       '<tr><td colspan="7"><div class="empty"><div class="icon">📋</div>No hay órdenes</div></td></tr>';
     return;
   }
-  document.getElementById('tablaBody').innerHTML = ordenes.map(o => `
+  const inicio = (paginaActual - 1) * POR_PAGINA;
+  const pagina = ordenes.slice(inicio, inicio + POR_PAGINA);
+  document.getElementById('tablaBody').innerHTML = pagina.map(o => `
     <tr>
       <td>
         <div class="codigo-cell" onclick="copiarCodigo('${o.codigo_seguimiento||''}')">
@@ -601,6 +670,33 @@ function badgeLabel(estado) {
     listo:'🎉 Listo', entregado:'✅ Entregado', cancelado:'✕ Cancelado'
   };
   return m[estado] || estado;
+}
+
+// ── Exportar a CSV (respeta filtro y búsqueda activos) ────
+function exportarCSV() {
+  if (!listaFiltrada.length) { alert('No hay órdenes para exportar.'); return; }
+  const celda = v => {
+    const s = String(v ?? '');
+    return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const cabecera = ['Código','Equipo','Cliente','Teléfono','Estado','Fecha Entrada','Entrega Estimada','Precio (L)','Notas'];
+  const filas = listaFiltrada.map(o => [
+    o.codigo_seguimiento || '', o.equipo || '', o.cliente_nombre || '', o.cliente_telefono || '',
+    badgeLabelText(o.estado), o.fecha_entrada || '', o.fecha_estimada || '',
+    parseFloat(o.precio || 0), o.notas || ''
+  ].map(celda).join(','));
+  // BOM para que Excel detecte UTF-8 (tildes y ñ correctas)
+  const csv  = '\uFEFF' + [cabecera.map(celda).join(','), ...filas].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const hoy  = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Tegucigalpa' });
+  a.href = url;
+  a.download = `ordenes_taller_${hoy}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 // ── Nueva orden ───────────────────────────────────────────
