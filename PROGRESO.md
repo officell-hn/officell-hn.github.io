@@ -24,6 +24,7 @@
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-06-23 | Horario corregido a **8:30 AM – 5:30 PM** (era 8:30–5:00) en todo el sitio: `index.html`, `contacto.html`, `sobre-nosotros.html`, `agentes-bancarios.html`, `como-enviar-recibir-remesas-honduras.html` (display + meta descriptions + schema.org `openingHoursSpecification` `closes` 17:30). Dato real confirmado por Adonias. También unificado en el prompt de Keyson (repo IA). (commits `d402d4f`, `4e5320d`) |
 | 2026-06-18 | SEO/Search Console: vinculada la propiedad de Search Console `https://officell-hn.github.io/` con Google Analytics (`G-Z5D12EC06P`) → reportes de "Consultas" y "Páginas orgánicas" dentro de Analytics. **Diagnóstico sitemap "No se ha podido obtener":** el archivo está OK — responde 200, XML válido (24 URLs), sin BOM, Googlebot permitido, 0 redirecciones, robots.txt apunta bien, páginas públicas sin `noindex`. El error es del lado de Google (propiedad nueva, sitemap en cola con baja prioridad; "Última lectura" vacía = aún no lo ha leído). **No es un problema de código.** Vía recomendada mientras se resuelve solo: indexación manual por "Inspección de URLs" → "Solicitar indexación" de las páginas clave, y revisar Indexación → Páginas para ver el estado real. Reenviar el sitemap repetidamente NO ayuda. |
 | 2026-06-12 | admin-taller: paginación 25/pág + export CSV (respeta filtros) + filtro de fechas Hoy/7días/Mes (commits `9ba63ad`, `4ba228c`) |
 | 2026-06-12 | Limpiezas ítems 13-15 de MEJORAS_WEB: `--azul` en tienda, wrapper `previewImg()` eliminado, regla CSS vacía (commit `28a1002`) |
