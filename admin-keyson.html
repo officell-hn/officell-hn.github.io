@@ -184,8 +184,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:0
   </div>
 </div>
 
+<script src="config.js"></script>
 <script>
-const API = 'https://officell-ia-production.up.railway.app/api/tienda';
+const API = (typeof OFFICELL_CONFIG !== 'undefined') ? OFFICELL_CONFIG.API : 'https://officell-ia-production.up.railway.app/api/tienda';
 let TOKEN = '';
 let diasActual = 7;
 let buscarTimeout = null;
@@ -193,10 +194,10 @@ let clienteActivo = null;
 
 // ── AUTH ────────────────────────────────────────────────────
 function authHeaders() {
-  return { 'Authorization': `Bearer ${TOKEN}` };
+  return TOKEN ? { 'Authorization': `Bearer ${TOKEN}` } : {};
 }
 function authHeadersPost() {
-  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` };
+  return TOKEN ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` } : { 'Content-Type': 'application/json' };
 }
 
 async function login() {

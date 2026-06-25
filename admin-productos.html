@@ -969,7 +969,7 @@ function renderPedidos(pedidos) {
         <td><span class="badge ${est.cls}">${est.label}</span></td>
         <td style="color:var(--muted);font-size:.82rem;white-space:nowrap">${fecha}</td>
         <td>
-          ${p.estado === 'pendiente_pago' ? `<button class="btn btn-success btn-sm" style="background:#f59e0b;border-color:#f59e0b" onclick="confirmarPago('${escHtml(p.id)}','${escHtml(p.nombre_cliente||'')}')">✅ Confirmar pago</button>` : ''}
+          ${p.estado === 'pendiente_pago' ? `<button class="btn btn-success btn-sm" style="background:#f59e0b;border-color:#f59e0b" onclick="confirmarPago('${escHtml(p.id)}')">✅ Confirmar pago</button>` : ''}
           ${p.estado !== 'completado' && p.estado !== 'pendiente_pago' ? `<button class="btn btn-success btn-sm" style="margin-top:4px" onclick="cambiarEstadoPedido('${escHtml(p.id)}','completado')" title="Marcar como completado">💎 Completado</button>` : ''}
           ${p.estado !== 'cancelado'  ? `<button class="btn btn-sm" style="margin-top:4px" onclick="cambiarEstadoPedido('${escHtml(p.id)}','cancelado')" title="Cancelar pedido">✕ Cancelar</button>` : `<button class="btn btn-sm" style="margin-top:4px;background:rgba(231,76,60,.15);border-color:#e74c3c;color:#e74c3c" onclick="eliminarPedido('${escHtml(p.id)}','${escHtml(p.codigo_seguimiento||p.id)}')" title="Eliminar definitivamente">🗑️ Eliminar</button>`}
         </td>
@@ -993,7 +993,9 @@ async function eliminarPedido(id, codigo) {
   }
 }
 
-async function confirmarPago(id, nombre) {
+async function confirmarPago(id) {
+  const ped = todosPedidos.find(p => p.id === id);
+  const nombre = ped?.nombre_cliente || '—';
   if (!confirm(`¿Confirmar que ya recibiste el pago de ${nombre}?\nEsto lo moverá a "En proceso" y notificará al cliente.`)) return;
   try {
     const r = await apiFetch(`${API}/admin/pedido/${id}`, {

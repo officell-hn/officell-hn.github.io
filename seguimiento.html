@@ -138,7 +138,7 @@ async function buscar() {
     const badgeClass = p.estado === 'completado' ? 'badge-completado' : p.estado === 'cancelado' ? 'badge-cancelado' : 'badge-proceso';
     const fecha = p.fecha ? new Date(p.fecha).toLocaleString('es-HN', { timeZone: 'America/Tegucigalpa', dateStyle: 'long', timeStyle: 'short' }) : '—';
     const items = Array.isArray(p.productos) ? p.productos : [];
-    const trackUrl = window.location.href.split('?')[0] + '?codigo=' + p.codigo;
+    const trackUrl = window.location.href.split('?')[0] + '?codigo=' + encodeURIComponent(p.codigo);
 
     el.innerHTML = `
       <div class="estado-card">

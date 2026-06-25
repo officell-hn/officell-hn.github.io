@@ -1,5 +1,17 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-06-18
+> Última revisión: 2026-06-25
+
+---
+
+## ✅ Bugs corregidos — revisión 2026-06-25
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-taller.html` | 125 (CSS) | **BUG ANIMACIÓN**: `copiarCodigo()` aplicaba `animation:fadeIn 0.2s ease` en el toast de "¡Código copiado!" pero `@keyframes fadeIn` nunca fue definida en el bloque `<style>`. El toast aparecía sin animación. | Agregado `@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}` después de `@keyframes spin`. |
+| `admin-keyson.html` | 188 | **BUG CONFIG**: La URL de la API estaba hardcodeada directamente: `const API = 'https://...'`. Los demás archivos admin usan `OFFICELL_CONFIG.API` vía `config.js` para que un cambio de endpoint solo requiera editar un archivo. Si Railway cambia la URL, `admin-keyson.html` quedaría roto mientras los demás se actualizan solos. | Agregado `<script src="config.js"></script>` y cambiado a `const API = (typeof OFFICELL_CONFIG !== 'undefined') ? OFFICELL_CONFIG.API : 'https://...'`. |
+| `admin-keyson.html` | 195 | **BUG AUTH**: `authHeaders()` siempre devolvía `{ 'Authorization': 'Bearer ' }` — incluso cuando `TOKEN` era `''` (antes del login). Enviaba una cabecera con bearer vacío en lugar de omitirla, lo cual podía activar parsing inesperado en el backend. `authHeadersPost()` tenía el mismo problema. | `authHeaders()` cambiado a retornar `{}` si TOKEN es falsy. `authHeadersPost()` retorna solo Content-Type si TOKEN es falsy. Comportamiento ahora consistente con `admin-taller.html` y `admin-productos.html`. |
+| `seguimiento.html` | 141 | **BUG URL**: Al construir la URL del QR de seguimiento, se hacía `'?codigo=' + p.codigo` sin `encodeURIComponent()`. Si el backend alguna vez devuelve códigos con caracteres especiales (espacios, `+`, `#`), la URL del QR quedaría malformada y el escaneo llevaría a una página de error. | Cambiado a `'?codigo=' + encodeURIComponent(p.codigo)`. |
+| `admin-productos.html` | 972 / 996 | **BUG JS**: `confirmarPago(id, nombre)` recibía el nombre del cliente como string literal dentro del atributo `onclick`, delimitado con comillas simples: `onclick="confirmarPago('id','O'Brien')"`. Un apostrofe en el nombre (muy común en Honduras: "María O'Brien", "Café El Buen") cerraba el string JS prematuramente, generando `SyntaxError` en el onclick y dejando ese botón de confirmación de pago completamente inoperativo. `escHtml()` no escapa `'`. | Quitado el parámetro `nombre` del onclick. La función ahora solo recibe `id` (UUID sin caracteres problemáticos) y busca el nombre internamente: `const ped = todosPedidos.find(p => p.id === id); const nombre = ped?.nombre_cliente || '—';`. |
 
 ---
 
@@ -145,6 +157,30 @@ El auto-login hace un fetch a `${API}/admin/productos` solo para verificar el JW
 
 ### ~~15. Regla CSS vacía `.cat-datalist {}` en `admin-productos.html`~~ ✅ IMPLEMENTADA 2026-06-12
 **Fix aplicado:** Regla vacía y su comentario eliminados.
+
+---
+
+### 17b. `admin-productos.html` — sección Pedidos sin paginación
+**Archivo:** `admin-productos.html`, función `renderPedidos()`  
+**Problema:** La tabla de pedidos muestra todos los registros en una sola página. Con volumen alto (>50 pedidos), la tabla se vuelve lenta y difícil de navegar. `admin-taller.html` ya tiene paginación de 25 items (implementada 2026-06-12); pedidos debería tener lo mismo.  
+**Solución:** Implementar paginación client-side igual a la de taller, con `POR_PAGINA_PEDIDOS = 20` y barra de navegación bajo la tabla.  
+**Prioridad:** Media
+
+---
+
+### 17c. `admin-keyson.html` — `init()` tiene lógica de UI duplicada al llamarse desde `login()`
+**Archivo:** `admin-keyson.html`, funciones `login()` e `init()`  
+**Problema:** `login()` ya oculta `#login-screen` y muestra `#app` (líneas 216-217), pero luego llama a `init()` que vuelve a hacerlo (líneas 231-232). No causa error funcional (ambos setean el mismo estado) pero es confuso y redundante.  
+**Solución:** Dividir `init()` en dos funciones: `cargarDatos()` (solo hace los fetch) e `init()` (restaura sesión con UI). `login()` llamaría a `cargarDatos()` directamente.  
+**Prioridad:** Baja
+
+---
+
+### 17d. `seguimiento.html` — no redirige a `taller.html` cuando se ingresa un código de taller
+**Archivo:** `seguimiento.html`  
+**Problema:** Si un cliente recibe un código de seguimiento del taller (formato `OC-XXXX-ABCD`) y lo ingresa en `seguimiento.html` (pensando que es la misma página que tienda), recibe "Código no encontrado" sin explicación. Debería detectar el formato y redirigir o sugerir `taller.html`.  
+**Solución:** Al recibir error 404, verificar si el código parece un código de taller (empieza con `OC-`) y mostrar mensaje: "Este código es de reparación. Consulta en [taller.html] el estado de tu equipo."  
+**Prioridad:** Baja
 
 ---
 
