@@ -633,7 +633,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
     const condMap = {nuevo:'cond-nuevo',usado:'cond-usado',reacondicionado:'cond-reacondicionado'};
     el.innerHTML = prods.map(p => `
       <a href="tienda.html" class="store-card">
-        ${p.imagen_url ? `<img src="${esc(p.imagen_url)}" class="store-card-img" alt="${esc(p.nombre)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ''}
+        ${p.imagen_url ? `<img src="${esc(p.imagen_url)}" class="store-card-img" alt="${esc(p.nombre)}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ''}
         <div class="store-card-img-ph" style="${p.imagen_url?'display:none':''}">📦</div>
         <div class="store-card-body">
           <div class="store-card-cat">${esc(p.categoria_web||'')}</div>
