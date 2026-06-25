@@ -403,9 +403,7 @@ function fechaCorta(iso) {
   return d.toLocaleDateString('es-HN', { day:'numeric', month:'short' });
 }
 
-function esc(str) {
-  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// esc() — definida en config.js (función canónica compartida, escapa también ')
 
 // Sesión restaurada por window.addEventListener('load') arriba — no duplicar
 </script>

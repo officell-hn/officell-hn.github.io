@@ -1047,9 +1047,7 @@ function fmtNum(n) {
   return parseFloat(n||0).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function escHtml(str) {
-  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// escHtml() — definida en config.js (función canónica compartida, escapa también ')
 
 let toastTimer;
 function toast(msg, type = 'ok') {

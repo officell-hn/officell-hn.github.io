@@ -611,6 +611,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
   </div>
 </footer>
 
+<script src="config.js"></script>
 <script>
 (async () => {
   const el = document.getElementById('store-featured');
@@ -645,7 +646,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
     el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--muted)"><a href="tienda.html" style="color:var(--accent)">Ver tienda →</a></div>';
   }
 })();
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+// esc() — definida en config.js (función canónica compartida)
 </script>
 
 <!-- WHATSAPP FLOAT -->

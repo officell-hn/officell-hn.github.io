@@ -22,8 +22,17 @@ const OFFICELL_CONFIG = {
   }
 };
 
+// Escape HTML para prevenir XSS al insertar datos del servidor via innerHTML.
+// Función canónica compartida — usar esc() o escHtml() (alias) en todas las páginas.
+function escHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // Exponer como variable global
 if (typeof window !== 'undefined') {
   window.OFFICELL_CONFIG = OFFICELL_CONFIG;
   window.API = OFFICELL_CONFIG.API; // compatibilidad con código existente
+  window.escHtml = escHtml;
+  window.esc = escHtml; // alias — ambos nombres apuntan a la misma función completa
 }
