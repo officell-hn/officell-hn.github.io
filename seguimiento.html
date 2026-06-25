@@ -126,7 +126,7 @@ async function buscar() {
     const data = await r.json();
 
     if (!data.ok) {
-      el.innerHTML = `<div class="error-box">❌ ${esc(data.error) || 'Código no encontrado.'}<br><br><small>Verifica el código en tu comprobante de WhatsApp.</small></div>`;
+      el.innerHTML = `<div class="error-box">❌ ${esc(data.error) || 'Código no encontrado.'}<br><br><small>Verifica el código en tu comprobante de WhatsApp.</small><br><br><small>¿Tu código es de una <b>reparación</b> del taller? Búscalo aquí: <a href="taller.html?codigo=${encodeURIComponent(codigo)}" style="color:var(--accent);font-weight:700">seguimiento del taller →</a></small></div>`;
       return;
     }
 
