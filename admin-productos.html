@@ -486,7 +486,7 @@ window.onload = () => {
   const saved = sessionStorage.getItem('oc_admin_jwt');
   if (saved) {
     TOKEN = saved;
-    fetch(`${API}/admin/productos`, { headers: authHeaders() })
+    fetch(`${API}/admin/ping`, { headers: authHeaders() })
       .then(r => r.json())
       .then(d => {
         if (d.ok) {
