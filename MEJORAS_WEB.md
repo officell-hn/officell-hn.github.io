@@ -160,34 +160,23 @@ El auto-login hace un fetch a `${API}/admin/productos` solo para verificar el JW
 
 ---
 
-### 17b. `admin-productos.html` — sección Pedidos sin paginación
-**Archivo:** `admin-productos.html`, función `renderPedidos()`  
-**Problema:** La tabla de pedidos muestra todos los registros en una sola página. Con volumen alto (>50 pedidos), la tabla se vuelve lenta y difícil de navegar. `admin-taller.html` ya tiene paginación de 25 items (implementada 2026-06-12); pedidos debería tener lo mismo.  
-**Solución:** Implementar paginación client-side igual a la de taller, con `POR_PAGINA_PEDIDOS = 20` y barra de navegación bajo la tabla.  
-**Prioridad:** Media
+### ~~17b. `admin-productos.html` — sección Pedidos sin paginación~~ ✅ IMPLEMENTADA 2026-06-25
+**Fix aplicado:** Paginación client-side de 20 pedidos por página (`POR_PAGINA_PEDIDOS = 20`), mismo patrón que taller. Barra `◀ Anterior · Página X de Y (N pedidos) · Siguiente ▶` bajo la tabla, oculta con ≤20 resultados. `renderPedidos(pedidos, resetPagina=true)` guarda el set en `pedidosFiltrados` y vuelve a página 1 en cada filtro/búsqueda/toggle; `cambiarPaginaPedidos()` navega sin resetear. Respeta el orden (pendientes de pago primero) y el filtro de cancelados. (commit `d3cdee1`)
 
 ---
 
-### 17c. `admin-keyson.html` — `init()` tiene lógica de UI duplicada al llamarse desde `login()`
-**Archivo:** `admin-keyson.html`, funciones `login()` e `init()`  
-**Problema:** `login()` ya oculta `#login-screen` y muestra `#app` (líneas 216-217), pero luego llama a `init()` que vuelve a hacerlo (líneas 231-232). No causa error funcional (ambos setean el mismo estado) pero es confuso y redundante.  
-**Solución:** Dividir `init()` en dos funciones: `cargarDatos()` (solo hace los fetch) e `init()` (restaura sesión con UI). `login()` llamaría a `cargarDatos()` directamente.  
-**Prioridad:** Baja
+### ~~17c. `admin-keyson.html` — `init()` tiene lógica de UI duplicada al llamarse desde `login()`~~ ✅ IMPLEMENTADA 2026-06-25
+**Fix aplicado:** `init()` dividido en `cargarDatos()` (solo los fetch: `cargarStats()` + `cargarClientes()`) e `init()` (restaura sesión guardada con UI, auto-login). `login()` ahora llama `cargarDatos()` directamente tras mostrar el panel; el listener `load` llama solo a `init()`. Eliminada la lógica de UI duplicada y el doble seteo de TOKEN. (commit `f0cfaee`)
 
 ---
 
-### 17d. `seguimiento.html` — no redirige a `taller.html` cuando se ingresa un código de taller
-**Archivo:** `seguimiento.html`  
-**Problema:** Si un cliente recibe un código de seguimiento del taller (formato `OC-XXXX-ABCD`) y lo ingresa en `seguimiento.html` (pensando que es la misma página que tienda), recibe "Código no encontrado" sin explicación. Debería detectar el formato y redirigir o sugerir `taller.html`.  
-**Solución:** Al recibir error 404, verificar si el código parece un código de taller (empieza con `OC-`) y mostrar mensaje: "Este código es de reparación. Consulta en [taller.html] el estado de tu equipo."  
-**Prioridad:** Baja
+### ~~17d. `seguimiento.html` — no redirige a `taller.html` cuando se ingresa un código de taller~~ ✅ IMPLEMENTADA 2026-06-25
+**Fix aplicado:** En el mensaje de "código no encontrado", `seguimiento.html` ahora ofrece un enlace directo a `taller.html?codigo=...` con el código ya cargado (taller.html autocarga el parámetro y busca solo). Se usó el enfoque seguro sin heurística de prefijo (el formato de los códigos de tienda se genera en el backend y no se puede verificar desde el front), mostrando la sugerencia como ayuda secundaria sin afirmar nada incorrecto. (commit `53b1219`)
 
 ---
 
-### 16. `esc()` de `admin-taller.html` y `escHtml()` de `admin-productos.html` son inconsistentes
-**Archivos:** Ambos admin  
-**Problema:** Existen dos funciones de escape con nombres distintos y comportamientos ligeramente distintos en el proyecto. `taller.html` (público) tiene la versión más completa (escapa `&`, `<`, `>`, `"`, `'`). La de admin-taller.html escapa `&`, `<`, `>`, `"` pero no `'`.  
-**Solución a largo plazo:** Unificar en un solo `config.js` o un archivo `utils.js` compartido con la función completa.
+### ~~16. `esc()` de `admin-taller.html` y `escHtml()` de `admin-productos.html` son inconsistentes~~ ✅ IMPLEMENTADA 2026-06-25
+**Fix aplicado:** Una sola función canónica de escape HTML en `config.js` (escapa `&`, `<`, `>`, `"`, `'` con guarda null/undefined), expuesta como `window.escHtml` y alias `window.esc`. Eliminadas las 7 definiciones locales duplicadas (admin-keyson, admin-productos, admin-taller, seguimiento, taller, tienda, index). `index.html` ahora también carga `config.js`. Corrige de paso el bug de seguridad de los admin que no escapaban la comilla simple. (commit `e5285d8`)
 
 ---
 
