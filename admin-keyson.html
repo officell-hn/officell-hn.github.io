@@ -216,7 +216,7 @@ async function login() {
     sessionStorage.setItem('oc_admin_jwt', TOKEN);
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
-    init();
+    cargarDatos();
   } catch(e) { err.textContent = 'Error de conexión'; err.style.display = 'block'; }
 }
 
@@ -226,21 +226,22 @@ function logout() {
 }
 
 // ── INIT ─────────────────────────────────────────────────────
-async function init() {
-  const saved = sessionStorage.getItem('oc_admin_jwt');
-  if (saved) {
-    TOKEN = saved;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    await Promise.all([cargarStats(), cargarClientes()]);
-    return;
-  }
+// Solo carga los datos del panel (no toca la UI de login/app)
+async function cargarDatos() {
+  await Promise.all([cargarStats(), cargarClientes()]);
 }
 
-window.addEventListener('load', () => {
+// Restaura una sesión guardada al cargar la página (auto-login)
+async function init() {
   const saved = sessionStorage.getItem('oc_admin_jwt');
-  if (saved) { TOKEN = saved; init(); }
-});
+  if (!saved) return;
+  TOKEN = saved;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  await cargarDatos();
+}
+
+window.addEventListener('load', init);
 
 async function recargar() {
   await Promise.all([cargarStats(), cargarClientes(document.getElementById('searchInput').value)]);
