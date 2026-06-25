@@ -332,6 +332,11 @@
           </tbody>
         </table>
       </div>
+      <div id="pag-pedidos" style="display:none;justify-content:center;align-items:center;gap:1rem;margin-top:1rem">
+        <button class="btn btn-sm" id="pagPedAnterior" onclick="cambiarPaginaPedidos(-1)">◀ Anterior</button>
+        <span id="pagPedInfo" style="font-size:.85rem;color:var(--muted)"></span>
+        <button class="btn btn-sm" id="pagPedSiguiente" onclick="cambiarPaginaPedidos(1)">Siguiente ▶</button>
+      </div>
     </div>
   </main>
 </div>
@@ -422,6 +427,9 @@ let TOKEN = '';
 let editandoId = null;
 let todosProductos = [];
 let todosPedidos = [];
+const POR_PAGINA_PEDIDOS = 20;
+let paginaPedidos = 1;
+let pedidosFiltrados = [];
 
 // ─── LOGIN CON JWT ──────────────────────────────────────────────
 function authHeaders() {
@@ -913,7 +921,9 @@ async function cargarPedidos() {
   }
 }
 
-function renderPedidos(pedidos) {
+function renderPedidos(pedidos, resetPagina = true) {
+  pedidosFiltrados = pedidos;          // recordar el set actual para la navegación de páginas
+  if (resetPagina) paginaPedidos = 1;  // todo cambio de filtro/búsqueda vuelve a la página 1
   // Ocultar cancelados a menos que el toggle esté activo
   const verCancelados = document.getElementById('chk-cancelados')?.checked;
   if (!verCancelados) pedidos = pedidos.filter(p => p.estado !== 'cancelado');
@@ -932,6 +942,7 @@ function renderPedidos(pedidos) {
   if (!pedidos.length) {
     document.getElementById('tbody-pedidos').innerHTML =
       '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">Sin pedidos aún</td></tr>';
+    document.getElementById('pag-pedidos').style.display = 'none';
     return;
   }
   // Ordenar: pendientes de pago primero
@@ -940,7 +951,11 @@ function renderPedidos(pedidos) {
     if (b.estado === 'pendiente_pago' && a.estado !== 'pendiente_pago') return 1;
     return 0;
   });
-  document.getElementById('tbody-pedidos').innerHTML = ordenados.map(p => {
+  // Paginación (20 por página)
+  renderPaginacionPedidos(ordenados.length);
+  const inicio = (paginaPedidos - 1) * POR_PAGINA_PEDIDOS;
+  const pagina = ordenados.slice(inicio, inicio + POR_PAGINA_PEDIDOS);
+  document.getElementById('tbody-pedidos').innerHTML = pagina.map(p => {
     let prods = []; try { prods = Array.isArray(p.productos) ? p.productos : (typeof p.productos === 'string' ? JSON.parse(p.productos) : []); } catch(e) {}
     const lista = prods.map(pr => `<li>• ${escHtml(pr.nombre||'?')} x${pr.cantidad} — L.${fmtNum((pr.precio||0)*(pr.cantidad||1))}</li>`).join('');
     const fecha = p.creado_en ? new Date(p.creado_en).toLocaleString('es-HN') : '—';
@@ -976,6 +991,23 @@ function renderPedidos(pedidos) {
       </tr>
     `;
   }).join('');
+}
+
+function cambiarPaginaPedidos(delta) {
+  paginaPedidos = Math.max(1, paginaPedidos + delta);
+  renderPedidos(pedidosFiltrados, false);  // re-render sin resetear la página
+}
+
+function renderPaginacionPedidos(total) {
+  const bar = document.getElementById('pag-pedidos');
+  if (total <= POR_PAGINA_PEDIDOS) { bar.style.display = 'none'; return; }
+  const totalPaginas = Math.ceil(total / POR_PAGINA_PEDIDOS);
+  if (paginaPedidos > totalPaginas) paginaPedidos = totalPaginas;
+  bar.style.display = 'flex';
+  document.getElementById('pagPedInfo').textContent =
+    `Página ${paginaPedidos} de ${totalPaginas} (${total} pedidos)`;
+  document.getElementById('pagPedAnterior').disabled  = paginaPedidos <= 1;
+  document.getElementById('pagPedSiguiente').disabled = paginaPedidos >= totalPaginas;
 }
 
 async function eliminarPedido(id, codigo) {
