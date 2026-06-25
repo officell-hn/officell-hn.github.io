@@ -138,10 +138,9 @@
 
 ---
 
-### 12. `auto-login` de admin-productos verifica consultando la lista de productos
-**Archivo:** `admin-productos.html`, ~línea 471  
-El auto-login hace un fetch a `${API}/admin/productos` solo para verificar el JWT. Si la lista de productos es grande esto es costoso. Sería más eficiente tener un endpoint `/admin/ping` o `/admin/me` que solo devuelva `{ok: true}`.  
-*(Requiere cambio en backend Railway.)*
+### ~~12. `auto-login` de admin-productos verifica consultando la lista de productos~~ ✅ IMPLEMENTADA 2026-06-25
+**Fix aplicado:** Backend IA — nuevo `GET /api/tienda/admin/ping` (`authAdmin`) que solo devuelve `{ok:true}` sin descargar datos (commit IA `eb03e16`). Frontend — el auto-login de `admin-productos.html` ahora llama a `${API}/admin/ping` en vez de `/admin/productos` (commit web `267ab6c`).  
+**⚠️ ORDEN DE DEPLOY:** desplegar primero el backend IA en Railway y verificar que `/admin/ping` responde; recién entonces pushear el cambio del web. Si el web se despliega antes, el auto-login daría 404.
 
 ---
 
