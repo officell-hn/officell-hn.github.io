@@ -1,5 +1,42 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-06-25
+> Última revisión: 2026-07-02
+
+---
+
+## ✅ Bugs corregidos — revisión 2026-07-02
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-taller.html` | 1092 | **BUG RENDERIZADO**: `imprimir()` construía el HTML del recibo inyectando campos de datos del usuario (`o.cliente_nombre`, `o.cliente_telefono`, `o.equipo`, `o.tipo_servicio`, `o.problema`, `o.notas`) directamente en el template string sin escapar. Si algún campo contenía `<` o `>` (p.ej., equipo "Samsung <A54>", nombre "O'Brien & Hijos"), el HTML del recibo se renderizaba malformado — el texto desaparecía o el layout se rompía. La misma función sí usaba `esc()` en otros contextos (`verDetalle()`) pero no en la ruta de impresión. | Aplicado `esc()` en los 6 campos de usuario: `cliente_nombre`, `cliente_telefono`, `equipo`, `tipo_servicio`, `problema` y `notas`. Campos seguros (números, fechas, estado desde mapa fijo) no modificados. |
+| `admin-productos.html` | 757 | **BUG UX**: `eliminarProducto()` llamaba a `renderProductos(todosProductos)` directamente después de eliminar un producto. Si el admin tenía activo un filtro de búsqueda o categoría, al borrar el producto la tabla saltaba a mostrar TODOS los productos (ignorando el filtro), desorientando al usuario y requiriendo re-filtrar manualmente. | Cambiado `renderProductos(todosProductos)` por `filtrarTabla()`, que re-aplica el filtro activo (`buscar-prod` + `filtro-cat`) sobre `todosProductos` actualizado. `updateStats()` y `populateCatFilter()` siguen recibiendo `todosProductos` completo, correcto. |
+| `admin-keyson.html` | 199 | **CÓDIGO MUERTO**: `authHeadersPost()` estaba definida (devuelve headers con `Content-Type` + `Authorization`) pero nunca se llamaba en ningún punto del archivo. La página Keyson es de solo lectura (solo GET) y todas sus peticiones usan `authHeaders()`. La función colgaba sin uso desde al menos la revisión 2026-06-18. | Eliminada la función. Sin impacto funcional. |
+
+---
+
+## 🟡 Mejoras pendientes — identificadas en revisión 2026-07-02
+
+### P1. `filtrarPedidos()` no busca por `game_id` — `admin-productos.html` línea 1065
+**Prioridad: Media**
+
+La función de búsqueda en la sección Pedidos no incluye el campo `game_id` (ID de jugador de Free Fire). La columna "🎮 ID Juego" es prominente en la tabla y visible para todos los pedidos de recargas. Si el admin recibe un comprobante de un cliente con su ID de jugador y quiere localizar el pedido, la búsqueda actual no lo encuentra.
+
+**Solución propuesta:** Agregar `|| (p.game_id||'').toLowerCase().includes(q)` al `.filter()` de `filtrarPedidos()` (línea ~1068).
+
+```javascript
+// Actual:
+const filtrados = todosPedidos.filter(p =>
+  !q || (p.id||'').toLowerCase().includes(q) ||
+  (p.nombre_cliente||'').toLowerCase().includes(q) ||
+  (p.telefono_cliente||'').toLowerCase().includes(q) ||
+  (p.email_cliente||'').toLowerCase().includes(q) ||
+  (p.codigo_seguimiento||'').toLowerCase().includes(q)
+);
+
+// Propuesto: agregar una línea más al filter:
+  || (p.game_id||'').toLowerCase().includes(q)
+```
+
+---
 
 ---
 

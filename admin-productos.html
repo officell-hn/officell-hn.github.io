@@ -754,7 +754,7 @@ async function eliminarProducto(id, btn) {
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
     todosProductos = todosProductos.filter(p => p.id !== id);
-    renderProductos(todosProductos);
+    filtrarTabla();
     updateStats(todosProductos);
     populateCatFilter(todosProductos);
     toast('Producto eliminado', 'ok');

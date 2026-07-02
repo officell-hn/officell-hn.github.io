@@ -1089,19 +1089,19 @@ function imprimir(id, formato) {
         <div class="tit">Recibo de Reparación</div>
         <div class="cod">${codigo}</div>
         <h3>Datos del Cliente</h3>
-        <table><tr><th>Nombre</th><td>${o.cliente_nombre||'—'}</td><th>Teléfono</th><td>${o.cliente_telefono||'—'}</td></tr></table>
+        <table><tr><th>Nombre</th><td>${esc(o.cliente_nombre||'—')}</td><th>Teléfono</th><td>${esc(o.cliente_telefono||'—')}</td></tr></table>
         <h3>Datos del Equipo</h3>
         <table>
-          <tr><th>Equipo</th><td colspan="3">${o.equipo}</td></tr>
-          <tr><th>Tipo de Servicio</th><td>${o.tipo_servicio||'Reparación'}</td><th>Precio Estimado</th><td>L.${parseFloat(o.precio||0).toLocaleString()}</td></tr>
-          <tr><th>Problema</th><td colspan="3">${o.problema||'—'}</td></tr>
+          <tr><th>Equipo</th><td colspan="3">${esc(o.equipo)}</td></tr>
+          <tr><th>Tipo de Servicio</th><td>${esc(o.tipo_servicio||'Reparación')}</td><th>Precio Estimado</th><td>L.${parseFloat(o.precio||0).toLocaleString()}</td></tr>
+          <tr><th>Problema</th><td colspan="3">${esc(o.problema||'—')}</td></tr>
         </table>
         <h3>Fechas</h3>
         <table><tr><th>Fecha de Entrada</th><td>${o.fecha_entrada||new Date().toISOString().substring(0,10)}</td><th>Entrega Estimada</th><td>${o.fecha_estimada||'Por confirmar'}</td></tr></table>
         <h3>Estado Actual</h3>
         <table>
           <tr><th>Estado</th><td colspan="3"><strong>${badgeLabelText(o.estado)}</strong></td></tr>
-          ${o.notas ? `<tr><th>Notas</th><td colspan="3">${o.notas}</td></tr>` : ''}
+          ${o.notas ? `<tr><th>Notas</th><td colspan="3">${esc(o.notas)}</td></tr>` : ''}
         </table>
         <div class="terms"><strong>Términos y Condiciones:</strong> Garantía según tipo de servicio (pantallas: 30 días, baterías: 90 días, software: 15 días). El equipo debe ser retirado dentro de los 30 días posteriores a que esté listo. Pasado este plazo, OFFICELL no se responsabiliza por el equipo.</div>
         <div class="qr"><img src="${qrDataUrl}"><div class="qr-lbl">Escanea para ver el estado de tu reparación</div></div>

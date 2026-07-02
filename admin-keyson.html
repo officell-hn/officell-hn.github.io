@@ -196,10 +196,6 @@ let clienteActivo = null;
 function authHeaders() {
   return TOKEN ? { 'Authorization': `Bearer ${TOKEN}` } : {};
 }
-function authHeadersPost() {
-  return TOKEN ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` } : { 'Content-Type': 'application/json' };
-}
-
 async function login() {
   const pwd = document.getElementById('pwdInput').value;
   const err = document.getElementById('loginError');
