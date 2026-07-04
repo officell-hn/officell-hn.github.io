@@ -13,28 +13,15 @@
 
 ---
 
-## 🟡 Mejoras pendientes — identificadas en revisión 2026-07-02
+## Mejoras identificadas en revisión 2026-07-02
 
-### P1. `filtrarPedidos()` no busca por `game_id` — `admin-productos.html` línea 1065
-**Prioridad: Media**
+### ~~P1. `filtrarPedidos()` no busca por `game_id`~~ ✅ APLICADA 2026-07-04
 
-La función de búsqueda en la sección Pedidos no incluye el campo `game_id` (ID de jugador de Free Fire). La columna "🎮 ID Juego" es prominente en la tabla y visible para todos los pedidos de recargas. Si el admin recibe un comprobante de un cliente con su ID de jugador y quiere localizar el pedido, la búsqueda actual no lo encuentra.
-
-**Solución propuesta:** Agregar `|| (p.game_id||'').toLowerCase().includes(q)` al `.filter()` de `filtrarPedidos()` (línea ~1068).
-
-```javascript
-// Actual:
-const filtrados = todosPedidos.filter(p =>
-  !q || (p.id||'').toLowerCase().includes(q) ||
-  (p.nombre_cliente||'').toLowerCase().includes(q) ||
-  (p.telefono_cliente||'').toLowerCase().includes(q) ||
-  (p.email_cliente||'').toLowerCase().includes(q) ||
-  (p.codigo_seguimiento||'').toLowerCase().includes(q)
-);
-
-// Propuesto: agregar una línea más al filter:
-  || (p.game_id||'').toLowerCase().includes(q)
-```
+La búsqueda de Pedidos no incluía el campo `game_id` (ID de jugador de Free Fire), así que
+no se podía localizar un pedido de recarga por el ID del jugador.
+**Fix aplicado** en `filtrarPedidos()` (admin-productos.html): se agregó
+`String(p.game_id||'').toLowerCase().includes(q)` al `.filter()` — con `String()` por si
+el backend devuelve el ID como número (`.toLowerCase()` directo sobre número lanzaría error).
 
 ---
 

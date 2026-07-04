@@ -1069,7 +1069,8 @@ function filtrarPedidos() {
     (p.nombre_cliente||'').toLowerCase().includes(q) ||
     (p.telefono_cliente||'').toLowerCase().includes(q) ||
     (p.email_cliente||'').toLowerCase().includes(q) ||
-    (p.codigo_seguimiento||'').toLowerCase().includes(q)
+    (p.codigo_seguimiento||'').toLowerCase().includes(q) ||
+    String(p.game_id||'').toLowerCase().includes(q)
   );
   renderPedidos(filtrados);
 }
