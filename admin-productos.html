@@ -517,9 +517,13 @@ async function cargarProductos() {
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
     todosProductos = d.productos;
-    renderProductos(todosProductos);
     updateStats(todosProductos);
     populateCatFilter(todosProductos);
+    // Preservar búsqueda/categoría activas tras recargar (crear/editar producto y ↻
+    // re-fetchean vía cargarProductos). Sin esto, guardar un producto con un filtro
+    // activo reseteaba la tabla a TODOS los productos — igual que ya hace eliminarProducto.
+    const hayFiltro = document.getElementById('buscar-prod').value.trim() || document.getElementById('filtro-cat').value;
+    if (hayFiltro) filtrarTabla(); else renderProductos(todosProductos);
   } catch (e) {
     document.getElementById('tbody-productos').innerHTML =
       `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
@@ -914,7 +918,11 @@ async function cargarPedidos() {
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
     todosPedidos = d.pedidos;
-    renderPedidos(todosPedidos);
+    // Preservar la búsqueda activa tras recargar (confirmar pago, cancelar, eliminar
+    // re-fetchean vía cargarPedidos): sin esto la tabla saltaba a TODOS los pedidos y
+    // perdía el filtro justo después de actuar sobre un pedido encontrado por búsqueda.
+    const q = document.getElementById('buscar-ped').value.trim();
+    if (q) filtrarPedidos(); else renderPedidos(todosPedidos);
   } catch (e) {
     document.getElementById('tbody-pedidos').innerHTML =
       `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;

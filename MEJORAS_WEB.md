@@ -1,5 +1,16 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-07-02
+> Última revisión: 2026-07-09
+
+---
+
+## ✅ Bugs corregidos — revisión 2026-07-09
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-productos.html` | 917 (`cargarPedidos`) | **BUG UX (pérdida de filtro)**: `confirmarPago()`, `cambiarEstadoPedido()` y `eliminarPedido()` re-fetchean la lista con `cargarPedidos()`, que renderizaba `renderPedidos(todosPedidos)` — el set COMPLETO — ignorando la búsqueda activa en `#buscar-ped`. Flujo roto típico: el admin busca "María", encuentra su pedido pendiente, hace clic en **✅ Confirmar pago**, y la tabla salta a mostrar TODOS los pedidos, perdiendo la búsqueda justo después de actuar. Es exactamente la misma clase de bug que ya se corrigió en `eliminarProducto()` (rev. 2026-07-02, cambiado a `filtrarTabla()`), pero la pestaña Pedidos quedó sin arreglar. | `cargarPedidos()` ahora, tras actualizar `todosPedidos`, respeta la búsqueda activa: `const q = ...buscar-ped.value.trim(); if (q) filtrarPedidos(); else renderPedidos(todosPedidos);`. El toggle "Ver cancelados" ya se re-aplica dentro de `renderPedidos()`, así que ambos filtros sobreviven a la acción. |
+| `admin-productos.html` | 519 (`cargarProductos`) | **BUG UX (pérdida de filtro)**: misma clase en la pestaña Productos. `guardarProducto()` (crear/editar) y el botón ↻ recargan vía `cargarProductos()`, que hacía `renderProductos(todosProductos)`. Editar un producto con un filtro de búsqueda o categoría activo reseteaba la tabla a todos los productos. `eliminarProducto()` sí preservaba el filtro (`filtrarTabla()`), quedando inconsistente con crear/editar/recargar. | `cargarProductos()` ahora corre `updateStats()` + `populateCatFilter()` sobre el set completo (correcto) y luego renderiza respetando el filtro: `const hayFiltro = buscar-prod.value.trim() \|\| filtro-cat.value; if (hayFiltro) filtrarTabla(); else renderProductos(todosProductos);`. Todo el admin queda consistente: los filtros sobreviven a mutaciones y a la recarga manual. |
+
+**Notas de la revisión 2026-07-09:** revisados `admin-taller.html`, `admin-productos.html`, `admin-keyson.html` y `config.js`. Autenticación correcta en todos (`authHeaders()` con Bearer JWT, `apiFetch()` maneja 401; keyson hace `logout()` en 401). Sin variables CSS ni referencias DOM rotas detectadas. Escape HTML unificado en `config.js` (escapa también `'`). Los dos hallazgos fueron pérdida de filtro tras mutación/recarga (misma raíz), ya corregidos arriba.
 
 ---
 
