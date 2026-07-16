@@ -110,10 +110,10 @@ No hay dependencias que instalar. Los cambios en `main` se publican solos en Git
 - Ver y gestionar pedidos de la tienda web (cambiar estado, ver ID de juego Free Fire)
 
 **Acceso a ambos paneles:**
-- Protegidos por contraseña enviada como header `x-admin-token`
+- La contraseña se envía a `POST /admin/login`; el backend responde con un **JWT** que luego viaja en el header `Authorization: Bearer <jwt>` (helper `authHeaders()` en cada panel)
 - **Backend/API:** `https://officell-ia-production.up.railway.app/api/tienda`
 - La contraseña **no está en el código fuente** — la verifica el servidor en Railway
-- La sesión se guarda en `localStorage` (`oc_admin_token`)
+- La sesión (el JWT) se guarda en `sessionStorage` (`oc_admin_jwt`)
 
 ---
 

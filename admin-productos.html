@@ -821,7 +821,7 @@ function agregarCampoImagen(valor='') {
   const row = document.createElement('div');
   row.style.cssText = 'display:flex;gap:6px;align-items:center';
   row.innerHTML = `
-    <input type="url" class="img-campo" placeholder="https://… URL de imagen ${idx+1}" value="${valor}"
+    <input type="url" class="img-campo" placeholder="https://… URL de imagen ${idx+1}" value="${escHtml(valor)}"
       style="flex:1;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.9rem"
       oninput="actualizarPreviews()">
     <button type="button" onclick="this.parentNode.remove();actualizarPreviews()"

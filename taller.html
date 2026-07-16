@@ -445,7 +445,7 @@ async function buscarOrden() {
         <div class="resultado-grid">
           <div class="dato-item">
             <div class="dato-label">Tipo de servicio</div>
-            <div class="dato-valor">${formatTipo(o.tipo_servicio)}</div>
+            <div class="dato-valor">${esc(formatTipo(o.tipo_servicio))}</div>
           </div>
           <div class="dato-item">
             <div class="dato-label">Fecha de entrada</div>
