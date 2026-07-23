@@ -109,11 +109,16 @@ No hay dependencias que instalar. Los cambios en `main` se publican solos en Git
 - Gestionar inventario de productos (agregar, editar, activar/desactivar)
 - Ver y gestionar pedidos de la tienda web (cambiar estado, ver ID de juego Free Fire)
 
-**Acceso a ambos paneles:**
-- Protegidos por contraseña enviada como header `x-admin-token`
+### `admin-keyson.html` — Auditoría de conversaciones de WhatsApp
+- Panel de solo lectura para revisar las conversaciones del asistente Keyson
+- Búsqueda de clientes por nombre/número y filtro por período (7/30/90 días o todo)
+
+**Acceso a ambos paneles (los tres: taller, productos y keyson):**
+- Login por contraseña contra `POST /admin/login`; el servidor devuelve un **JWT**
+- Las peticiones autenticadas envían el token como header `Authorization: Bearer <jwt>` (helper `authHeaders()`)
 - **Backend/API:** `https://officell-ia-production.up.railway.app/api/tienda`
 - La contraseña **no está en el código fuente** — la verifica el servidor en Railway
-- La sesión se guarda en `localStorage` (`oc_admin_token`)
+- La sesión se guarda en `sessionStorage` (`oc_admin_jwt`); un `401` (token expirado) cierra sesión y pide volver a ingresar
 
 ---
 
