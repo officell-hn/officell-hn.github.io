@@ -290,11 +290,12 @@
               <th>Stock</th>
               <th>En Web</th>
               <th>Dest.</th>
+              <th>Venta permanente</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody id="tbody-productos">
-            <tr><td colspan="10" class="loading"><div class="spinner"></div></td></tr>
+            <tr><td colspan="11" class="loading"><div class="spinner"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -511,7 +512,7 @@ function showTab(tab, btn) {
 // ─── PRODUCTOS ─────────────────────────────────────────────────
 async function cargarProductos() {
   document.getElementById('tbody-productos').innerHTML =
-    '<tr><td colspan="10" class="loading"><div class="spinner"></div></td></tr>';
+    '<tr><td colspan="11" class="loading"><div class="spinner"></div></td></tr>';
   try {
     const r = await apiFetch(`${API}/admin/productos`, { headers: authHeaders() });
     const d = await r.json();
@@ -526,7 +527,7 @@ async function cargarProductos() {
     if (hayFiltro) filtrarTabla(); else renderProductos(todosProductos);
   } catch (e) {
     document.getElementById('tbody-productos').innerHTML =
-      `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
+      `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
   }
 }
 
@@ -554,7 +555,7 @@ function populateCatFilter(prods) {
 function renderProductos(prods) {
   if (!prods.length) {
     document.getElementById('tbody-productos').innerHTML =
-      '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">Sin productos</td></tr>';
+      '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--muted)">Sin productos</td></tr>';
     return;
   }
   document.getElementById('tbody-productos').innerHTML = prods.map(p => `
@@ -580,6 +581,12 @@ function renderProductos(prods) {
       <td>
         <label class="toggle">
           <input type="checkbox" ${p.destacado?'checked':''} onchange="toggleCampo('${p.id}','destacado',this.checked)">
+          <span class="slider"></span>
+        </label>
+      </td>
+      <td>
+        <label class="toggle">
+          <input type="checkbox" ${p.reposicion!=='unica'?'checked':''} onchange="toggleCampo('${p.id}','reposicion', this.checked ? 'permanente' : 'unica')">
           <span class="slider"></span>
         </label>
       </td>
