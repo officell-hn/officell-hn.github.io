@@ -24,6 +24,7 @@
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-07-30 | Revisión semanal admin. **Sin bugs críticos** (auth JWT correcta en los 3 paneles, sin `x-admin-token`, sin refs DOM/CSS rotas, sin código muerto). Mejora aplicada: **paginación en la pestaña Productos de `admin-productos.html`** (25/pág, reusa el patrón de Pedidos/Taller) — antes renderizaba todo el inventario de una vez, pesado con muchos SKU. Documentadas M1 (export CSV productos, Media) y M2 (export CSV pedidos, Baja) en `MEJORAS_WEB.md`. |
 | 2026-07-09 | Revisión semanal admin. Corregida pérdida de filtro tras mutación/recarga en `admin-productos.html`: **Pedidos** — `confirmarPago`/`cambiarEstadoPedido`/`eliminarPedido` recargan vía `cargarPedidos()` que ahora respeta la búsqueda activa (`filtrarPedidos()`); **Productos** — `guardarProducto` y ↻ recargan vía `cargarProductos()` que ahora respeta búsqueda + categoría (`filtrarTabla()`). Antes la tabla saltaba a todos los registros justo tras actuar sobre uno encontrado por búsqueda. Misma clase que el fix de `eliminarProducto` (2026-07-02), ahora consistente en todo el admin. |
 | 2026-06-25 | Limpiezas pendientes MEJORAS_WEB: **#16** unifica `esc()`/`escHtml()` en `config.js` (función completa que escapa también `'`; index ahora carga config.js); **#17b** paginación 20/pág en pestaña Pedidos de admin-productos; **#17c** separa `cargarDatos()`/`init()` en admin-keyson; **#17d** seguimiento ofrece enlace al taller con el código cargado; **perf** `decoding="async"` en imágenes de producto (tienda + index). (commits `e5285d8`, `d3cdee1`, `f0cfaee`, `53b1219`, `885b60a`) |
 | 2026-06-23 | Horario corregido a **8:30 AM – 5:30 PM** (era 8:30–5:00) en todo el sitio: `index.html`, `contacto.html`, `sobre-nosotros.html`, `agentes-bancarios.html`, `como-enviar-recibir-remesas-honduras.html` (display + meta descriptions + schema.org `openingHoursSpecification` `closes` 17:30). Dato real confirmado por Adonias. También unificado en el prompt de Keyson (repo IA). (commits `d402d4f`, `4e5320d`) |
@@ -52,6 +53,9 @@
 - [x] Implementar búsqueda de texto en tabla de órdenes del taller — verificado 2026-06-11 (campo `#buscarOrden`)
 - [x] Exportar órdenes del taller a CSV — implementado 2026-06-12 (botón ⬇️ CSV, respeta filtros)
 - [x] Paginación en tabla de órdenes del taller — implementado 2026-06-12 (25 por página)
+- [x] Paginación en tabla de productos (admin-productos) — implementado 2026-07-30 (25 por página)
+- [ ] Exportar inventario de productos a CSV — pendiente (M1, Media). El Taller ya tiene CSV; replicar patrón
+- [ ] Exportar pedidos a CSV — pendiente (M2, Baja)
 
 ---
 

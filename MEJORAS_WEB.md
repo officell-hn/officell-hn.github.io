@@ -1,5 +1,27 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-07-09
+> Última revisión: 2026-07-30
+
+---
+
+## ✅ Mejora aplicada — revisión 2026-07-30
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-productos.html` | 555 (`renderProductos`) | **UX / RENDIMIENTO (pestaña Productos sin paginación)**: la tabla de inventario renderizaba **TODOS** los productos de una sola vez (`renderProductos` no paginaba), a diferencia de Pedidos (`17b`, 20/pág) y del Taller (25/pág), que sí paginan. Para una tienda de celulares el inventario crece a decenas o cientos de SKU, cada fila con `<img>` thumbnail → DOM grande, scroll pesado y render lento en móviles de gama baja. | Paginación client-side de **25 productos por página** (`POR_PAGINA_PRODUCTOS = 25`), reusando el mismo patrón probado de Pedidos: `renderProductos(prods, resetPagina=true)` guarda el set en `productosFiltrados` y vuelve a página 1 en cada filtro/búsqueda/recarga; `cambiarPaginaProductos()` navega sin resetear; `renderPaginacionProductos()` pinta la barra `◀ Anterior · Página X de Y (N productos) · Siguiente ▶` (id `#pag-productos`), oculta con ≤25 resultados. Los toggles, editar y eliminar siguen operando por `id`/`data-id`, no por índice de fila, así que la paginación no los afecta. `filtrarTabla()` y `eliminarProducto()` (que llama `filtrarTabla()`) resetean a página 1 — consistente con Pedidos. |
+
+**Notas de la revisión 2026-07-30:** revisados `admin-taller.html`, `admin-productos.html`, `admin-keyson.html`, `config.js` y las páginas funcionales de cliente (`tienda.html`, `seguimiento.html`). **Sin bugs críticos ni de lógica JS.**
+- **Autenticación correcta** en los tres paneles: login → `POST /admin/login` → JWT → `Authorization: Bearer` vía `authHeaders()`. `apiFetch()` maneja `401` (alerta + `doLogout()`) en taller/productos; keyson hace `logout()` en `401` en cada GET. **Ningún** fetch usa `x-admin-token` ni auth incorrecta.
+- Sin `getElementById` a IDs inexistentes (verificado por script en los 3 admin). Sin variables CSS ni referencias DOM rotas. Sin funciones duplicadas ni código muerto nuevo. Escape HTML unificado en `config.js` (escapa también `'`).
+- Columna nueva "Venta permanente" (`reposicion`, commit `3e15bb5`): coherente — header y `colspan=11` cuadran (11 columnas), el toggle reusa `toggleCampo` y actualiza el estado local correctamente.
+- El único hallazgo accionable fue la falta de paginación en la tabla de Productos, ya corregida arriba.
+
+### Mejoras identificadas — pendientes (revisión 2026-07-30)
+
+**M1 (Media). Exportar inventario de productos a CSV.**
+`admin-productos.html` ya imprime el inventario a PDF (`imprimirInventario()`, respeta filtros), pero no exporta CSV. El Taller sí tiene botón CSV (`exportarCSV()`, con BOM UTF-8 para Excel y escape de celdas). Propuesta: replicar `exportarCSV()` en Productos sobre `productosFiltrados` (columnas: Nombre, Categoría, Condición, Precio, Costo, Stock, En Web, Destacado, Venta permanente) — reutilizar el mismo helper `celda()` y el prefijo `﻿`. Bajo riesgo, patrón ya existente en el repo.
+
+**M2 (Baja). Exportar pedidos a CSV.**
+La pestaña Pedidos no tiene export. Útil para conciliar ventas del mes (código, cliente, teléfono, game_id, total, método, estado, fecha). Mismo patrón `exportarCSV()`. Prioridad baja: el volumen de pedidos web es menor y ya hay seguimiento por código.
 
 ---
 

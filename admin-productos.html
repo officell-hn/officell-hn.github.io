@@ -299,6 +299,11 @@
           </tbody>
         </table>
       </div>
+      <div id="pag-productos" style="display:none;justify-content:center;align-items:center;gap:1rem;margin-top:1rem">
+        <button class="btn btn-sm" id="pagProdAnterior" onclick="cambiarPaginaProductos(-1)">◀ Anterior</button>
+        <span id="pagProdInfo" style="font-size:.85rem;color:var(--muted)"></span>
+        <button class="btn btn-sm" id="pagProdSiguiente" onclick="cambiarPaginaProductos(1)">Siguiente ▶</button>
+      </div>
     </div>
 
     <!-- ══ PEDIDOS ══ -->
@@ -431,6 +436,9 @@ let todosPedidos = [];
 const POR_PAGINA_PEDIDOS = 20;
 let paginaPedidos = 1;
 let pedidosFiltrados = [];
+const POR_PAGINA_PRODUCTOS = 25;
+let paginaProductos = 1;
+let productosFiltrados = [];
 
 // ─── LOGIN CON JWT ──────────────────────────────────────────────
 function authHeaders() {
@@ -552,13 +560,20 @@ function populateCatFilter(prods) {
   dl.innerHTML = todas.map(c => `<option value="${c}">`).join('');
 }
 
-function renderProductos(prods) {
+function renderProductos(prods, resetPagina = true) {
+  productosFiltrados = prods;          // recordar el set actual para la navegación de páginas
+  if (resetPagina) paginaProductos = 1; // todo cambio de filtro/búsqueda vuelve a la página 1
   if (!prods.length) {
     document.getElementById('tbody-productos').innerHTML =
       '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--muted)">Sin productos</td></tr>';
+    document.getElementById('pag-productos').style.display = 'none';
     return;
   }
-  document.getElementById('tbody-productos').innerHTML = prods.map(p => `
+  // Paginación client-side (25 por página) — mismo patrón que Pedidos y Taller
+  renderPaginacionProductos(prods.length);
+  const inicio = (paginaProductos - 1) * POR_PAGINA_PRODUCTOS;
+  const pagina = prods.slice(inicio, inicio + POR_PAGINA_PRODUCTOS);
+  document.getElementById('tbody-productos').innerHTML = pagina.map(p => `
     <tr data-id="${p.id}">
       <td>
         ${p.imagen_url
@@ -606,6 +621,23 @@ function filtrarTabla() {
     (!cat || p.categoria_web === cat)
   );
   renderProductos(filtrados);
+}
+
+function cambiarPaginaProductos(delta) {
+  paginaProductos = Math.max(1, paginaProductos + delta);
+  renderProductos(productosFiltrados, false);  // re-render sin resetear la página
+}
+
+function renderPaginacionProductos(total) {
+  const bar = document.getElementById('pag-productos');
+  if (total <= POR_PAGINA_PRODUCTOS) { bar.style.display = 'none'; return; }
+  const totalPaginas = Math.ceil(total / POR_PAGINA_PRODUCTOS);
+  if (paginaProductos > totalPaginas) paginaProductos = totalPaginas;
+  bar.style.display = 'flex';
+  document.getElementById('pagProdInfo').textContent =
+    `Página ${paginaProductos} de ${totalPaginas} (${total} productos)`;
+  document.getElementById('pagProdAnterior').disabled  = paginaProductos <= 1;
+  document.getElementById('pagProdSiguiente').disabled = paginaProductos >= totalPaginas;
 }
 
 function imprimirInventario() {
