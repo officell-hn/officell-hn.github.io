@@ -630,9 +630,16 @@ function cambiarPaginaProductos(delta) {
 
 function renderPaginacionProductos(total) {
   const bar = document.getElementById('pag-productos');
-  if (total <= POR_PAGINA_PRODUCTOS) { bar.style.display = 'none'; return; }
-  const totalPaginas = Math.ceil(total / POR_PAGINA_PRODUCTOS);
+  // El ajuste de página va ANTES de cualquier salida: renderProductos rebana
+  // el arreglo con paginaProductos justo después de llamar acá. Si se saliera
+  // sin corregirla cuando la lista encoge a una sola página (por ejemplo,
+  // estando en la página 3 y quedando 20 productos), el corte arrancaría en el
+  // índice 50 de un arreglo de 20 y la tabla quedaría EN BLANCO: sin filas, sin
+  // barra y sin el mensaje "Sin productos". Hoy ningún llamador puede
+  // provocarlo, pero este orden evita que el próximo lo destape sin darse cuenta.
+  const totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA_PRODUCTOS));
   if (paginaProductos > totalPaginas) paginaProductos = totalPaginas;
+  if (total <= POR_PAGINA_PRODUCTOS) { bar.style.display = 'none'; return; }
   bar.style.display = 'flex';
   document.getElementById('pagProdInfo').textContent =
     `Página ${paginaProductos} de ${totalPaginas} (${total} productos)`;
