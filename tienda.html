@@ -457,6 +457,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
 const API = (typeof OFFICELL_CONFIG !== 'undefined') ? OFFICELL_CONFIG.API : 'https://officell-ia-production.up.railway.app/api/tienda';
 let todosProductos = [];
 let categoriaActiva = 'todos';
+let mapaIconosCat = {}; // slug -> icono, viene de /categorias — se llena en cargarProductos()
 
 // ── DIAMANTES FREE FIRE ──
 const DIAMANTES_FF = [
@@ -486,16 +487,15 @@ async function cargarProductos() {
     todosProductos = prodData.ok ? prodData.productos : [];
 
     // Renderizar filtros de categoría
+    // los íconos/etiquetas venían hardcodeados con slugs que no existían en los datos (ej: 'celulares-nuevos'),
+    // por eso el ícono de producto siempre caía al 📦 por defecto — ahora se usa lo que ya trae la API
     if (catData.ok && catData.categorias.length > 0) {
-      const labels = {
-        'celulares-nuevos':'📱 Celulares Nuevos','celulares-usados':'🔄 Celulares Usados',
-        'accesorios':'🎧 Accesorios','repuestos':'🔧 Repuestos','computadoras':'💻 Computadoras',
-        'tablets':'📠 Tablets','otros':'📦 Otros'
-      };
+      mapaIconosCat = {};
+      catData.categorias.forEach(c => { mapaIconosCat[c.categoria] = c.icono; });
       const filtrosEl = document.getElementById('filtrosCat');
       filtrosEl.innerHTML = `<button class="filtro-btn active" onclick="filtrarCategoria('todos',this)">🏪 Todos</button>`;
       catData.categorias.forEach(c => {
-        const label = labels[c.categoria] || escHtml(c.categoria);
+        const label = escHtml(c.icono + ' ' + c.label);
         filtrosEl.innerHTML += `<button class="filtro-btn" data-cat="${escHtml(c.categoria)}" onclick="filtrarCategoria(this.dataset.cat,this)">${label} <small style="opacity:0.6">(${c.cantidad})</small></button>`;
       });
       // Botón Diamantes FF — siempre al final
@@ -560,15 +560,13 @@ function renderProductos() {
     return;
   }
 
-  const iconos = {'celulares-nuevos':'📱','celulares-usados':'📲','accesorios':'🎧','repuestos':'🔧','computadoras':'💻','tablets':'📠','otros':'📦'};
-
   // Registrar todos en el mapa para onclick seguro
   productos.forEach(p => { mapaProductos[p.id] = p; });
 
   container.innerHTML = `<div class="productos-grid">${productos.map(p => {
     const badgeCond = p.condicion === 'nuevo' ? 'badge-nuevo' : p.condicion === 'usado' ? 'badge-usado' : 'badge-reacondicionado';
     const condLabel = p.condicion === 'nuevo' ? '✨ Nuevo' : p.condicion === 'usado' ? '🔄 Usado' : '🔧 Reacon.';
-    const icono = iconos[p.categoria_web] || '📦';
+    const icono = mapaIconosCat[p.categoria_web] || '📦';
 
     // Soporte para múltiples imágenes
     let imagenes = [];
@@ -698,7 +696,10 @@ function cerrarCarrito() {
 function renderCarrito() {
   const container = document.getElementById('carritoItems');
   const footer = document.getElementById('carritoFooter');
-  const iconos = {'celulares-nuevos':'📱','celulares-usados':'📲','accesorios':'🎧','repuestos':'🔧','computadoras':'💻','tablets':'📠','otros':'📦'};
+  // mismo bug que en renderProductos(): este mapa tenía slugs que no existían en los datos,
+  // por eso el ícono del carrito nunca coincidía — se usa mapaIconosCat (viene de /categorias).
+  // mapaIconosCat arranca en {} y solo se llena cuando cargarProductos() responde, así que si el
+  // carrito se abre antes (items de localStorage, API caída) el lookup da undefined y cae en 📦 sin reventar.
 
   if (!carrito.length) {
     container.innerHTML = `<div class="carrito-vacio"><div class="icon">🛒</div><p>Tu carrito está vacío</p></div>`;
@@ -708,7 +709,7 @@ function renderCarrito() {
 
   const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
   container.innerHTML = carrito.map((item, idx) => {
-    const icono = iconos[item.categoria_web] || '📦';
+    const icono = mapaIconosCat[item.categoria_web] || '📦';
     let imgSrc = item.imagen_url || '';
     if (imgSrc) {
       try { const arr = JSON.parse(imgSrc); if (Array.isArray(arr)) imgSrc = arr[0] || ''; } catch(e) {}

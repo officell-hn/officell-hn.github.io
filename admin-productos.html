@@ -347,20 +347,10 @@
       </div>
       <div class="form-group">
         <label>Categoría *</label>
-        <input type="text" id="f-categoria" list="cats-list" placeholder="Ej: celulares">
-        <datalist id="cats-list">
-          <option value="celulares">
-          <option value="accesorios">
-          <option value="tablets">
-          <option value="computadoras">
-          <option value="audífonos">
-          <option value="cargadores">
-          <option value="carcasas">
-          <option value="pantallas">
-          <option value="baterías">
-          <option value="cables">
-          <option value="otros">
-        </datalist>
+        <!-- select con la taxonomía única del backend (antes era texto libre y nacían variantes como "Celular"/"Celulares Claro") -->
+        <select id="f-categoria">
+          <option value="">— Elegí una categoría —</option>
+        </select>
       </div>
       <div class="form-group">
         <label>Condición</label>
@@ -422,6 +412,7 @@ let TOKEN = '';
 let editandoId = null;
 let todosProductos = [];
 let todosPedidos = [];
+let categoriasCache = []; // taxonomía única del backend — se carga UNA vez y se cachea
 
 // ─── LOGIN CON JWT ──────────────────────────────────────────────
 function authHeaders() {
@@ -459,6 +450,7 @@ async function doLogin() {
     document.getElementById('login-error').textContent = '';
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    cargarCategorias();
     cargarProductos();
   } catch(e) {
     document.getElementById('login-error').textContent = 'Error de conexión con el servidor.';
@@ -484,6 +476,7 @@ window.onload = () => {
         if (d.ok) {
           document.getElementById('login-screen').style.display = 'none';
           document.getElementById('app').style.display = 'block';
+          cargarCategorias();
           cargarProductos();
         } else { TOKEN = ''; sessionStorage.removeItem('oc_admin_jwt'); }
       })
@@ -500,6 +493,35 @@ function showTab(tab, btn) {
   if (tab === 'pedidos') cargarPedidos();
 }
 
+// ─── CATEGORÍAS (taxonomía única del backend) ───────────────────
+// Se pide UNA sola vez y se cachea en categoriasCache — evita golpear la API en cada render
+async function cargarCategorias() {
+  if (categoriasCache.length) { poblarSelectCategoria(); poblarFiltroCategoria(); return; }
+  try {
+    const r = await fetch(`${API}/categorias?todas=true`);
+    const d = await r.json();
+    if (d.ok) categoriasCache = d.categorias;
+  } catch (e) { /* si falla, los selects quedan con la opción por defecto */ }
+  poblarSelectCategoria();
+  poblarFiltroCategoria();
+}
+
+function poblarSelectCategoria() {
+  const sel = document.getElementById('f-categoria');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Elegí una categoría —</option>' +
+    categoriasCache.map(c => `<option value="${c.slug}">${escHtml(c.icono + ' ' + c.label)}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
+function poblarFiltroCategoria() {
+  const sel = document.getElementById('filtro-cat');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todas las categorías</option>' +
+    categoriasCache.map(c => `<option value="${c.slug}">${escHtml(c.icono + ' ' + c.label)}</option>`).join('');
+  if (cur) sel.value = cur;
+}
+
 // ─── PRODUCTOS ─────────────────────────────────────────────────
 async function cargarProductos() {
   document.getElementById('tbody-productos').innerHTML =
@@ -511,7 +533,6 @@ async function cargarProductos() {
     todosProductos = d.productos;
     renderProductos(todosProductos);
     updateStats(todosProductos);
-    populateCatFilter(todosProductos);
   } catch (e) {
     document.getElementById('tbody-productos').innerHTML =
       `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
@@ -524,19 +545,6 @@ function updateStats(prods) {
   document.getElementById('stat-dest').textContent = prods.filter(p => p.destacado).length;
   const cats = new Set(prods.map(p => p.categoria_web));
   document.getElementById('stat-cats').textContent = cats.size;
-}
-
-function populateCatFilter(prods) {
-  const cats = [...new Set(prods.map(p => p.categoria_web).filter(Boolean))].sort();
-  const sel = document.getElementById('filtro-cat');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">Todas las categorías</option>' +
-    cats.map(c => `<option value="${c}" ${c===cur?'selected':''}>${c}</option>`).join('');
-  // También actualizar datalist del modal — sin duplicar las opciones base
-  const dl = document.getElementById('cats-list');
-  const base = ['otros','accesorios','cargadores','carcasas','cables'];
-  const todas = [...new Set([...cats, ...base])].sort();
-  dl.innerHTML = todas.map(c => `<option value="${c}">`).join('');
 }
 
 function renderProductos(prods) {
@@ -748,7 +756,6 @@ async function eliminarProducto(id, btn) {
     todosProductos = todosProductos.filter(p => p.id !== id);
     renderProductos(todosProductos);
     updateStats(todosProductos);
-    populateCatFilter(todosProductos);
     toast('Producto eliminado', 'ok');
   } catch (e) { toast(e.message, 'err'); btn.disabled = false; }
 }
