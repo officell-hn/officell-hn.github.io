@@ -354,11 +354,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
 <script>
 const API = (typeof OFFICELL_CONFIG !== 'undefined') ? OFFICELL_CONFIG.API : 'https://officell-ia-production.up.railway.app/api/tienda';
 
-// Escape HTML para prevenir XSS al insertar datos del servidor via innerHTML
-function esc(str) {
-  if (str === null || str === undefined) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+// esc() — definida en config.js (función canónica compartida)
 
 // ── Servicios ──────────────────────────────────────────────
 async function cargarServicios() {

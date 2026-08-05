@@ -578,12 +578,12 @@ function renderProductos() {
     const pid = 'p' + p.id;
     const imgHtml = imgPrincipal
       ? `<div class="producto-img" id="imgwrap-${pid}">
-           <img id="imgmain-${pid}" src="${imgPrincipal}" alt="${p.nombre}" loading="lazy"
+           <img id="imgmain-${pid}" src="${escHtml(imgPrincipal)}" alt="${escHtml(p.nombre)}" loading="lazy" decoding="async"
              onerror="this.parentNode.innerHTML='<div style=\'font-size:3.5rem;width:100%;height:100%;display:flex;align-items:center;justify-content:center\'>${icono}</div>'">
            ${imagenes.length > 1 ? `<div style="position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:0.65rem;padding:2px 7px;border-radius:10px">📷 ${imagenes.length}</div>` : ''}
          </div>
          ${imagenes.length > 1 ? `<div style="display:flex;gap:4px;padding:6px 10px;background:var(--surface);overflow-x:auto">
-           ${imagenes.map((u,i) => `<img src="${escHtml(u)}" alt="${escHtml(p.nombre)} - imagen ${i+1}" loading="lazy" onclick="switchImg('${pid}',${i})" style="width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid ${i===0?'var(--accent)':'transparent'};flex-shrink:0;transition:border 0.2s" onerror="this.style.display='none'">`).join('')}
+           ${imagenes.map((u,i) => `<img src="${escHtml(u)}" alt="${escHtml(p.nombre)} - imagen ${i+1}" loading="lazy" decoding="async" onclick="switchImg('${pid}',${i})" style="width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid ${i===0?'var(--accent)':'transparent'};flex-shrink:0;transition:border 0.2s" onerror="this.style.display='none'">`).join('')}
          </div>` : ''}`
       : `<div class="producto-img-placeholder">${icono}</div>`;
 
@@ -630,9 +630,7 @@ function buscar(val) {
 // ════════════════════════════════════════════
 // UTILIDADES SEGURIDAD
 // ════════════════════════════════════════════
-function escHtml(str) {
-  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+// escHtml() — definida en config.js (función canónica compartida)
 
 // ════════════════════════════════════════════
 // MAPA DE PRODUCTOS (para onclick seguro)

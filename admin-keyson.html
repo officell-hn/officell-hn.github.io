@@ -196,10 +196,6 @@ let clienteActivo = null;
 function authHeaders() {
   return TOKEN ? { 'Authorization': `Bearer ${TOKEN}` } : {};
 }
-function authHeadersPost() {
-  return TOKEN ? { 'Content-Type': 'application/json', 'Authorization': `Bearer ${TOKEN}` } : { 'Content-Type': 'application/json' };
-}
-
 async function login() {
   const pwd = document.getElementById('pwdInput').value;
   const err = document.getElementById('loginError');
@@ -216,7 +212,7 @@ async function login() {
     sessionStorage.setItem('oc_admin_jwt', TOKEN);
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
-    init();
+    cargarDatos();
   } catch(e) { err.textContent = 'Error de conexión'; err.style.display = 'block'; }
 }
 
@@ -226,21 +222,22 @@ function logout() {
 }
 
 // ── INIT ─────────────────────────────────────────────────────
-async function init() {
-  const saved = sessionStorage.getItem('oc_admin_jwt');
-  if (saved) {
-    TOKEN = saved;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    await Promise.all([cargarStats(), cargarClientes()]);
-    return;
-  }
+// Solo carga los datos del panel (no toca la UI de login/app)
+async function cargarDatos() {
+  await Promise.all([cargarStats(), cargarClientes()]);
 }
 
-window.addEventListener('load', () => {
+// Restaura una sesión guardada al cargar la página (auto-login)
+async function init() {
   const saved = sessionStorage.getItem('oc_admin_jwt');
-  if (saved) { TOKEN = saved; init(); }
-});
+  if (!saved) return;
+  TOKEN = saved;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  await cargarDatos();
+}
+
+window.addEventListener('load', init);
 
 async function recargar() {
   await Promise.all([cargarStats(), cargarClientes(document.getElementById('searchInput').value)]);
@@ -403,9 +400,7 @@ function fechaCorta(iso) {
   return d.toLocaleDateString('es-HN', { day:'numeric', month:'short' });
 }
 
-function esc(str) {
-  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// esc() — definida en config.js (función canónica compartida, escapa también ')
 
 // Sesión restaurada por window.addEventListener('load') arriba — no duplicar
 </script>

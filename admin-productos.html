@@ -290,11 +290,12 @@
               <th>Stock</th>
               <th>En Web</th>
               <th>Dest.</th>
+              <th>Venta permanente</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody id="tbody-productos">
-            <tr><td colspan="10" class="loading"><div class="spinner"></div></td></tr>
+            <tr><td colspan="11" class="loading"><div class="spinner"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -331,6 +332,11 @@
             <tr><td colspan="10" class="loading"><div class="spinner"></div></td></tr>
           </tbody>
         </table>
+      </div>
+      <div id="pag-pedidos" style="display:none;justify-content:center;align-items:center;gap:1rem;margin-top:1rem">
+        <button class="btn btn-sm" id="pagPedAnterior" onclick="cambiarPaginaPedidos(-1)">◀ Anterior</button>
+        <span id="pagPedInfo" style="font-size:.85rem;color:var(--muted)"></span>
+        <button class="btn btn-sm" id="pagPedSiguiente" onclick="cambiarPaginaPedidos(1)">Siguiente ▶</button>
       </div>
     </div>
   </main>
@@ -413,6 +419,9 @@ let editandoId = null;
 let todosProductos = [];
 let todosPedidos = [];
 let categoriasCache = []; // taxonomía única del backend — se carga UNA vez y se cachea
+const POR_PAGINA_PEDIDOS = 20;
+let paginaPedidos = 1;
+let pedidosFiltrados = [];
 
 // ─── LOGIN CON JWT ──────────────────────────────────────────────
 function authHeaders() {
@@ -470,7 +479,7 @@ window.onload = () => {
   const saved = sessionStorage.getItem('oc_admin_jwt');
   if (saved) {
     TOKEN = saved;
-    fetch(`${API}/admin/productos`, { headers: authHeaders() })
+    fetch(`${API}/admin/ping`, { headers: authHeaders() })
       .then(r => r.json())
       .then(d => {
         if (d.ok) {
@@ -525,17 +534,24 @@ function poblarFiltroCategoria() {
 // ─── PRODUCTOS ─────────────────────────────────────────────────
 async function cargarProductos() {
   document.getElementById('tbody-productos').innerHTML =
-    '<tr><td colspan="10" class="loading"><div class="spinner"></div></td></tr>';
+    '<tr><td colspan="11" class="loading"><div class="spinner"></div></td></tr>';
   try {
     const r = await apiFetch(`${API}/admin/productos`, { headers: authHeaders() });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
     todosProductos = d.productos;
-    renderProductos(todosProductos);
     updateStats(todosProductos);
+    // Ya no se llama populateCatFilter(): el filtro de categorías se llena desde
+    // la taxonomía única del backend (poblarFiltroCategoria), no de los productos
+    // que haya cargados en ese momento.
+    // Preservar búsqueda/categoría activas tras recargar (crear/editar producto y ↻
+    // re-fetchean vía cargarProductos). Sin esto, guardar un producto con un filtro
+    // activo reseteaba la tabla a TODOS los productos — igual que ya hace eliminarProducto.
+    const hayFiltro = document.getElementById('buscar-prod').value.trim() || document.getElementById('filtro-cat').value;
+    if (hayFiltro) filtrarTabla(); else renderProductos(todosProductos);
   } catch (e) {
     document.getElementById('tbody-productos').innerHTML =
-      `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
+      `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
   }
 }
 
@@ -550,7 +566,7 @@ function updateStats(prods) {
 function renderProductos(prods) {
   if (!prods.length) {
     document.getElementById('tbody-productos').innerHTML =
-      '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">Sin productos</td></tr>';
+      '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--muted)">Sin productos</td></tr>';
     return;
   }
   document.getElementById('tbody-productos').innerHTML = prods.map(p => `
@@ -576,6 +592,12 @@ function renderProductos(prods) {
       <td>
         <label class="toggle">
           <input type="checkbox" ${p.destacado?'checked':''} onchange="toggleCampo('${p.id}','destacado',this.checked)">
+          <span class="slider"></span>
+        </label>
+      </td>
+      <td>
+        <label class="toggle">
+          <input type="checkbox" ${p.reposicion!=='unica'?'checked':''} onchange="toggleCampo('${p.id}','reposicion', this.checked ? 'permanente' : 'unica')">
           <span class="slider"></span>
         </label>
       </td>
@@ -754,7 +776,7 @@ async function eliminarProducto(id, btn) {
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
     todosProductos = todosProductos.filter(p => p.id !== id);
-    renderProductos(todosProductos);
+    filtrarTabla();
     updateStats(todosProductos);
     toast('Producto eliminado', 'ok');
   } catch (e) { toast(e.message, 'err'); btn.disabled = false; }
@@ -913,14 +935,20 @@ async function cargarPedidos() {
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
     todosPedidos = d.pedidos;
-    renderPedidos(todosPedidos);
+    // Preservar la búsqueda activa tras recargar (confirmar pago, cancelar, eliminar
+    // re-fetchean vía cargarPedidos): sin esto la tabla saltaba a TODOS los pedidos y
+    // perdía el filtro justo después de actuar sobre un pedido encontrado por búsqueda.
+    const q = document.getElementById('buscar-ped').value.trim();
+    if (q) filtrarPedidos(); else renderPedidos(todosPedidos);
   } catch (e) {
     document.getElementById('tbody-pedidos').innerHTML =
       `<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--danger)">Error: ${e.message}</td></tr>`;
   }
 }
 
-function renderPedidos(pedidos) {
+function renderPedidos(pedidos, resetPagina = true) {
+  pedidosFiltrados = pedidos;          // recordar el set actual para la navegación de páginas
+  if (resetPagina) paginaPedidos = 1;  // todo cambio de filtro/búsqueda vuelve a la página 1
   // Ocultar cancelados a menos que el toggle esté activo
   const verCancelados = document.getElementById('chk-cancelados')?.checked;
   if (!verCancelados) pedidos = pedidos.filter(p => p.estado !== 'cancelado');
@@ -939,6 +967,7 @@ function renderPedidos(pedidos) {
   if (!pedidos.length) {
     document.getElementById('tbody-pedidos').innerHTML =
       '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">Sin pedidos aún</td></tr>';
+    document.getElementById('pag-pedidos').style.display = 'none';
     return;
   }
   // Ordenar: pendientes de pago primero
@@ -947,7 +976,11 @@ function renderPedidos(pedidos) {
     if (b.estado === 'pendiente_pago' && a.estado !== 'pendiente_pago') return 1;
     return 0;
   });
-  document.getElementById('tbody-pedidos').innerHTML = ordenados.map(p => {
+  // Paginación (20 por página)
+  renderPaginacionPedidos(ordenados.length);
+  const inicio = (paginaPedidos - 1) * POR_PAGINA_PEDIDOS;
+  const pagina = ordenados.slice(inicio, inicio + POR_PAGINA_PEDIDOS);
+  document.getElementById('tbody-pedidos').innerHTML = pagina.map(p => {
     let prods = []; try { prods = Array.isArray(p.productos) ? p.productos : (typeof p.productos === 'string' ? JSON.parse(p.productos) : []); } catch(e) {}
     const lista = prods.map(pr => `<li>• ${escHtml(pr.nombre||'?')} x${pr.cantidad} — L.${fmtNum((pr.precio||0)*(pr.cantidad||1))}</li>`).join('');
     const fecha = p.creado_en ? new Date(p.creado_en).toLocaleString('es-HN') : '—';
@@ -983,6 +1016,23 @@ function renderPedidos(pedidos) {
       </tr>
     `;
   }).join('');
+}
+
+function cambiarPaginaPedidos(delta) {
+  paginaPedidos = Math.max(1, paginaPedidos + delta);
+  renderPedidos(pedidosFiltrados, false);  // re-render sin resetear la página
+}
+
+function renderPaginacionPedidos(total) {
+  const bar = document.getElementById('pag-pedidos');
+  if (total <= POR_PAGINA_PEDIDOS) { bar.style.display = 'none'; return; }
+  const totalPaginas = Math.ceil(total / POR_PAGINA_PEDIDOS);
+  if (paginaPedidos > totalPaginas) paginaPedidos = totalPaginas;
+  bar.style.display = 'flex';
+  document.getElementById('pagPedInfo').textContent =
+    `Página ${paginaPedidos} de ${totalPaginas} (${total} pedidos)`;
+  document.getElementById('pagPedAnterior').disabled  = paginaPedidos <= 1;
+  document.getElementById('pagPedSiguiente').disabled = paginaPedidos >= totalPaginas;
 }
 
 async function eliminarPedido(id, codigo) {
@@ -1044,7 +1094,8 @@ function filtrarPedidos() {
     (p.nombre_cliente||'').toLowerCase().includes(q) ||
     (p.telefono_cliente||'').toLowerCase().includes(q) ||
     (p.email_cliente||'').toLowerCase().includes(q) ||
-    (p.codigo_seguimiento||'').toLowerCase().includes(q)
+    (p.codigo_seguimiento||'').toLowerCase().includes(q) ||
+    String(p.game_id||'').toLowerCase().includes(q)
   );
   renderPedidos(filtrados);
 }
@@ -1054,9 +1105,7 @@ function fmtNum(n) {
   return parseFloat(n||0).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function escHtml(str) {
-  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// escHtml() — definida en config.js (función canónica compartida, escapa también ')
 
 let toastTimer;
 function toast(msg, type = 'ok') {

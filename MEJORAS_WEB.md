@@ -1,5 +1,40 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-06-25
+> Última revisión: 2026-07-09
+
+---
+
+## ✅ Bugs corregidos — revisión 2026-07-09
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-productos.html` | 917 (`cargarPedidos`) | **BUG UX (pérdida de filtro)**: `confirmarPago()`, `cambiarEstadoPedido()` y `eliminarPedido()` re-fetchean la lista con `cargarPedidos()`, que renderizaba `renderPedidos(todosPedidos)` — el set COMPLETO — ignorando la búsqueda activa en `#buscar-ped`. Flujo roto típico: el admin busca "María", encuentra su pedido pendiente, hace clic en **✅ Confirmar pago**, y la tabla salta a mostrar TODOS los pedidos, perdiendo la búsqueda justo después de actuar. Es exactamente la misma clase de bug que ya se corrigió en `eliminarProducto()` (rev. 2026-07-02, cambiado a `filtrarTabla()`), pero la pestaña Pedidos quedó sin arreglar. | `cargarPedidos()` ahora, tras actualizar `todosPedidos`, respeta la búsqueda activa: `const q = ...buscar-ped.value.trim(); if (q) filtrarPedidos(); else renderPedidos(todosPedidos);`. El toggle "Ver cancelados" ya se re-aplica dentro de `renderPedidos()`, así que ambos filtros sobreviven a la acción. |
+| `admin-productos.html` | 519 (`cargarProductos`) | **BUG UX (pérdida de filtro)**: misma clase en la pestaña Productos. `guardarProducto()` (crear/editar) y el botón ↻ recargan vía `cargarProductos()`, que hacía `renderProductos(todosProductos)`. Editar un producto con un filtro de búsqueda o categoría activo reseteaba la tabla a todos los productos. `eliminarProducto()` sí preservaba el filtro (`filtrarTabla()`), quedando inconsistente con crear/editar/recargar. | `cargarProductos()` ahora corre `updateStats()` + `populateCatFilter()` sobre el set completo (correcto) y luego renderiza respetando el filtro: `const hayFiltro = buscar-prod.value.trim() \|\| filtro-cat.value; if (hayFiltro) filtrarTabla(); else renderProductos(todosProductos);`. Todo el admin queda consistente: los filtros sobreviven a mutaciones y a la recarga manual. |
+
+**Notas de la revisión 2026-07-09:** revisados `admin-taller.html`, `admin-productos.html`, `admin-keyson.html` y `config.js`. Autenticación correcta en todos (`authHeaders()` con Bearer JWT, `apiFetch()` maneja 401; keyson hace `logout()` en 401). Sin variables CSS ni referencias DOM rotas detectadas. Escape HTML unificado en `config.js` (escapa también `'`). Los dos hallazgos fueron pérdida de filtro tras mutación/recarga (misma raíz), ya corregidos arriba.
+
+---
+
+## ✅ Bugs corregidos — revisión 2026-07-02
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-taller.html` | 1092 | **BUG RENDERIZADO**: `imprimir()` construía el HTML del recibo inyectando campos de datos del usuario (`o.cliente_nombre`, `o.cliente_telefono`, `o.equipo`, `o.tipo_servicio`, `o.problema`, `o.notas`) directamente en el template string sin escapar. Si algún campo contenía `<` o `>` (p.ej., equipo "Samsung <A54>", nombre "O'Brien & Hijos"), el HTML del recibo se renderizaba malformado — el texto desaparecía o el layout se rompía. La misma función sí usaba `esc()` en otros contextos (`verDetalle()`) pero no en la ruta de impresión. | Aplicado `esc()` en los 6 campos de usuario: `cliente_nombre`, `cliente_telefono`, `equipo`, `tipo_servicio`, `problema` y `notas`. Campos seguros (números, fechas, estado desde mapa fijo) no modificados. |
+| `admin-productos.html` | 757 | **BUG UX**: `eliminarProducto()` llamaba a `renderProductos(todosProductos)` directamente después de eliminar un producto. Si el admin tenía activo un filtro de búsqueda o categoría, al borrar el producto la tabla saltaba a mostrar TODOS los productos (ignorando el filtro), desorientando al usuario y requiriendo re-filtrar manualmente. | Cambiado `renderProductos(todosProductos)` por `filtrarTabla()`, que re-aplica el filtro activo (`buscar-prod` + `filtro-cat`) sobre `todosProductos` actualizado. `updateStats()` y `populateCatFilter()` siguen recibiendo `todosProductos` completo, correcto. |
+| `admin-keyson.html` | 199 | **CÓDIGO MUERTO**: `authHeadersPost()` estaba definida (devuelve headers con `Content-Type` + `Authorization`) pero nunca se llamaba en ningún punto del archivo. La página Keyson es de solo lectura (solo GET) y todas sus peticiones usan `authHeaders()`. La función colgaba sin uso desde al menos la revisión 2026-06-18. | Eliminada la función. Sin impacto funcional. |
+
+---
+
+## Mejoras identificadas en revisión 2026-07-02
+
+### ~~P1. `filtrarPedidos()` no busca por `game_id`~~ ✅ APLICADA 2026-07-04
+
+La búsqueda de Pedidos no incluía el campo `game_id` (ID de jugador de Free Fire), así que
+no se podía localizar un pedido de recarga por el ID del jugador.
+**Fix aplicado** en `filtrarPedidos()` (admin-productos.html): se agregó
+`String(p.game_id||'').toLowerCase().includes(q)` al `.filter()` — con `String()` por si
+el backend devuelve el ID como número (`.toLowerCase()` directo sobre número lanzaría error).
+
+---
 
 ---
 
@@ -138,10 +173,9 @@
 
 ---
 
-### 12. `auto-login` de admin-productos verifica consultando la lista de productos
-**Archivo:** `admin-productos.html`, ~línea 471  
-El auto-login hace un fetch a `${API}/admin/productos` solo para verificar el JWT. Si la lista de productos es grande esto es costoso. Sería más eficiente tener un endpoint `/admin/ping` o `/admin/me` que solo devuelva `{ok: true}`.  
-*(Requiere cambio en backend Railway.)*
+### ~~12. `auto-login` de admin-productos verifica consultando la lista de productos~~ ✅ IMPLEMENTADA 2026-06-25
+**Fix aplicado:** Backend IA — nuevo `GET /api/tienda/admin/ping` (`authAdmin`) que solo devuelve `{ok:true}` sin descargar datos (commit IA `eb03e16`). Frontend — el auto-login de `admin-productos.html` ahora llama a `${API}/admin/ping` en vez de `/admin/productos` (commit web `267ab6c`).  
+**⚠️ ORDEN DE DEPLOY:** desplegar primero el backend IA en Railway y verificar que `/admin/ping` responde; recién entonces pushear el cambio del web. Si el web se despliega antes, el auto-login daría 404.
 
 ---
 
@@ -160,34 +194,23 @@ El auto-login hace un fetch a `${API}/admin/productos` solo para verificar el JW
 
 ---
 
-### 17b. `admin-productos.html` — sección Pedidos sin paginación
-**Archivo:** `admin-productos.html`, función `renderPedidos()`  
-**Problema:** La tabla de pedidos muestra todos los registros en una sola página. Con volumen alto (>50 pedidos), la tabla se vuelve lenta y difícil de navegar. `admin-taller.html` ya tiene paginación de 25 items (implementada 2026-06-12); pedidos debería tener lo mismo.  
-**Solución:** Implementar paginación client-side igual a la de taller, con `POR_PAGINA_PEDIDOS = 20` y barra de navegación bajo la tabla.  
-**Prioridad:** Media
+### ~~17b. `admin-productos.html` — sección Pedidos sin paginación~~ ✅ IMPLEMENTADA 2026-06-25
+**Fix aplicado:** Paginación client-side de 20 pedidos por página (`POR_PAGINA_PEDIDOS = 20`), mismo patrón que taller. Barra `◀ Anterior · Página X de Y (N pedidos) · Siguiente ▶` bajo la tabla, oculta con ≤20 resultados. `renderPedidos(pedidos, resetPagina=true)` guarda el set en `pedidosFiltrados` y vuelve a página 1 en cada filtro/búsqueda/toggle; `cambiarPaginaPedidos()` navega sin resetear. Respeta el orden (pendientes de pago primero) y el filtro de cancelados. (commit `d3cdee1`)
 
 ---
 
-### 17c. `admin-keyson.html` — `init()` tiene lógica de UI duplicada al llamarse desde `login()`
-**Archivo:** `admin-keyson.html`, funciones `login()` e `init()`  
-**Problema:** `login()` ya oculta `#login-screen` y muestra `#app` (líneas 216-217), pero luego llama a `init()` que vuelve a hacerlo (líneas 231-232). No causa error funcional (ambos setean el mismo estado) pero es confuso y redundante.  
-**Solución:** Dividir `init()` en dos funciones: `cargarDatos()` (solo hace los fetch) e `init()` (restaura sesión con UI). `login()` llamaría a `cargarDatos()` directamente.  
-**Prioridad:** Baja
+### ~~17c. `admin-keyson.html` — `init()` tiene lógica de UI duplicada al llamarse desde `login()`~~ ✅ IMPLEMENTADA 2026-06-25
+**Fix aplicado:** `init()` dividido en `cargarDatos()` (solo los fetch: `cargarStats()` + `cargarClientes()`) e `init()` (restaura sesión guardada con UI, auto-login). `login()` ahora llama `cargarDatos()` directamente tras mostrar el panel; el listener `load` llama solo a `init()`. Eliminada la lógica de UI duplicada y el doble seteo de TOKEN. (commit `f0cfaee`)
 
 ---
 
-### 17d. `seguimiento.html` — no redirige a `taller.html` cuando se ingresa un código de taller
-**Archivo:** `seguimiento.html`  
-**Problema:** Si un cliente recibe un código de seguimiento del taller (formato `OC-XXXX-ABCD`) y lo ingresa en `seguimiento.html` (pensando que es la misma página que tienda), recibe "Código no encontrado" sin explicación. Debería detectar el formato y redirigir o sugerir `taller.html`.  
-**Solución:** Al recibir error 404, verificar si el código parece un código de taller (empieza con `OC-`) y mostrar mensaje: "Este código es de reparación. Consulta en [taller.html] el estado de tu equipo."  
-**Prioridad:** Baja
+### ~~17d. `seguimiento.html` — no redirige a `taller.html` cuando se ingresa un código de taller~~ ✅ IMPLEMENTADA 2026-06-25
+**Fix aplicado:** En el mensaje de "código no encontrado", `seguimiento.html` ahora ofrece un enlace directo a `taller.html?codigo=...` con el código ya cargado (taller.html autocarga el parámetro y busca solo). Se usó el enfoque seguro sin heurística de prefijo (el formato de los códigos de tienda se genera en el backend y no se puede verificar desde el front), mostrando la sugerencia como ayuda secundaria sin afirmar nada incorrecto. (commit `53b1219`)
 
 ---
 
-### 16. `esc()` de `admin-taller.html` y `escHtml()` de `admin-productos.html` son inconsistentes
-**Archivos:** Ambos admin  
-**Problema:** Existen dos funciones de escape con nombres distintos y comportamientos ligeramente distintos en el proyecto. `taller.html` (público) tiene la versión más completa (escapa `&`, `<`, `>`, `"`, `'`). La de admin-taller.html escapa `&`, `<`, `>`, `"` pero no `'`.  
-**Solución a largo plazo:** Unificar en un solo `config.js` o un archivo `utils.js` compartido con la función completa.
+### ~~16. `esc()` de `admin-taller.html` y `escHtml()` de `admin-productos.html` son inconsistentes~~ ✅ IMPLEMENTADA 2026-06-25
+**Fix aplicado:** Una sola función canónica de escape HTML en `config.js` (escapa `&`, `<`, `>`, `"`, `'` con guarda null/undefined), expuesta como `window.escHtml` y alias `window.esc`. Eliminadas las 7 definiciones locales duplicadas (admin-keyson, admin-productos, admin-taller, seguimiento, taller, tienda, index). `index.html` ahora también carga `config.js`. Corrige de paso el bug de seguridad de los admin que no escapaban la comilla simple. (commit `e5285d8`)
 
 ---
 

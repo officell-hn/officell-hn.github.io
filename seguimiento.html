@@ -101,11 +101,7 @@ main { max-width: 600px; margin: 0 auto; padding: 2rem 1rem; }
 <script>
 const API = (typeof OFFICELL_CONFIG !== 'undefined') ? OFFICELL_CONFIG.API : 'https://officell-ia-production.up.railway.app/api/tienda';
 
-// Escape HTML para prevenir XSS al insertar datos del servidor via innerHTML
-function esc(str) {
-  if (str === null || str === undefined) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+// esc() — definida en config.js (función canónica compartida)
 
 // Autocargar si viene código en la URL
 window.addEventListener('DOMContentLoaded', () => {
@@ -130,7 +126,7 @@ async function buscar() {
     const data = await r.json();
 
     if (!data.ok) {
-      el.innerHTML = `<div class="error-box">❌ ${esc(data.error) || 'Código no encontrado.'}<br><br><small>Verifica el código en tu comprobante de WhatsApp.</small></div>`;
+      el.innerHTML = `<div class="error-box">❌ ${esc(data.error) || 'Código no encontrado.'}<br><br><small>Verifica el código en tu comprobante de WhatsApp.</small><br><br><small>¿Tu código es de una <b>reparación</b> del taller? Búscalo aquí: <a href="taller.html?codigo=${encodeURIComponent(codigo)}" style="color:var(--accent);font-weight:700">seguimiento del taller →</a></small></div>`;
       return;
     }
 
