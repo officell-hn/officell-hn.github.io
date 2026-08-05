@@ -513,6 +513,26 @@ async function cargarProductos() {
 }
 
 // ════════════════════════════════════════════
+// URL de la página individual del producto
+// (debe replicar EXACTO utils/slug.js del repo officell-ia-main:
+//  normalización NFD, [^a-z0-9]+ -> '-', recorte de guiones, slice(0,60),
+//  cola = últimos 6 caracteres alfanuméricos del id en minúsculas)
+// ════════════════════════════════════════════
+function slugProducto(nombre, id) {
+  const base = String(nombre || 'producto')
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60) || 'producto';
+  const cola = String(id).replace(/[^a-zA-Z0-9]/g, '').slice(-6).toLowerCase();
+  return `${base}-${cola}`;
+}
+function urlProducto(nombre, id) {
+  return `producto/${slugProducto(nombre, id)}.html`;
+}
+
+// ════════════════════════════════════════════
 // RENDERIZAR PRODUCTOS
 // ════════════════════════════════════════════
 function renderProductos() {
@@ -576,29 +596,38 @@ function renderProductos() {
     }
     const imgPrincipal = imagenes[0] || '';
     const pid = 'p' + p.id;
-    const imgHtml = imgPrincipal
+    // Imagen principal (va dentro del enlace a la página del producto)
+    const imgMainHtml = imgPrincipal
       ? `<div class="producto-img" id="imgwrap-${pid}">
            <img id="imgmain-${pid}" src="${escHtml(imgPrincipal)}" alt="${escHtml(p.nombre)}" loading="lazy" decoding="async"
              onerror="this.parentNode.innerHTML='<div style=\'font-size:3.5rem;width:100%;height:100%;display:flex;align-items:center;justify-content:center\'>${icono}</div>'">
            ${imagenes.length > 1 ? `<div style="position:absolute;bottom:4px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:0.65rem;padding:2px 7px;border-radius:10px">📷 ${imagenes.length}</div>` : ''}
-         </div>
-         ${imagenes.length > 1 ? `<div style="display:flex;gap:4px;padding:6px 10px;background:var(--surface);overflow-x:auto">
-           ${imagenes.map((u,i) => `<img src="${escHtml(u)}" alt="${escHtml(p.nombre)} - imagen ${i+1}" loading="lazy" decoding="async" onclick="switchImg('${pid}',${i})" style="width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid ${i===0?'var(--accent)':'transparent'};flex-shrink:0;transition:border 0.2s" onerror="this.style.display='none'">`).join('')}
-         </div>` : ''}`
+         </div>`
       : `<div class="producto-img-placeholder">${icono}</div>`;
+    // Tira de miniaturas (queda FUERA del enlace: tienen onclick para cambiar la imagen principal,
+    // anidarlas dentro del <a> rompería ese comportamiento)
+    const imgThumbsHtml = imagenes.length > 1
+      ? `<div style="display:flex;gap:4px;padding:6px 10px;background:var(--surface);overflow-x:auto">
+           ${imagenes.map((u,i) => `<img src="${escHtml(u)}" alt="${escHtml(p.nombre)} - imagen ${i+1}" loading="lazy" decoding="async" onclick="switchImg('${pid}',${i})" style="width:44px;height:44px;object-fit:cover;border-radius:6px;cursor:pointer;border:2px solid ${i===0?'var(--accent)':'transparent'};flex-shrink:0;transition:border 0.2s" onerror="this.style.display='none'">`).join('')}
+         </div>`
+      : '';
+
+    const hrefProducto = escHtml(urlProducto(p.nombre, p.id));
 
     return `<div class="producto-card">
       ${p.destacado ? '<span class="badge-destacado">⭐ Destacado</span>' : ''}
       <span class="badge-condicion ${badgeCond}">${condLabel}</span>
-      ${imgHtml}
+      <a href="${hrefProducto}" style="display:block;color:inherit;text-decoration:none">${imgMainHtml}</a>
+      ${imgThumbsHtml}
       <div class="producto-info">
         <div class="producto-categoria">${escHtml(p.categoria_web || 'Producto')}</div>
-        <div class="producto-nombre">${escHtml(p.nombre)}</div>
+        <a href="${hrefProducto}" style="display:block;color:inherit;text-decoration:none"><div class="producto-nombre">${escHtml(p.nombre)}</div></a>
         ${p.descripcion ? `<div class="producto-desc">${escHtml(p.descripcion)}</div>` : ''}
         <div class="producto-precio">L.${parseFloat(p.precio).toLocaleString()} <span>HNL</span></div>
         <button class="btn-agregar" onclick="agregarPorId('${p.id}')" ${p.cantidad < 1 ? 'disabled' : ''}>
           ${p.cantidad < 1 ? 'Sin stock' : '🛒 Agregar al carrito'}
         </button>
+        <a href="${hrefProducto}" style="display:block;text-align:center;margin-top:0.5rem;font-size:0.8rem;color:var(--muted);text-decoration:none;transition:color 0.3s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">Ver detalles →</a>
       </div>
     </div>`;
   }).join('')}</div>`;
