@@ -1,5 +1,65 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-07-09
+> Última revisión: 2026-08-06
+
+---
+
+## 🔴 CRÍTICO ABIERTO — Páginas de producto faltantes (revisión 2026-08-06)
+
+**Requiere acción del dueño — no se puede resolver solo desde este repo.**
+
+El commit `8afa59a` ("feat(tienda): pagina propia por producto") cableó los enlaces
+en `tienda.html` y las 11 URLs en `sitemap.xml` hacia `producto/{slug}.html`, **pero
+los archivos HTML generados nunca se commitearon a este repo.** El commit solo modificó
+`tienda.html` y `sitemap.xml` (verificado con `git show --name-status 8afa59a`); la carpeta
+`producto/` (minúscula) no existe — solo existe `Producto/` (mayúscula, imágenes).
+
+**Impacto en producción (activo ahora mismo):**
+- Cada tarjeta de producto en `tienda.html` (imagen, nombre y "Ver detalles →") enlaza a
+  `producto/{slug}.html`, que da **404**. El cliente que hace clic en un producto llega a
+  una página de error. GitHub Pages es case-sensitive, así que `producto/` ≠ `Producto/`.
+- `sitemap.xml` anunciaba 11 URLs 404 a Google → daño SEO (páginas "no encontradas" en
+  Search Console, desperdicio de crawl budget).
+
+**Fix parcial aplicado en esta revisión (seguro y reversible):**
+- `sitemap.xml`: vaciado el bloque `<!-- PRODUCTOS:INICIO --> … <!-- PRODUCTOS:FIN -->`
+  (se conservan los marcadores). Ya no se anuncian URLs 404 a Google. Como el bloque es
+  generado entre marcadores, **regenerar lo vuelve a llenar** — sin conflicto.
+- Los enlaces en `tienda.html` se **dejaron intactos** a propósito: son una feature
+  deliberada del dueño (FASE 2, subida el 2026-08-05) y el arreglo correcto es generar y
+  commitear las páginas, no quitar los enlaces. Quitarlos chocaría con el rollout en curso.
+
+**Fix completo (lo debe hacer el dueño):**
+1. Correr `scripts/generar_paginas_producto.js` del repo **officell-ia** (commit `d2b9694`).
+2. Commitear los archivos `producto/*.html` generados **a este repo** (`officell-hn.github.io`).
+3. Regenerar `sitemap.xml` (rellena el bloque de productos automáticamente).
+No se generaron las páginas a mano en esta revisión: contienen datos de precio, condición y
+disponibilidad (JSON-LD Product, Open Graph) que deben salir del generador canónico y de la
+API en vivo — fabricarlas a mano arriesgaría publicar datos incorrectos del negocio.
+
+---
+
+## ✅ Bugs corregidos — revisión 2026-08-06
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `tienda.html` | 603 (`renderProductos`) | **BUG RENDER (fallback roto)**: el handler `onerror` de la imagen principal del producto se construía con comillas simples escapadas dentro del template literal: `innerHTML='<div style=\'…\'>${icono}</div>'`. En el HTML emitido, `\'` colapsa a `'` literal, y esas comillas simples **cierran prematuramente** el string JS del atributo `onerror` (`innerHTML='<div style='` ← string completo; el resto queda como JS suelto → `SyntaxError`). Los handlers inline con error de sintaxis no se ejecutan. Escenario: cualquier producto cuya `imagen_url` falle al cargar (URL rota, imagen borrada, CDN caída) muestra el ícono de imagen rota del navegador en vez del emoji de categoría de respaldo. | Cambiadas las comillas internas del `style` de `\'…\'` a `&quot;…&quot;`. El parser HTML decodifica `&quot;`→`"` al leer el atributo, así que el JS ejecutado queda `innerHTML='<div style="…">${icono}</div>'` — sin comillas simples sueltas, string válido. El fallback ahora sí renderiza. |
+| `tienda.html` | 745, 750 (`renderCarrito`) | **BUG UX (escape inconsistente)**: en el carrito, `imgSrc` (src de la miniatura) y `item.nombre` se insertaban crudos vía `innerHTML`, mientras que `renderProductos()` siempre pasa nombre y URLs por `escHtml()`. Un producto con `<`, `>` o comillas en el nombre (o una URL con comillas) rompía el layout del carrito. No es XSS externo (los datos vienen de la propia API/localStorage) pero es inconsistente con el resto del archivo y con los fixes previos de escape. | Envueltos ambos en `escHtml()`: `src="${escHtml(imgSrc)}"` y `${escHtml(item.nombre)}`. Consistente con el resto de la tienda. |
+
+**Notas de la revisión 2026-08-06:** revisados `admin-taller.html`, `admin-productos.html`,
+`admin-keyson.html`, `config.js`, `seguimiento.html`, `taller.html` y `tienda.html`.
+Autenticación correcta en todo el admin (`authHeaders()` con Bearer JWT, `apiFetch()` maneja
+401; keyson hace `logout()` en 401). Cruzadas todas las referencias `getElementById`/`id=` en
+los tres paneles admin: **sin referencias DOM rotas**. Variables CSS y funciones invocadas
+verificadas. El hallazgo mayor de la semana es el crítico de páginas de producto faltantes
+(arriba). Los otros dos bugs (fallback de imagen y escape del carrito) se corrigieron directo.
+
+### Mejora pendiente detectada (no crítica) — Media prioridad
+- **`admin-productos.html` — pestaña Pedidos sin exportar a CSV.** La pestaña Pedidos tiene
+  búsqueda, toggle de cancelados y paginación, pero **no** botón de export CSV, mientras que
+  `admin-taller.html` sí lo tiene (`exportarCSV()`, respeta filtros). Los pedidos son ventas
+  reales de la tienda; poder exportarlos ayudaría a contabilidad. Se puede replicar el patrón
+  de `exportarCSV()` de taller sobre `pedidosFiltrados`. No se implementó en esta revisión por
+  ser mejora, no bug (la política es documentar mejoras, aplicar solo bugs críticos).
 
 ---
 
