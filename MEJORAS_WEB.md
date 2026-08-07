@@ -1,4 +1,17 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
+> Última revisión: 2026-07-23
+
+---
+
+## ✅ Correcciones — revisión 2026-07-23
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `README.md` | 112–116 | **DOC DESACTUALIZADA (auth)**: la sección "Acceso a ambos paneles" describía el mecanismo de autenticación **anterior**, ya eliminado del código: decía que los paneles se protegen con un header `x-admin-token` y que la sesión se guarda en `localStorage` (`oc_admin_token`). El código real (los tres paneles + `config.js`) usa **JWT**: login contra `POST /admin/login`, header `Authorization: Bearer <jwt>` vía `authHeaders()`, y sesión en `sessionStorage` (`oc_admin_jwt`). Cualquiera que leyera el README para entender/mantener la auth quedaba mal informado (buscaría un header y un storage que no existen). No hay ningún `x-admin-token` ni `oc_admin_token` en el código — solo en esta doc. | Reescrita la sección con el flujo real (login → JWT → `Authorization: Bearer`, `sessionStorage` `oc_admin_jwt`, `401` cierra sesión). |
+| `README.md` | 108–110 | **DOC INCOMPLETA**: `admin-keyson.html` (panel de auditoría de conversaciones de WhatsApp) no estaba documentado entre los paneles administrativos, pese a existir y estar mantenido. | Agregada subsección `admin-keyson.html` (solo lectura: búsqueda de clientes + filtro por período). |
+
+**Notas de la revisión 2026-07-23:** revisados los tres paneles (`admin-taller.html`, `admin-productos.html`, `admin-keyson.html`), `config.js`, y las páginas funcionales de cliente (`seguimiento.html`, `tienda.html`, `taller.html`). **Sin bugs críticos ni de lógica JS este ciclo.** Autenticación correcta en todo el admin (Bearer JWT vía `authHeaders()`; `apiFetch()` maneja 401 en taller/productos; keyson hace `logout()` en 401). Sin fetch con auth incorrecta (ningún `x-admin-token` en código). Sin variables CSS ni referencias DOM rotas. Sin funciones duplicadas ni código muerto nuevo (los hallazgos de código muerto de ciclos previos siguen resueltos). El checkout de `tienda.html` previene doble-submit y preserva el carrito si la API falla; paginación/filtros del admin sobreviven a mutaciones (corregido en ciclos 2026-07-02/09). El único hallazgo fue documentación de auth desactualizada en el README, ya corregida arriba. Las mejoras no críticas pendientes siguen listadas más abajo (paginación keyson, export en keyson, etc. — ninguna urgente).
+
 > Última revisión: 2026-07-16
 
 ---
