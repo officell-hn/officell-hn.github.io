@@ -1,5 +1,17 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-07-09
+> Última revisión: 2026-07-16
+
+---
+
+## ✅ Bugs corregidos — revisión 2026-07-16
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-productos.html` | 824 (`agregarCampoImagen`) | **BUG RENDERIZADO/ATRIBUTO**: la función construye cada campo de URL de imagen con `value="${valor}"` inyectando el valor sin escapar dentro de un atributo HTML delimitado por comillas dobles. Al **editar** un producto, `setImagenesValue()` → `agregarCampoImagen(u)` vuelca las URLs guardadas en el formulario. Una URL almacenada que contenga una comilla doble (`"`) cierra el atributo `value` prematuramente: el campo queda truncado o se inyectan atributos espurios, y al guardar se perdería/corrompería la URL de la imagen. Es exactamente la misma clase de bug de comillas-en-atributos que el proyecto ya corrigió en los `onclick` (apostrofes en `confirmarPago`, `abrirConversacion`), pero la ruta de imágenes quedó sin cubrir. | Escapado el valor con la función canónica: `value="${escHtml(valor)}"`. `escHtml()` (config.js) escapa `"` → `&quot;`, así el atributo sobrevive intacto y `dataset`/`.value` recuperan el valor original. Sin cambios de comportamiento para URLs normales. |
+| `taller.html` | 448 (`buscarOrden`) | **HARDENING RENDERIZADO**: en la vista pública de seguimiento del taller, `buscarOrden()` escapa con `esc()` todos los campos que provienen del backend (`equipo`, `cliente_nombre`, `codigo_seguimiento`, `estado_desc`, `notas`…) **excepto** `${formatTipo(o.tipo_servicio)}`, que se interpolaba crudo en el `innerHTML`. `formatTipo()` devuelve etiquetas seguras de un mapa fijo, pero para un `tipo_servicio` desconocido cae al fallback `t.charAt(0).toUpperCase()+t.slice(1)` — el valor crudo del servidor. Inconsistente con el resto de la función y con `seguimiento.html`. | Envuelto en la función canónica: `${esc(formatTipo(o.tipo_servicio))}`. Ahora los 100% de los campos interpolados de esa vista pasan por `esc()`. Sin cambios visibles para los tipos conocidos. |
+| `README.md` | 113–116 | **DOC DESACTUALIZADA**: la sección "Acceso a ambos paneles" describía un esquema de auth que ya no existe: "contraseña enviada como header `x-admin-token`" y "sesión en `localStorage` (`oc_admin_token`)". El sistema migró hace tiempo a JWT: la contraseña va a `POST /admin/login`, el backend responde un JWT que viaja en `Authorization: Bearer <jwt>` (helper `authHeaders()`), y la sesión se guarda en `sessionStorage` con la clave `oc_admin_jwt`. Un mantenedor futuro que confiara en el README buscaría un header y una clave de storage inexistentes. | Reescrita la sección para reflejar el flujo real (login → JWT → header `Authorization: Bearer` → `sessionStorage`/`oc_admin_jwt`). Cambio de documentación únicamente. |
+
+**Notas de la revisión 2026-07-16:** revisados los 5 archivos con lógica de API (`admin-taller.html`, `admin-productos.html`, `admin-keyson.html`, `taller.html`, `tienda.html`, `seguimiento.html`, `index.html`) + `config.js`. **Autenticación:** correcta y consistente en todo el panel — cero rastros de `x-admin-token` o tokens legacy en el código; todos los fetch autenticados usan `authHeaders()` con Bearer JWT y `apiFetch()`/checks de 401 cierran sesión limpiamente. **Endpoints públicos** (taller/servicios, taller/orden, pedido, productos, categorías) no requieren auth — correcto. **CSS/DOM:** sin variables ni referencias a elementos inexistentes detectadas; paginación, filtros, export CSV/PDF, spinners de carga y estados de error/éxito presentes en todos los paneles. **Escape HTML:** unificado en `config.js`; los 2 huecos restantes (arriba) ahora cubiertos. No se encontraron bugs que rompan funcionalidad — los hallazgos son hardening de escape y una doc desactualizada.
 
 ---
 
@@ -130,6 +142,22 @@ el backend devuelve el ID como número (`.toLowerCase()` directo sobre número l
 ---
 
 ## 🟡 Media prioridad (mejora de usabilidad significativa)
+
+### 19. `tienda.html` — el QR del modal de confirmación usa servicio externo (`api.qrserver.com`)
+**Detectado 2026-07-16.** En `confirmarPedido()` (≈línea 914), tras registrar el pedido el QR de seguimiento
+se genera con `https://api.qrserver.com/v1/create-qr-code/?...&data=<trackUrl>`. Esto:
+1. **Envía la URL de seguimiento del cliente a un tercero** (privacidad).
+2. Añade una **dependencia externa** — si qrserver.com está caído o bloqueado, el cliente ve un QR roto.
+
+`seguimiento.html` ya se migró a generación local con `qrcode.min.js` + `QRCode.toCanvas()` (ítem #18,
+rev. 2026-06-25), y `admin-taller.html` usa `QRCode.toDataURL()` para sus recibos. `tienda.html` quedó
+como el único punto que aún depende del servicio externo.
+**Solución propuesta:** cargar `qrcode.min.js` (mismo CDN que ya usan taller/seguimiento) en `tienda.html`
+y reemplazar el `<img src="api.qrserver.com…">` por un `<canvas>` generado con
+`QRCode.toCanvas(el, trackUrl, {width:300, margin:1})`, con fallback al `<img>` externo si la librería no
+cargó. Alinea las tres páginas con QR bajo el mismo enfoque local.
+
+---
 
 ### ~~4. Botón "Guardar" no se deshabilita durante `actualizarEstado()`~~ ✅ IMPLEMENTADO
 **Verificado 2026-06-11:** Línea ~706 de `admin-taller.html`: `if (btnGuardar) { btnGuardar.disabled = true; btnGuardar.textContent = '⏳ Guardando...'; }` y el `finally` lo rehabilita. El patrón anti-doble-click está implementado.
