@@ -24,6 +24,8 @@
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-07-30 | Revisión semanal admin. **Sin bugs críticos** (auth JWT correcta en los 3 paneles, sin `x-admin-token`, sin refs DOM/CSS rotas, sin código muerto). Mejora aplicada: **paginación en la pestaña Productos de `admin-productos.html`** (25/pág, reusa el patrón de Pedidos/Taller) — antes renderizaba todo el inventario de una vez, pesado con muchos SKU. Documentadas M1 (export CSV productos, Media) y M2 (export CSV pedidos, Baja) en `MEJORAS_WEB.md`. |
+
 | 2026-07-23 | Revisión semanal admin. **Sin bugs críticos ni de lógica JS este ciclo** — los tres paneles (`admin-taller`, `admin-productos`, `admin-keyson`), `config.js` y las páginas de cliente (`seguimiento`, `tienda`, `taller`) están limpios: auth correcta (Bearer JWT), sin fetch mal autenticados, sin CSS/DOM rotos, sin código muerto nuevo. Único hallazgo: `README.md` documentaba el mecanismo de auth **anterior** ya eliminado (header `x-admin-token` + `localStorage oc_admin_token`) en vez del real (JWT → `Authorization: Bearer` + `sessionStorage oc_admin_jwt`). Corregida la sección de auth y agregada la subsección faltante de `admin-keyson.html`. Detalle en `MEJORAS_WEB.md` (rev. 2026-07-23). |
 
 | 2026-07-16 | Revisión semanal admin. Auth verificada 100% JWT Bearer (sin rastros de `x-admin-token` en código). 3 fixes de hardening/doc: (1) `admin-productos.html` — `agregarCampoImagen()` escapa el `value` del campo de URL (`escHtml`) para que una imagen con `"` guardada no rompa el formulario de edición; (2) `taller.html` — `formatTipo(o.tipo_servicio)` ahora pasa por `esc()` (único campo sin escapar en la vista pública de seguimiento); (3) `README.md` — corregida la doc de auth (era `x-admin-token`/`localStorage`, ahora JWT `Bearer`/`sessionStorage` `oc_admin_jwt`). Documentada mejora #19 (Media): migrar el QR del modal de confirmación de `tienda.html` de `api.qrserver.com` a generación local, como ya hacen taller/seguimiento. |
@@ -55,6 +57,9 @@
 - [x] Implementar búsqueda de texto en tabla de órdenes del taller — verificado 2026-06-11 (campo `#buscarOrden`)
 - [x] Exportar órdenes del taller a CSV — implementado 2026-06-12 (botón ⬇️ CSV, respeta filtros)
 - [x] Paginación en tabla de órdenes del taller — implementado 2026-06-12 (25 por página)
+- [x] Paginación en tabla de productos (admin-productos) — implementado 2026-07-30 (25 por página)
+- [ ] Exportar inventario de productos a CSV — pendiente (M1, Media). El Taller ya tiene CSV; replicar patrón
+- [ ] Exportar pedidos a CSV — pendiente (M2, Baja)
 
 ---
 
