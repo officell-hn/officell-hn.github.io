@@ -1,0 +1,11 @@
+# Ramas ya revisadas que NO aportan codigo a main.
+# Las lee verificar_ramas.js para no avisar en falso.
+
+# 6-ago-2026, revisada y descartada a proposito:
+origin/revision-semanal-2026-05-21   # del 21-may, muy anterior al rediseno de la tienda
+origin/claude/jolly-noether-r4nglx   # PR #7: sus 3 arreglos de tienda.html YA se aplicaron
+                                     # (commit ebb387f). Lo que NO se tomo fue su cambio al
+                                     # sitemap: corrio antes de publicar las fichas, creia que
+                                     # no existian y vaciaba el bloque de productos. Mergearla
+                                     # deja un marcador de conflicto dentro del sitemap.xml y
+                                     # devuelve el enlace a producto/ singular. NO mergear.
