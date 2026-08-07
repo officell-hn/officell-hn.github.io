@@ -11,14 +11,18 @@ const OFFICELL_CONFIG = {
 
   // Datos del negocio
   NOMBRE: 'OFFICELL',
-  SLOGAN: 'Tu celular como nuevo — garantizado',
+  SLOGAN: 'Tecnología, Banca y Más.',
   UBICACION: 'Danlí, Honduras',
 
-  // Colores de marca
+  // Colores de marca (logo nuevo, 7-ago-2026). Base grafito + blanco;
+  // los cuatro del isotipo se usan como acento, no como fondos grandes.
   COLORES: {
-    azul:    '#185FA5',
+    grafito: '#25282A',
     blanco:  '#FFFFFF',
-    naranja: '#EF9F27'
+    magenta: '#C6007E',
+    cian:    '#59C7F2',
+    ambar:   '#FDB913',
+    verde:   '#00A74A'
   }
 };
 
