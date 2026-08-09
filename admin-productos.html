@@ -383,10 +383,26 @@
         <label>Cantidad en stock</label>
         <input type="number" id="f-cantidad" placeholder="1" min="0" value="1">
       </div>
+      <div class="form-group">
+        <label>Stock mínimo <span style="color:var(--muted);font-size:.8rem">(avisa al llegar aquí)</span></label>
+        <input type="number" id="f-stockmin" placeholder="3" min="0" value="3">
+      </div>
+      <div class="form-group">
+        <label>Código de barras <span style="color:var(--muted);font-size:.8rem">(opcional)</span></label>
+        <input type="text" id="f-codbarras" placeholder="Escanea o escribe el código">
+      </div>
       <div class="form-group form-full">
         <label>Imágenes del producto <span style="color:var(--muted);font-size:0.8rem">(agrega hasta 5 fotos)</span></label>
         <div id="imagenes-lista" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
-        <button type="button" onclick="agregarCampoImagen()" style="background:var(--bg3);color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:8px 16px;cursor:pointer;font-size:0.85rem;width:100%">+ Agregar otra imagen</button>
+        <!-- Subida directa a Cloudinary. Se oculta solo si CLOUDINARY no está configurado
+             en config.js, así el panel nunca queda con un botón que no hace nada. -->
+        <input type="file" id="f-foto-file" accept="image/*" multiple style="display:none" onchange="subirFotos(this)">
+        <button type="button" id="btn-subir-foto" onclick="document.getElementById('f-foto-file').click()"
+          style="display:none;background:var(--verde,#00A74A);color:#fff;border:none;border-radius:8px;padding:11px 16px;cursor:pointer;font-size:0.9rem;font-weight:600;width:100%;margin-bottom:8px">
+          📷 Tomar o subir foto
+        </button>
+        <div id="subida-estado" style="display:none;font-size:.85rem;color:var(--muted);margin-bottom:8px"></div>
+        <button type="button" onclick="agregarCampoImagen()" style="background:var(--bg3);color:var(--muted);border:1px dashed var(--border);border-radius:8px;padding:8px 16px;cursor:pointer;font-size:0.85rem;width:100%">+ Pegar URL manualmente</button>
         <div id="img-previews" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
       </div>
       <div class="form-group form-full">
@@ -827,6 +843,7 @@ function abrirModalCrear() {
   document.getElementById('modal-titulo').textContent = 'Nuevo Producto';
   document.getElementById('btn-guardar').textContent = 'Crear producto';
   limpiarModal();
+  mostrarBotonSubida();
   document.getElementById('modal-producto').classList.add('open');
   document.getElementById('f-nombre').focus();
 }
@@ -846,11 +863,14 @@ function abrirModalEditar(p) {
   document.getElementById('f-precio').value = p.precio || '';
   document.getElementById('f-costo').value = p.costo || '';
   document.getElementById('f-cantidad').value = p.cantidad || 1;
+  document.getElementById('f-stockmin').value = (p.stock_minimo === null || p.stock_minimo === undefined) ? 3 : p.stock_minimo;
+  document.getElementById('f-codbarras').value = p.codigo_barras || '';
   setImagenesValue(p.imagen_url || '');
   document.getElementById('f-descripcion').value = p.descripcion || '';
   document.getElementById('f-enweb').checked = !!p.en_web;
   document.getElementById('f-destacado').checked = !!p.destacado;
   actualizarPreviews();
+  mostrarBotonSubida();
   document.getElementById('modal-producto').classList.add('open');
   document.getElementById('f-nombre').focus();
 }
@@ -860,13 +880,100 @@ function cerrarModal() {
 }
 
 function limpiarModal() {
-  ['f-nombre','f-categoria','f-precio','f-costo','f-descripcion'].forEach(id => document.getElementById(id).value = '');
+  ['f-nombre','f-categoria','f-precio','f-costo','f-descripcion','f-codbarras'].forEach(id => document.getElementById(id).value = '');
   setImagenesValue('');
   document.getElementById('f-condicion').value = 'nuevo';
   document.getElementById('f-cantidad').value = '1';
+  document.getElementById('f-stockmin').value = '3';
   document.getElementById('f-enweb').checked = true;
   document.getElementById('f-destacado').checked = false;
   // img-preview eliminado en refactor multi-imagen (noop)
+}
+
+// ── SUBIDA DE FOTOS (Cloudinary) ────────────────────────────────
+// El panel es estático (GitHub Pages), así que la subida va directo del navegador
+// a Cloudinary con un "unsigned upload preset". Eso significa que NO viaja ningún
+// secreto en el código: el preset solo autoriza subir a una carpeta, nada más.
+// Si CLOUDINARY no está configurado en config.js, el botón queda oculto y se
+// sigue pudiendo pegar URLs a mano — el panel nunca queda a medias.
+function cloudinaryListo() {
+  const c = (window.OFFICELL_CONFIG || {}).CLOUDINARY || {};
+  return !!(c.CLOUD_NAME && c.UPLOAD_PRESET);
+}
+
+function mostrarBotonSubida() {
+  const btn = document.getElementById('btn-subir-foto');
+  if (btn) btn.style.display = cloudinaryListo() ? 'block' : 'none';
+}
+
+function estadoSubida(texto, mostrar = true) {
+  const el = document.getElementById('subida-estado');
+  if (!el) return;
+  el.textContent = texto || '';
+  el.style.display = mostrar && texto ? 'block' : 'none';
+}
+
+// Sube UNA imagen y devuelve su URL https definitiva.
+async function subirUnaFoto(file) {
+  const c = window.OFFICELL_CONFIG.CLOUDINARY;
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', c.UPLOAD_PRESET);
+  if (c.CARPETA) fd.append('folder', c.CARPETA);
+
+  const r = await fetch(`https://api.cloudinary.com/v1_1/${c.CLOUD_NAME}/image/upload`, {
+    method: 'POST', body: fd
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || !d.secure_url) {
+    throw new Error((d.error && d.error.message) || 'Cloudinary rechazó la imagen');
+  }
+  // f_auto,q_auto → Cloudinary sirve WebP/AVIF comprimido según el navegador,
+  // y w_1200 evita mandar una foto de 4000px al celular de un cliente.
+  return d.secure_url.replace('/upload/', '/upload/f_auto,q_auto,w_1200/');
+}
+
+async function subirFotos(input) {
+  const archivos = [...(input.files || [])];
+  input.value = ''; // permite volver a elegir la misma foto si algo falló
+  if (!archivos.length) return;
+
+  if (!cloudinaryListo()) {
+    toast('Falta configurar Cloudinary en config.js', 'err');
+    return;
+  }
+
+  const libres = Math.max(0, 5 - [...document.querySelectorAll('.img-campo')].filter(i => i.value.trim()).length);
+  if (libres === 0) { toast('Ya tienes 5 fotos, elimina alguna primero', 'err'); return; }
+
+  const aSubir = archivos.slice(0, libres);
+  if (archivos.length > libres) toast(`Solo caben ${libres} foto(s) más`, 'err');
+
+  const btn = document.getElementById('btn-subir-foto');
+  if (btn) btn.disabled = true;
+
+  let ok = 0;
+  for (let i = 0; i < aSubir.length; i++) {
+    const f = aSubir[i];
+    estadoSubida(`Subiendo ${i + 1} de ${aSubir.length}…`);
+    // 10 MB — una foto de celular ronda 3-5 MB; más que eso es un archivo raro.
+    if (f.size > 10 * 1024 * 1024) { toast(`${f.name} pesa más de 10 MB`, 'err'); continue; }
+    try {
+      const url = await subirUnaFoto(f);
+      // Reusa un campo vacío si lo hay; si no, agrega uno nuevo.
+      const vacio = [...document.querySelectorAll('.img-campo')].find(inp => !inp.value.trim());
+      if (vacio) { vacio.value = url; }
+      else { agregarCampoImagen(url); }
+      ok++;
+    } catch (e) {
+      toast(`Error subiendo ${f.name}: ${e.message}`, 'err');
+    }
+  }
+
+  estadoSubida('', false);
+  if (btn) btn.disabled = false;
+  actualizarPreviews();
+  if (ok) toast(ok === 1 ? 'Foto subida ✓' : `${ok} fotos subidas ✓`, 'ok');
 }
 
 // ── MÚLTIPLES IMÁGENES ──
@@ -932,6 +1039,11 @@ async function guardarProducto() {
     descripcion: document.getElementById('f-descripcion').value.trim(),
     en_web: document.getElementById('f-enweb').checked,
     destacado: document.getElementById('f-destacado').checked,
+    // Campos que existían en el backend pero el formulario nunca mandaba:
+    // stock_minimo quedaba fijo en 3 para todo el catálogo y codigo_barras
+    // siempre vacío (el fix del 16-jul lo dejó pasar por Zod, faltaba el input).
+    stock_minimo: Math.max(0, parseInt(document.getElementById('f-stockmin').value) || 0),
+    codigo_barras: document.getElementById('f-codbarras').value.trim(),
   };
 
   const btn = document.getElementById('btn-guardar');

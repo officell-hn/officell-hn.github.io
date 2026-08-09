@@ -14,6 +14,19 @@ const OFFICELL_CONFIG = {
   SLOGAN: 'Tecnología, Banca y Más.',
   UBICACION: 'Danlí, Honduras',
 
+  // Cloudinary — subida de fotos de producto desde el panel (9-ago-2026).
+  // Antes había que hostear cada foto por fuera y pegar el link a mano; con esto
+  // se sube desde la cámara del teléfono y la URL se llena sola.
+  // CLOUD_NAME y UPLOAD_PRESET salen del panel de Cloudinary (el preset debe ser
+  // "Unsigned" — es lo único que permite subir desde el navegador sin exponer el
+  // API secret). Mientras estén vacíos, el botón de subir no aparece y se sigue
+  // pudiendo pegar URLs a mano.
+  CLOUDINARY: {
+    CLOUD_NAME:    'rnk4ftug',
+    UPLOAD_PRESET: 'officell_productos',
+    CARPETA:       'productos'
+  },
+
   // Colores de marca (logo nuevo, 7-ago-2026). Base grafito + blanco;
   // los cuatro del isotipo se usan como acento, no como fondos grandes.
   COLORES: {
