@@ -119,6 +119,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
 .producto-card:hover{transform:translateY(-4px);border-color:var(--accent)}
 .badge-destacado{position:absolute;top:0.75rem;left:0.75rem;background:var(--accent2);color:#fff;padding:0.25rem 0.6rem;border-radius:50px;font-size:0.7rem;font-weight:700;z-index:1}
 .badge-condicion{position:absolute;top:0.75rem;right:0.75rem;padding:0.25rem 0.6rem;border-radius:50px;font-size:0.7rem;font-weight:700;z-index:1}
+/* Producto agotado (9-ago-2026): antes desaparecía del catálogo y el cliente no
+   sabía si existía o se había acabado. Ahora sigue visible, atenuado y con la
+   cinta "Sin existencia" para que se entienda de un vistazo. */
+.producto-card.agotado .producto-img,.producto-card.agotado .producto-img-placeholder{opacity:.45;filter:grayscale(.6)}
+.producto-card.agotado .producto-precio{opacity:.6}
+.cinta-agotado{position:absolute;top:44%;left:0;right:0;background:rgba(15,20,32,.88);color:#fff;text-align:center;padding:.4rem 0;font-size:.82rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;z-index:2;pointer-events:none}
 .badge-nuevo{background:rgba(0,232,143,0.15);color:var(--green);border:1px solid var(--green)}
 .badge-usado{background:rgba(255,107,53,0.15);color:var(--accent2);border:1px solid var(--accent2)}
 .badge-reacondicionado{background:rgba(0,212,255,0.15);color:var(--accent);border:1px solid var(--accent)}
@@ -614,18 +620,23 @@ function renderProductos() {
 
     const hrefProducto = escHtml(urlProducto(p.nombre, p.id));
 
-    return `<div class="producto-card">
-      ${p.destacado ? '<span class="badge-destacado">⭐ Destacado</span>' : ''}
+    const agotado = Number(p.cantidad) < 1;
+
+    return `<div class="producto-card${agotado ? ' agotado' : ''}">
+      ${p.destacado && !agotado ? '<span class="badge-destacado">⭐ Destacado</span>' : ''}
       <span class="badge-condicion ${badgeCond}">${condLabel}</span>
-      <a href="${hrefProducto}" style="display:block;color:inherit;text-decoration:none">${imgMainHtml}</a>
+      <a href="${hrefProducto}" style="display:block;color:inherit;text-decoration:none;position:relative">
+        ${agotado ? '<div class="cinta-agotado">Sin existencia</div>' : ''}
+        ${imgMainHtml}
+      </a>
       ${imgThumbsHtml}
       <div class="producto-info">
         <div class="producto-categoria">${escHtml(p.categoria_web || 'Producto')}</div>
         <a href="${hrefProducto}" style="display:block;color:inherit;text-decoration:none"><div class="producto-nombre">${escHtml(p.nombre)}</div></a>
         ${p.descripcion ? `<div class="producto-desc">${escHtml(p.descripcion)}</div>` : ''}
         <div class="producto-precio">L.${parseFloat(p.precio).toLocaleString()} <span>HNL</span></div>
-        <button class="btn-agregar" onclick="agregarPorId('${p.id}')" ${p.cantidad < 1 ? 'disabled' : ''}>
-          ${p.cantidad < 1 ? 'Sin stock' : '🛒 Agregar al carrito'}
+        <button class="btn-agregar" onclick="agregarPorId('${p.id}')" ${agotado ? 'disabled' : ''}>
+          ${agotado ? 'Sin existencia — consultanos' : '🛒 Agregar al carrito'}
         </button>
         <a href="${hrefProducto}" style="display:block;text-align:center;margin-top:0.5rem;font-size:0.8rem;color:var(--muted);text-decoration:none;transition:color 0.3s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">Ver detalles →</a>
       </div>
@@ -689,8 +700,22 @@ function agregarPorId(id) {
 // CARRITO
 // ════════════════════════════════════════════
 function agregarCarrito(producto) {
+  // Los agotados ahora SÍ aparecen en el catálogo (para que el cliente sepa que
+  // existen), así que hay que impedir acá que entren al carrito. El botón ya va
+  // deshabilitado, pero esto cubre el caso de llamarla desde la ficha o de que
+  // el stock haya cambiado desde que se cargó la página.
+  const disponible = Number(producto.cantidad);
+  if (!Number.isFinite(disponible) || disponible < 1) {
+    alert('Este producto está sin existencia por el momento. Escribinos por WhatsApp y te avisamos cuando llegue.');
+    return;
+  }
+
   const idx = carrito.findIndex(i => i.id === producto.id);
   if (idx >= 0) {
+    if (carrito[idx].cantidad >= disponible) {
+      alert(`Solo tenemos ${disponible} unidad(es) de este producto.`);
+      return;
+    }
     carrito[idx].cantidad++;
   } else {
     carrito.push({ ...producto, cantidad: 1 });
