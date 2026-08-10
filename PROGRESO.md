@@ -5,7 +5,7 @@
 
 ---
 
-## Estado actual (2026-06-12)
+## Estado actual (2026-08-09)
 
 ### Páginas principales
 | Página | Estado |
@@ -16,7 +16,9 @@
 | `admin-taller.html` | ✅ Activa |
 | `taller.html` | ✅ Activa |
 | `agentes-bancarios.html` | ✅ Activa |
-| Blog SEO | ✅ 5+ artículos, sitemap actualizado |
+| Blog SEO | ✅ 9+ artículos, sitemap actualizado |
+
+**Catálogo:** 43 productos publicados (32 de joyería) al 2026-08-09. Alta desde WhatsApp vía MAX (ver `MEJORAS_IA.md`) o desde el panel con subida de foto directa.
 
 ---
 
@@ -24,6 +26,7 @@
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-08-09 | **Carga de catálogo desde el teléfono.** (1) **Subida de fotos a Cloudinary** en `admin-productos.html`: botón 📷 que abre la cámara, sube varias a la vez y llena la URL sola — antes había que hostear cada foto por fuera y pegar el link, inviable para cargar cientos de productos. Las URLs salen con `f_auto,q_auto,w_1200` → WebP comprimido, **resuelve de paso el pendiente de imágenes pesadas**. Config en `config.js` → `CLOUDINARY` (cloud `rnk4ftug`, preset unsigned `officell_productos`); si está vacío el botón se oculta y se sigue pudiendo pegar URLs, el panel nunca queda a medias. (2) Campos **Stock mínimo** y **Código de barras** agregados al modal — el backend ya los soportaba pero el formulario no los tenía (`codigo_barras` se sumó al schema el 16-jul y quedó sin input). (3) `tienda.html`: los productos **agotados ahora se muestran** atenuados y con cinta "Sin existencia" en vez de desaparecer del catálogo — el cliente no podía distinguir entre "no lo tienen" y "se acabó". Guard en `agregarCarrito` que impide meter un producto en 0 y topa la cantidad al stock real. (4) El aviso de eliminar producto ahora **nombra** el producto (nombre, código, precio, stock): con nombres casi idénticos no había forma de verificar cuál se estaba borrando. |
 | 2026-07-30 | Revisión semanal admin. **Sin bugs críticos** (auth JWT correcta en los 3 paneles, sin `x-admin-token`, sin refs DOM/CSS rotas, sin código muerto). Mejora aplicada: **paginación en la pestaña Productos de `admin-productos.html`** (25/pág, reusa el patrón de Pedidos/Taller) — antes renderizaba todo el inventario de una vez, pesado con muchos SKU. Documentadas M1 (export CSV productos, Media) y M2 (export CSV pedidos, Baja) en `MEJORAS_WEB.md`. |
 
 | 2026-07-23 | Revisión semanal admin. **Sin bugs críticos ni de lógica JS este ciclo** — los tres paneles (`admin-taller`, `admin-productos`, `admin-keyson`), `config.js` y las páginas de cliente (`seguimiento`, `tienda`, `taller`) están limpios: auth correcta (Bearer JWT), sin fetch mal autenticados, sin CSS/DOM rotos, sin código muerto nuevo. Único hallazgo: `README.md` documentaba el mecanismo de auth **anterior** ya eliminado (header `x-admin-token` + `localStorage oc_admin_token`) en vez del real (JWT → `Authorization: Bearer` + `sessionStorage oc_admin_jwt`). Corregida la sección de auth y agregada la subsección faltante de `admin-keyson.html`. Detalle en `MEJORAS_WEB.md` (rev. 2026-07-23). |
