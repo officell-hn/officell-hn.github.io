@@ -822,7 +822,18 @@ async function toggleCampo(id, campo, valor) {
 }
 
 async function eliminarProducto(id, btn) {
-  if (!confirm('¿Eliminar este producto? No se puede deshacer.')) return;
+  // El aviso ahora NOMBRA el producto: con un catálogo grande y varios nombres
+  // parecidos ("Aretes de Zirconia con Diseño Floral" x2), un "¿Eliminar este
+  // producto?" a secas no deja verificar que se está borrando el correcto.
+  const prod = todosProductos.find(x => x.id === id) || {};
+  const detalle = [
+    prod.nombre || 'este producto',
+    prod.codigo_barras ? `Código: ${prod.codigo_barras}` : null,
+    prod.precio ? `Precio: L.${Number(prod.precio).toLocaleString('es-HN')}` : null,
+    (prod.cantidad !== undefined && prod.cantidad !== null) ? `Stock: ${prod.cantidad}` : null
+  ].filter(Boolean).join('\n');
+
+  if (!confirm(`¿Eliminar de la tienda?\n\n${detalle}\n\nSe quita del catálogo; el historial de movimientos se conserva.`)) return;
   btn.disabled = true;
   try {
     const r = await apiFetch(`${API}/admin/producto/${id}`, {
