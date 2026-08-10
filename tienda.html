@@ -992,6 +992,24 @@ actualizarContador();
 cargarProductos().then(() => {
   // Soporte de URL param: ?cat=diamantes-ff
   const params = new URLSearchParams(window.location.search);
+
+  // ?agregar=<id> — viene del botón "Agregar al carrito" de la ficha de producto
+  // (10-ago-2026). La ficha es un ARCHIVO ESTÁTICO generado, así que a propósito
+  // NO lleva su propia copia de la lógica del carrito: si horneáramos precio y
+  // existencia dentro del HTML, quedarían congelados en el momento de generarlo
+  // y el cliente podría meter al carrito algo con el precio viejo o ya vendido.
+  // Acá los datos vienen recién pedidos a la API, y agregarCarrito() ya valida
+  // existencia y abre el panel del carrito.
+  const idAgregar = params.get('agregar');
+  if (idAgregar) {
+    // Se limpia la URL ANTES de agregar: si no, recargar la página con F5
+    // volvería a sumar el producto una y otra vez.
+    history.replaceState(null, '', window.location.pathname);
+    const prod = (todosProductos || []).find(x => String(x.id) === String(idAgregar));
+    if (prod) agregarCarrito(prod);
+    else alert('Ese producto ya no está disponible. Mirá el resto del catálogo o escribinos por WhatsApp.');
+  }
+
   const catParam = params.get('cat');
   if (catParam) {
     categoriaActiva = catParam;
