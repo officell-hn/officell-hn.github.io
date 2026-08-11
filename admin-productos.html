@@ -873,7 +873,11 @@ function abrirModalEditar(p) {
   document.getElementById('f-condicion').value = p.condicion || 'nuevo';
   document.getElementById('f-precio').value = p.precio || '';
   document.getElementById('f-costo').value = p.costo || '';
-  document.getElementById('f-cantidad').value = p.cantidad || 1;
+  // ⛔ 11-ago-2026: era `p.cantidad || 1`. Un producto agotado (0) abría el
+  // formulario mostrando 1, así que aunque no se tocara el campo se volvía a
+  // guardar 1 al apretar "Guardar cambios".
+  document.getElementById('f-cantidad').value =
+    (p.cantidad === null || p.cantidad === undefined || p.cantidad === '') ? 1 : p.cantidad;
   document.getElementById('f-stockmin').value = (p.stock_minimo === null || p.stock_minimo === undefined) ? 3 : p.stock_minimo;
   document.getElementById('f-codbarras').value = p.codigo_barras || '';
   setImagenesValue(p.imagen_url || '');
@@ -1033,6 +1037,20 @@ function setImagenesValue(val) {
   agregarCampoImagen(val); // URL simple
 }
 
+// ⛔ EL CERO ES UN VALOR, NO UN CAMPO VACÍO (11-ago-2026).
+//
+// Acá estaba escrito `parseInt(campo) || 1`. `parseInt('0')` da 0, y 0 en
+// JavaScript es falsy, así que el `|| 1` lo pisaba: poner 0 de stock guardaba 1.
+// Adonias le puso 0 a la silla que se agotó, guardó, y la lista seguía diciendo
+// 1 — y la tienda seguía ofreciendo en venta algo que no hay en el local.
+//
+// El valor por defecto SOLO debe entrar cuando el campo está vacío o tiene algo
+// que no es un número.
+function enteroNoNegativo(valor, porDefecto) {
+  const n = parseInt(valor, 10);
+  return Number.isFinite(n) && n >= 0 ? n : porDefecto;
+}
+
 async function guardarProducto() {
   const nombre = document.getElementById('f-nombre').value.trim();
   const precio = parseFloat(document.getElementById('f-precio').value);
@@ -1045,7 +1063,7 @@ async function guardarProducto() {
     condicion: document.getElementById('f-condicion').value,
     precio,
     costo: parseFloat(document.getElementById('f-costo').value) || 0,
-    cantidad: parseInt(document.getElementById('f-cantidad').value) || 1,
+    cantidad: enteroNoNegativo(document.getElementById('f-cantidad').value, 1),
     imagen_url: getImagenesValue(),
     descripcion: document.getElementById('f-descripcion').value.trim(),
     en_web: document.getElementById('f-enweb').checked,
