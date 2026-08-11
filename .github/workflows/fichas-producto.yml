@@ -1,0 +1,119 @@
+# Publica sola la ficha de cada producto nuevo.
+#
+# POR QUÉ EXISTE (11-ago-2026): las fichas de producto son ARCHIVOS generados —se
+# hornean para que el preview de WhatsApp muestre foto y precio, porque ese
+# preview no ejecuta JavaScript—. Hasta hoy había que correr el generador a mano
+# cada vez que entraba un producto, y pasó dos veces que no se hizo: la joyería
+# el lunes y los auriculares hoy. El cliente hacía click y le salía 404.
+#
+# Adonias: "arreglalo para que se genere la ficha automático al ingresar un
+# producto".
+#
+# CÓMO FUNCIONA: le pide al servidor las fichas YA ARMADAS y las escribe. La
+# lógica de armado vive en UN solo lugar (scripts/generar_paginas_producto.js del
+# repo de IA) y no se copia acá: si se duplicara, bastaría que una versión
+# cambiara el slug para que todos los enlaces de la tienda quedaran rotos.
+#
+# NO NECESITA NINGUNA CLAVE: el endpoint es público porque devuelve exactamente
+# el mismo HTML que ya está publicado en este sitio.
+
+name: Fichas de producto
+
+on:
+  schedule:
+    # Cada 15 minutos. GitHub a veces retrasa los cron, así que puede tardar un
+    # poco más; para verlo al instante está el botón de "Run workflow".
+    - cron: '*/15 * * * *'
+  workflow_dispatch:        # botón manual, cuando no se quiere esperar
+
+# Permiso para que la tarea pueda commitear en este mismo repo.
+permissions:
+  contents: write
+
+concurrency:
+  # Si una corrida se solapa con otra, se cancela la vieja: escribir los mismos
+  # archivos dos veces a la vez terminaría en un conflicto de push.
+  group: fichas-producto
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pedirle las fichas al servidor
+        id: bajar
+        run: |
+          set -euo pipefail
+          curl -sS --fail --retry 3 --retry-delay 5 --max-time 120 \
+            https://officell-ia-production.up.railway.app/api/tienda/fichas \
+            -o fichas.json
+          node -e "
+            const d = JSON.parse(require('fs').readFileSync('fichas.json','utf8'));
+            if (!d.ok || !Array.isArray(d.fichas)) { console.error('respuesta inesperada'); process.exit(1); }
+            // ⛔ GUARDA: si el servidor devolviera CERO fichas por un problema
+            // suyo, sin esto se borrarían todas las páginas del sitio.
+            if (d.fichas.length === 0) { console.error('el servidor devolvio 0 fichas — no se toca nada'); process.exit(1); }
+            console.log('fichas recibidas: ' + d.fichas.length);
+          "
+
+      - name: Escribir las fichas y el sitemap
+        run: |
+          set -euo pipefail
+          node -e "
+            const fs = require('fs'), path = require('path');
+            const d = JSON.parse(fs.readFileSync('fichas.json','utf8'));
+            const dir = d.carpeta || 'productos';
+            fs.mkdirSync(dir, { recursive: true });
+
+            const escritas = new Set();
+            for (const f of d.fichas) {
+              // Nombre de archivo simple: nada de rutas ni saltos de carpeta.
+              if (!/^[a-z0-9._-]+\.html$/i.test(f.archivo)) { console.log('nombre raro, se salta: ' + f.archivo); continue; }
+              fs.writeFileSync(path.join(dir, f.archivo), f.html, 'utf8');
+              escritas.add(f.archivo);
+            }
+
+            // Las de productos que ya no se venden se sacan, igual que hace el
+            // generador cuando se corre a mano.
+            let borradas = 0;
+            for (const a of fs.readdirSync(dir).filter(x => x.endsWith('.html'))) {
+              if (!escritas.has(a)) { fs.unlinkSync(path.join(dir, a)); borradas++; }
+            }
+
+            // Sitemap: se reemplaza sólo el bloque entre las marcas.
+            const s = d.sitemap;
+            if (s && fs.existsSync('sitemap.xml')) {
+              let xml = fs.readFileSync('sitemap.xml','utf8');
+              const bloque = [s.marcaInicio]
+                .concat(s.urls.map(u => '  <url>\n    <loc>' + u + '</loc>\n    <lastmod>' + s.fecha + '</lastmod>\n    <changefreq>weekly</changefreq>\n  </url>'))
+                .concat([s.marcaFin]).join('\n');
+              const esc = t => t.replace(/[.*+?^\${}()|[\]\\\\]/g, '\\\\\$&');
+              if (xml.includes(s.marcaInicio) && xml.includes(s.marcaFin)) {
+                xml = xml.replace(new RegExp(esc(s.marcaInicio) + '[\\\\s\\\\S]*?' + esc(s.marcaFin)), bloque);
+              } else {
+                xml = xml.replace('</urlset>', bloque + '\n</urlset>');
+              }
+              fs.writeFileSync('sitemap.xml', xml, 'utf8');
+            }
+            console.log('escritas: ' + escritas.size + ' · borradas: ' + borradas);
+          "
+          rm -f fichas.json
+
+      - name: Publicar si cambió algo
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "Sin cambios — no se publica nada."
+            exit 0
+          fi
+          git config user.name  "OFFICELL bot"
+          git config user.email "arriaza42@gmail.com"
+          git add productos sitemap.xml
+          git commit -m "fichas: publicar productos nuevos del catalogo
+
+          Generado solo por la tarea Fichas de producto. Las fichas se arman en el
+          servidor (scripts/generar_paginas_producto.js del repo de IA) y aca solo
+          se escriben, para no duplicar la logica del slug."
+          git push
