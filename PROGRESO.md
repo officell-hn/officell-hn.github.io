@@ -26,6 +26,7 @@
 
 | Fecha | Cambio |
 |-------|--------|
+| 2026-08-13 | Revisión semanal admin. **Sin bugs críticos ni de lógica JS** (auth 100% JWT Bearer en los 3 paneles, sin `x-admin-token`; 0 CSS/DOM rotos; sin código muerto ni funciones duplicadas). Revisado a fondo el código nuevo del ciclo (Cloudinary, stock mínimo/código de barras, fix stock=0, agregar-al-carrito-desde-ficha, marcado de agotados): todo sólido. Mejora aplicada: **export CSV del inventario en `admin-productos.html`** (botón ⬇️ CSV + `exportarCSVProductos()`), pendiente M1 desde 2026-07-30 — reusa el patrón probado del Taller (respeta búsqueda/categoría, BOM UTF-8, numéricos en crudo). Queda M2 (export CSV de pedidos, Baja) en `MEJORAS_WEB.md`. |
 | 2026-08-09 | **Carga de catálogo desde el teléfono.** (1) **Subida de fotos a Cloudinary** en `admin-productos.html`: botón 📷 que abre la cámara, sube varias a la vez y llena la URL sola — antes había que hostear cada foto por fuera y pegar el link, inviable para cargar cientos de productos. Las URLs salen con `f_auto,q_auto,w_1200` → WebP comprimido, **resuelve de paso el pendiente de imágenes pesadas**. Config en `config.js` → `CLOUDINARY` (cloud `rnk4ftug`, preset unsigned `officell_productos`); si está vacío el botón se oculta y se sigue pudiendo pegar URLs, el panel nunca queda a medias. (2) Campos **Stock mínimo** y **Código de barras** agregados al modal — el backend ya los soportaba pero el formulario no los tenía (`codigo_barras` se sumó al schema el 16-jul y quedó sin input). (3) `tienda.html`: los productos **agotados ahora se muestran** atenuados y con cinta "Sin existencia" en vez de desaparecer del catálogo — el cliente no podía distinguir entre "no lo tienen" y "se acabó". Guard en `agregarCarrito` que impide meter un producto en 0 y topa la cantidad al stock real. (4) El aviso de eliminar producto ahora **nombra** el producto (nombre, código, precio, stock): con nombres casi idénticos no había forma de verificar cuál se estaba borrando. |
 | 2026-07-30 | Revisión semanal admin. **Sin bugs críticos** (auth JWT correcta en los 3 paneles, sin `x-admin-token`, sin refs DOM/CSS rotas, sin código muerto). Mejora aplicada: **paginación en la pestaña Productos de `admin-productos.html`** (25/pág, reusa el patrón de Pedidos/Taller) — antes renderizaba todo el inventario de una vez, pesado con muchos SKU. Documentadas M1 (export CSV productos, Media) y M2 (export CSV pedidos, Baja) en `MEJORAS_WEB.md`. |
 
@@ -61,7 +62,7 @@
 - [x] Exportar órdenes del taller a CSV — implementado 2026-06-12 (botón ⬇️ CSV, respeta filtros)
 - [x] Paginación en tabla de órdenes del taller — implementado 2026-06-12 (25 por página)
 - [x] Paginación en tabla de productos (admin-productos) — implementado 2026-07-30 (25 por página)
-- [ ] Exportar inventario de productos a CSV — pendiente (M1, Media). El Taller ya tiene CSV; replicar patrón
+- [x] Exportar inventario de productos a CSV — implementado 2026-08-13 (botón ⬇️ CSV, `exportarCSVProductos()`, respeta filtros)
 - [ ] Exportar pedidos a CSV — pendiente (M2, Baja)
 
 ---
