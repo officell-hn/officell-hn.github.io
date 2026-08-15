@@ -77,17 +77,18 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
 .wa-float svg{width:30px;height:30px;fill:#fff}
 @media(max-width:768px){.nav-links{display:none}.related-grid{grid-template-columns:1fr}}
 
-/* HONDUBET */
-.hb-wrap{max-width:1100px;margin:1.5rem auto;display:block;text-decoration:none;border-radius:16px;overflow:hidden;transition:transform .2s,box-shadow .2s;padding:0 2rem}
-.hb-wrap:hover{transform:translateY(-3px);box-shadow:0 10px 40px rgba(255,107,0,.35)}
-.hb-lead{background:linear-gradient(135deg,#0d1b2a 0%,#1a2e45 100%);border:1px solid #ff6b00;border-radius:16px;padding:0 2rem;height:90px;display:flex;align-items:center;justify-content:space-between;gap:1rem}
-.hb-lead-logo{display:flex;align-items:center;gap:.7rem;flex-shrink:0}
-.hb-lead-logo-icon{width:42px;height:42px;background:#ff6b00;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.4rem;color:#fff;font-family:'Bebas Neue',sans-serif}
-.hb-lead-brand{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#fff;letter-spacing:.1em}
-.hb-lead-text{flex:1;text-align:center;color:#e2e8f0;font-size:.92rem;line-height:1.4}
-.hb-lead-text strong{color:#ff6b00}
-.hb-lead-btn{flex-shrink:0;background:#ff6b00;color:#fff;font-weight:700;font-size:.85rem;padding:.6rem 1.4rem;border-radius:50px;white-space:nowrap;border:2px solid #ff8c00;box-shadow:0 0 16px rgba(255,107,0,.4)}
-@media(max-width:600px){.hb-lead{height:auto;padding:1rem;flex-wrap:wrap;justify-content:center;text-align:center}.hb-lead-text{width:100%}}</style>
+/* BANNER OFFICELL — publicidad propia (15-ago-2026, reemplazó al de Hondubet) */
+.ob-wrap{max-width:1100px;margin:1.5rem auto;display:block;text-decoration:none;border-radius:16px;overflow:hidden;transition:transform .2s,box-shadow .2s;padding:0 2rem}
+.ob-wrap:hover{transform:translateY(-3px);box-shadow:0 10px 40px rgba(198,0,126,.35)}
+.ob-lead{background:linear-gradient(135deg,#25282A 0%,#3a3f42 100%);border:1px solid #C6007E;border-radius:16px;padding:0 2rem;height:90px;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.ob-logo{display:flex;align-items:center;gap:.7rem;flex-shrink:0}
+.ob-ico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.5rem;line-height:1}
+.ob-brand{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:#fff;letter-spacing:.1em}
+.ob-text{flex:1;text-align:center;color:#e2e8f0;font-size:.92rem;line-height:1.4}
+.ob-text strong{color:#59C7F2}
+.ob-btn{flex-shrink:0;background:#C6007E;color:#fff;font-weight:700;font-size:.85rem;padding:.6rem 1.4rem;border-radius:50px;white-space:nowrap;border:2px solid #e0329b;box-shadow:0 0 16px rgba(198,0,126,.4)}
+@media(max-width:600px){.ob-lead{height:auto;padding:1rem;flex-wrap:wrap;justify-content:center;text-align:center}.ob-text{width:100%}}
+</style>
 </head>
 <body>
 
@@ -281,8 +282,8 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
 </section>
 
 
-<!-- HONDUBET BANNER -->
-<a href="https://hondubet.com/registro/aff/deporte?id_afiliado=101677" target="_blank" rel="noopener sponsored" class="hb-wrap"><div class="hb-lead"><div class="hb-lead-logo"><div class="hb-lead-logo-icon">H</div><span class="hb-lead-brand">HONDUBET</span></div><div class="hb-lead-text"><strong>La casa de apuestas #1 de Honduras!</strong><br>Futbol en vivo - Casino - Slots - Agente Oficial OFFICELL</div><div class="hb-lead-btn">REGISTRATE GRATIS</div></div></a>
+<!-- BANNER OFFICELL -->
+<a href="tienda.html" class="ob-wrap" id="obBanner"><div class="ob-lead"><div class="ob-logo"><div class="ob-ico" style="background:#C6007E">🛍️</div><span class="ob-brand">OFFICELL</span></div><div class="ob-text"><strong>Mirá el catálogo completo</strong><br>Celulares, accesorios, audio y joyería — con precio y foto</div><div class="ob-btn">Ver la tienda</div></div></a><script>(function(){var a=[{u:'tienda.html',i:'🛍️',c:'#C6007E',t:'Mirá el catálogo completo',s:'Celulares, accesorios, audio y joyería — con precio y foto',b:'Ver la tienda'},{u:'https://wa.me/50493323393',i:'📱',c:'#59C7F2',t:'Láminas de hidrogel desde L.200',s:'Las recortamos en el momento para CUALQUIER modelo, hasta los que ya no consiguen vidrio',b:'Escribinos'},{u:'agentes-bancarios.html',i:'🏦',c:'#00A74A',t:'Agente bancario en el centro de Danlí',s:'Atlántida, Ficohsa, Banpaís y Banrural — depósitos, retiros, remesas y pago de servicios',b:'Ver servicios'}];var x=a[Math.floor(Math.random()*a.length)],e=document.getElementById('obBanner');if(!e)return;e.href=x.u;e.innerHTML='<div class="ob-lead"><div class="ob-logo"><div class="ob-ico" style="background:'+x.c+'">'+x.i+'</div><span class="ob-brand">OFFICELL</span></div><div class="ob-text"><strong>'+x.t+'</strong><br>'+x.s+'</div><div class="ob-btn">'+x.b+'</div></div>';})();</script>
 <footer>
   <div class="footer-logo">OFFICE<span>LL</span> SERVICIO TÉCNICO</div>
   <p class="footer-text">Reparación profesional de celulares y computadoras en Danlí, Honduras.</p>
