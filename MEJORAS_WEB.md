@@ -1,5 +1,22 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-08-13
+> Última revisión: 2026-08-17
+
+---
+
+## ✅ Mejora aplicada — 2026-08-17
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-productos.html` | 320 (barra de Pedidos) + 1331 (`exportarCSVPedidos`) | **MEJORA M2 (Baja, pendiente desde 2026-07-30): la pestaña Pedidos no tenía export.** Taller (2026-06-12) e Inventario (2026-08-13) ya bajaban CSV; Pedidos era la única de las tres sin forma de sacar las ventas para conciliar el mes o pasárselas a un contador. | Agregado botón **⬇️ CSV** junto a **↻ Actualizar** y la función `exportarCSVPedidos()`, mismo patrón de los otros dos (escape de celdas, **BOM UTF-8**, total **en crudo** para que Excel lo sume). Columnas: Código, Cliente, Teléfono, Email, ID Juego, Productos, Total, Método, Estado, Fecha. Archivo `pedidos_YYYY-MM-DD.csv`. Sin resultados → `toast` y no descarga. |
+
+**Tres decisiones propias de Pedidos, que los otros dos CSV no tenían que resolver:**
+- **No se reusa `pedidosFiltrados`.** `renderPedidos()` guarda esa variable **antes** de descartar los cancelados, así que exportarla habría bajado pedidos que no están en pantalla. La función reaplica los **dos** filtros (búsqueda + toggle "Ver cancelados") para que el CSV muestre exactamente lo que ve Adonias.
+- **Estados sin emoji.** La tabla pinta `⏳ Pendiente pago`; el CSV escribe `Pendiente de pago`. Un CSV termina en Excel, en un banco o donde un contador, y ahí el emoji sale como caja vacía. Mismo criterio que `badgeLabelText()` en el Taller.
+- **Fecha `YYYY-MM-DD HH:MM:SS` en hora de Honduras.** `toLocaleString('es-HN')` mete una coma (se come una columna al leerlo a ojo) y ordena mal en Excel. Se arma con `en-CA` + `en-GB` sobre `America/Tegucigalpa`.
+
+**Probado** con 21 casos sobre la función real extraída del HTML: filtros de búsqueda (cliente, `game_id`, email), toggle de cancelados, escape de comas en nombres de producto, `productos` como arreglo / como texto JSON / roto, fecha nula, respaldo a `paypal_order_id` cuando no hay `metodo_pago`, y el caso sin resultados. Sin bugs.
+
+**Con esto quedan cerrados M1 y M2: las tres pestañas del panel exportan a CSV.**
 
 ---
 
@@ -17,7 +34,7 @@
 
 ### Mejora pendiente tras esta revisión
 
-**M2 (Baja). Exportar pedidos a CSV.**
+**M2 (Baja). Exportar pedidos a CSV.** — ✅ **RESUELTA el 2026-08-17**, ver arriba.
 La pestaña Pedidos sigue sin export. Útil para conciliar ventas del mes (código, cliente, teléfono, game_id, total, método, estado, fecha). Mismo patrón `exportarCSV()` que ya usan Taller e Inventario. Prioridad baja: el volumen de pedidos web es menor y ya hay seguimiento por código.
 
 ---

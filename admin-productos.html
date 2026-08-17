@@ -317,6 +317,7 @@
           Ver cancelados
         </label>
         <button class="btn btn-success btn-sm" onclick="cargarPedidos()" title="Recargar">↻ Actualizar</button>
+        <button class="btn btn-sm" style="background:var(--bg3);border:1px solid var(--border);color:var(--text)" onclick="exportarCSVPedidos()" title="Exportar pedidos a CSV (respeta la búsqueda y el ver cancelados)">⬇️ CSV</button>
       </div>
       <div class="table-wrap">
         <table>
@@ -1325,6 +1326,83 @@ function filtrarPedidos() {
     String(p.game_id||'').toLowerCase().includes(q)
   );
   renderPedidos(filtrados);
+}
+
+// ── Exportar pedidos a CSV (respeta la búsqueda y el toggle de cancelados) ──
+// Mismo patrón que el CSV del Taller y el del Inventario: escape de celdas, BOM
+// UTF-8 para que Excel lea tildes/ñ, y el total en crudo para que Excel lo sume.
+// Ojo: NO se puede reusar `pedidosFiltrados` — renderPedidos() lo guarda ANTES
+// de descartar los cancelados, así que traería pedidos que no están en pantalla.
+// Por eso se reaplican los dos filtros acá, igual que hacen filtrarPedidos() y
+// renderPedidos().
+function exportarCSVPedidos() {
+  const q = document.getElementById('buscar-ped').value.toLowerCase();
+  const verCancelados = document.getElementById('chk-cancelados')?.checked;
+  const peds = todosPedidos.filter(p =>
+    (!q || (p.id||'').toLowerCase().includes(q) ||
+      (p.nombre_cliente||'').toLowerCase().includes(q) ||
+      (p.telefono_cliente||'').toLowerCase().includes(q) ||
+      (p.email_cliente||'').toLowerCase().includes(q) ||
+      (p.codigo_seguimiento||'').toLowerCase().includes(q) ||
+      String(p.game_id||'').toLowerCase().includes(q)) &&
+    (verCancelados || p.estado !== 'cancelado')
+  );
+  if (!peds.length) { toast('No hay pedidos para exportar', 'err'); return; }
+
+  const celda = v => {
+    const s = String(v ?? '');
+    return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  // Etiquetas sin emoji: el CSV puede terminar donde un ⏳ no se ve (contador, banco).
+  const estadoTxt = {
+    pendiente_pago: 'Pendiente de pago',
+    en_proceso:     'En proceso',
+    completado:     'Completado',
+    cancelado:      'Cancelado',
+    pagado:         'Pagado'
+  };
+  // Fecha en hora de Honduras y como "YYYY-MM-DD HH:MM:SS" para que Excel la
+  // ordene bien; toLocaleString() metería una coma y rompería la lectura visual.
+  const fechaCSV = v => {
+    if (!v) return '';
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return '';
+    const dia  = d.toLocaleDateString('en-CA', { timeZone: 'America/Tegucigalpa' });
+    const hora = d.toLocaleTimeString('en-GB', { timeZone: 'America/Tegucigalpa', hour12: false });
+    return `${dia} ${hora}`;
+  };
+  const cabecera = ['Código','Cliente','Teléfono','Email','ID Juego','Productos','Total','Método','Estado','Fecha'];
+  const filas = peds.map(p => {
+    // Mismo parseo defensivo que renderPedidos: puede venir arreglo, texto JSON o roto.
+    let prods = [];
+    try { prods = Array.isArray(p.productos) ? p.productos : (typeof p.productos === 'string' ? JSON.parse(p.productos) : []); } catch(e) {}
+    const detalle = prods.map(pr => `${pr.nombre||'?'} x${pr.cantidad||1}`).join('; ');
+    return [
+      p.codigo_seguimiento || p.id || '',
+      p.nombre_cliente   || '',
+      p.telefono_cliente || '',
+      p.email_cliente    || '',
+      p.game_id          || '',
+      detalle,
+      parseFloat(p.total || 0),
+      p.metodo_pago || p.paypal_order_id || '',
+      estadoTxt[p.estado] || p.estado || 'pendiente',
+      fechaCSV(p.creado_en)
+    ].map(celda).join(',');
+  });
+  // BOM para que Excel detecte UTF-8 (tildes y ñ correctas)
+  const csv  = '\uFEFF' + [cabecera.map(celda).join(','), ...filas].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const hoy  = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Tegucigalpa' });
+  a.href = url;
+  a.download = `pedidos_${hoy}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast(`${peds.length} pedido${peds.length!==1?'s':''} exportado${peds.length!==1?'s':''} ✓`, 'ok');
 }
 
 // ─── UTILS ─────────────────────────────────────────────────────
