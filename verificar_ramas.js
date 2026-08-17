@@ -49,8 +49,8 @@ try {
 
     const fecha  = sh(`git log -1 --format=%ad --date=short ${b}`);
     const titulo = sh(`git log -1 --format=%s ${b}`);
-    // Solo interesa si toca CÓDIGO. Una rama que solo agrega documentación no
-    // justifica frenar un despliegue.
+    // Solo FRENA si toca CÓDIGO. Una rama que solo agrega documentación no
+    // justifica frenar un despliegue — pero sí hay que mencionarla (ver abajo).
     let tocaCodigo = true;
     if (arbol) {
       const archivos = sh(`git diff --name-only ${arbolActual} ${arbol}`).split('\n').filter(Boolean);
@@ -60,8 +60,34 @@ try {
   }
 
   const conCodigo = pendientes.filter(p => p.tocaCodigo);
+  const sinCodigo = pendientes.filter(p => !p.tocaCodigo);
+
+  // Aviso suave para lo que NO toca .html ni .js (informes, notas, configuración).
+  //
+  // POR QUÉ EXISTE (17-ago-2026): una revisión que solo dejaba un .md era
+  // INVISIBLE. El reporte semanal del 13-ago de Bancos (commit 914b224, 92
+  // líneas en MEJORAS_BANCOS.md) pasó 4 días en su rama mientras este mismo
+  // script decía "Todo lo revisado esta en main". No era cierto — y como el
+  // guardia daba verde, nadie tenía motivo para ir a buscarlo.
+  if (sinCodigo.length) {
+    console.log('');
+    console.log('  ---------------------------------------------------------------');
+    console.log('   HAY INFORMES SIN JUNTAR  (esto NO frena nada)');
+    console.log('  ---------------------------------------------------------------');
+    console.log('');
+    console.log('   No tocan .html ni .js, asi que no cambian la app:');
+    console.log('');
+    for (const p of sinCodigo) console.log(`     ${p.fecha}  ${p.b}\n                 ${p.titulo}`);
+    console.log('');
+    console.log('   Que hacer: pedile a Claude Code que los junte, o agregalos');
+    console.log('   a ramas_descartadas.txt si ya no aportan.');
+    console.log('');
+  }
+
   if (!conCodigo.length) {
-    console.log('  Todo lo revisado esta en main.');
+    console.log(sinCodigo.length
+      ? '  Sin codigo pendiente (pero mira el aviso de arriba).'
+      : '  Todo lo revisado esta en main.');
     process.exit(0);
   }
 
