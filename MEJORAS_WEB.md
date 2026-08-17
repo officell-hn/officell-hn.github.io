@@ -1,5 +1,24 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-07-30
+> Última revisión: 2026-08-13
+
+---
+
+## ✅ Mejora aplicada — revisión 2026-08-13
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-productos.html` | 277 (barra de acciones) + 800 (`exportarCSVProductos`) | **MEJORA M1 (Media, pendiente desde 2026-07-30): faltaba exportar el inventario a CSV.** El panel solo imprimía el inventario a PDF (`imprimirInventario()`); no había forma de bajarlo como CSV para abrirlo en Excel/Sheets, conciliar stock o pasarlo a un contador. El Taller sí tenía botón CSV (`exportarCSV()`) desde 2026-06-12. | Agregado botón **⬇️ CSV** junto a **🖨️ PDF** y la función `exportarCSVProductos()`, que **reusa el patrón ya probado del Taller**: respeta la búsqueda y la categoría activas (misma lógica de filtro que `imprimirInventario()`), escapa las celdas (`celda()` con comillas dobles), antepone **BOM UTF-8** (`﻿`) para que Excel lea tildes/ñ, y vuelca los numéricos **en crudo** (precio/costo/stock sin separadores de miles) para que Excel los trate como números. Columnas: Nombre, Categoría, Condición, Precio, Costo, Stock, Stock mínimo, Código de barras, En Web, Destacado, Venta permanente. Nombre de archivo `inventario_YYYY-MM-DD.csv` (fecha de Honduras). Si el filtro no deja productos, avisa con `toast` y no descarga. |
+
+**Notas de la revisión 2026-08-13:** revisados `admin-taller.html`, `admin-productos.html`, `admin-keyson.html`, `config.js` y las páginas de cliente (`tienda.html`, `seguimiento.html`, `taller.html`), con foco en el código nuevo desde el último ciclo (subida de fotos a Cloudinary, campos Stock mínimo/Código de barras, fix de stock=0, "agregar al carrito desde la ficha", marcado de agotados). **Sin bugs críticos ni de lógica JS este ciclo.**
+- **Autenticación correcta** en los tres paneles: login → `POST /admin/login` → JWT → `Authorization: Bearer` vía `authHeaders()`. **Ningún** fetch usa `x-admin-token` ni auth incorrecta (verificado por grep en todo el repo). `apiFetch()` maneja `401` en taller/productos; keyson hace `logout()` en `401` en cada GET.
+- **Sin CSS ni DOM rotos** (verificado por script): 0 variables `var(--x)` sin definir y 0 `getElementById` a IDs inexistentes en los 6 archivos funcionales. Sin funciones duplicadas ni código muerto nuevo. `config.js` (que provee `esc()`/`escHtml()`) está incluido en todas las páginas que lo usan.
+- **Código nuevo sólido:** la subida a Cloudinary usa preset unsigned (sin secretos en el cliente), topa a 5 fotos, valida 10 MB y reporta errores por foto; el fix de stock=0 (`enteroNoNegativo()`) distingue correctamente el 0 (valor) del campo vacío; `agregarCarrito()` revalida existencia al agregar desde la ficha y limpia la URL con `replaceState` antes de sumar (evita duplicar en F5); los agotados se muestran atenuados sin poder entrar al carrito.
+- El único ítem accionable fue **M1** (export CSV de inventario), pendiente desde hace dos ciclos y de bajo riesgo (patrón ya existente en el Taller) — aplicado arriba. Queda **M2** (export CSV de pedidos, Baja) documentado más abajo.
+
+### Mejora pendiente tras esta revisión
+
+**M2 (Baja). Exportar pedidos a CSV.**
+La pestaña Pedidos sigue sin export. Útil para conciliar ventas del mes (código, cliente, teléfono, game_id, total, método, estado, fecha). Mismo patrón `exportarCSV()` que ya usan Taller e Inventario. Prioridad baja: el volumen de pedidos web es menor y ya hay seguimiento por código.
 
 ---
 

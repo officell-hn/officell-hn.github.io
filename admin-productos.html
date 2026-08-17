@@ -275,6 +275,7 @@
         <button class="btn btn-primary" onclick="abrirModalCrear()">+ Nuevo producto</button>
         <button class="btn btn-success btn-sm" onclick="cargarProductos()" title="Recargar">↻</button>
         <button class="btn btn-sm" style="background:var(--bg3);border:1px solid var(--border);color:var(--text)" onclick="imprimirInventario()" title="Imprimir inventario / Guardar PDF">🖨️ PDF</button>
+        <button class="btn btn-sm" style="background:var(--bg3);border:1px solid var(--border);color:var(--text)" onclick="exportarCSVProductos()" title="Exportar inventario a CSV (respeta búsqueda y categoría)">⬇️ CSV</button>
       </div>
 
       <div class="table-wrap">
@@ -795,6 +796,52 @@ ${tablas}
   if (!win) { alert('Permite ventanas emergentes para imprimir.'); return; }
   win.document.write(html);
   win.document.close();
+}
+
+// ── Exportar inventario a CSV (respeta búsqueda y categoría activas) ──
+// Mismo patrón probado que el CSV del Taller: escape de celdas, BOM UTF-8 para
+// que Excel lea tildes/ñ, y valores numéricos en crudo (sin separadores de
+// miles) para que Excel los trate como números y no como texto.
+function exportarCSVProductos() {
+  const buscar = document.getElementById('buscar-prod').value.toLowerCase();
+  const catFiltro = document.getElementById('filtro-cat').value;
+  const prods = todosProductos.filter(p =>
+    (!buscar || p.nombre.toLowerCase().includes(buscar) || (p.descripcion||'').toLowerCase().includes(buscar)) &&
+    (!catFiltro || p.categoria_web === catFiltro)
+  );
+  if (!prods.length) { toast('No hay productos para exportar', 'err'); return; }
+
+  const celda = v => {
+    const s = String(v ?? '');
+    return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const cabecera = ['Nombre','Categoría','Condición','Precio','Costo','Stock','Stock mínimo','Código de barras','En Web','Destacado','Venta permanente'];
+  const filas = prods.map(p => [
+    p.nombre || '',
+    p.categoria_web || '',
+    p.condicion || '',
+    parseFloat(p.precio || 0),
+    parseFloat(p.costo || 0),
+    parseInt(p.cantidad || 0),
+    (p.stock_minimo === null || p.stock_minimo === undefined) ? '' : parseInt(p.stock_minimo),
+    p.codigo_barras || '',
+    p.en_web ? 'Sí' : 'No',
+    p.destacado ? 'Sí' : 'No',
+    p.reposicion === 'unica' ? 'No' : 'Sí'
+  ].map(celda).join(','));
+  // BOM para que Excel detecte UTF-8 (tildes y ñ correctas)
+  const csv  = '\uFEFF' + [cabecera.map(celda).join(','), ...filas].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const hoy  = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Tegucigalpa' });
+  a.href = url;
+  a.download = `inventario_${hoy}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast(`${prods.length} producto${prods.length!==1?'s':''} exportado${prods.length!==1?'s':''} ✓`, 'ok');
 }
 
 function condBadge(c) {
