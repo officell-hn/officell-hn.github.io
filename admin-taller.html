@@ -839,7 +839,15 @@ async function actualizarEstado() {
         body: JSON.stringify({ monto: montoAdelanto, completo: tipoAdelanto === 'completo' })
       });
       const da = await ra.json();
-      if (!da.ok) alert(`⚠️ Orden guardada pero el adelanto no pudo registrarse: ${da.error || 'error desconocido'}`);
+      if (!da.ok) {
+        alert(`⚠️ Orden guardada pero el adelanto no pudo registrarse: ${da.error || 'error desconocido'}`);
+      } else if (da.duplicado) {
+        // El backend detectó un abono idéntico (misma orden, mismo monto, mismo
+        // día) y NO lo registró de nuevo. Hay que DECIRLO: sin este aviso el
+        // modal se cerraba como si todo hubiera salido bien y el abono
+        // simplemente no existía. Un silencio acá cuesta plata.
+        alert(`⚠️ ${da.mensaje || 'Ya había un abono idéntico hoy para esta orden; no se registró de nuevo.'}`);
+      }
     }
 
     cerrarModalEstado();
