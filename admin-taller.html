@@ -409,6 +409,14 @@ td{padding:0.85rem 1rem;font-size:0.9rem;vertical-align:middle}
               <option value="parcial">Adelanto parcial</option>
             </select>
           </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label>Forma de pago</label>
+            <select id="fMetodoAdelanto">
+              <option value="efectivo">Efectivo</option>
+              <option value="transferencia">Transferencia</option>
+              <option value="tigo money">Tigo Money</option>
+            </select>
+          </div>
         </div>
         <div style="font-size:0.78rem;color:var(--muted);margin-top:0.5rem">⚠️ Se registrará el ingreso ahora. Al entregar, solo se cobrará el saldo pendiente.</div>
       </div>
@@ -794,6 +802,9 @@ async function actualizarEstado() {
   const pagoAdelantado = document.getElementById('fPagoAdelantado').checked;
   const montoAdelanto  = parseFloat(document.getElementById('fMontoAdelanto').value) || 0;
   const tipoAdelanto   = document.getElementById('fTipoAdelanto').value;
+  // CAP-3: forma de pago por abono. Se guarda en jimmy_abonos.metodo_pago para
+  // poder responder "cuánto entró por transferencia" sin adivinar.
+  const metodoAdelanto = document.getElementById('fMetodoAdelanto').value;
 
   if (pagoAdelantado && montoAdelanto <= 0) {
     alert('Ingresa el monto recibido por adelantado'); return;
@@ -836,7 +847,7 @@ async function actualizarEstado() {
       const ra = await apiFetch(`${API}/taller/adelanto/${ordenActualId}`, {
         method: 'POST',
         headers: { 'Content-Type':'application/json', ...authHeaders() },
-        body: JSON.stringify({ monto: montoAdelanto, completo: tipoAdelanto === 'completo' })
+        body: JSON.stringify({ monto: montoAdelanto, completo: tipoAdelanto === 'completo', metodo_pago: metodoAdelanto })
       });
       const da = await ra.json();
       if (!da.ok) {
