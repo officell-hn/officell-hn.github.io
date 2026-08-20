@@ -429,6 +429,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
       <div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.4rem">Tu código de seguimiento</div>
       <div id="confirmCodigo" style="font-family:'Courier New',monospace;font-size:1.6rem;font-weight:900;color:var(--accent);letter-spacing:2px">—</div>
     </div>
+    <canvas id="confirmQRCanvas" width="160" height="160" style="width:160px;height:160px;border-radius:10px;margin-bottom:1rem;display:none;background:#fff"></canvas>
     <img id="confirmQR" src="" alt="QR" style="width:160px;height:160px;border-radius:10px;margin-bottom:1rem;display:none">
     <div style="display:flex;gap:0.75rem;flex-direction:column">
       <a id="confirmTrackLink" href="#" target="_blank"
@@ -445,6 +446,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;display:fl
 <!-- WA FLOTANTE -->
 <a href="https://wa.me/50493323393" target="_blank" class="wa-float" title="WhatsApp OFFICELL" rel="noopener">💬</a>
 
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="config.js"></script>
 <script>
 // ════════════════════════════════════════════
@@ -954,14 +956,30 @@ async function confirmarPedido(metodo) {
     document.getElementById('checkoutModal').classList.remove('open');
     document.getElementById('confirmCodigo').textContent = codigo;
     const qrImg = document.getElementById('confirmQR');
+    const qrCanvas = document.getElementById('confirmQRCanvas');
     const trackLink = document.getElementById('confirmTrackLink');
-    if (trackUrl) {
+    // Respaldo al servicio externo solo si qrcode.min.js no cargó o falla.
+    const qrExterno = () => {
       qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(trackUrl)}`;
       qrImg.style.display = 'block';
+      qrCanvas.style.display = 'none';
+    };
+    if (trackUrl) {
+      // Generar el QR localmente (sin dependencia externa ni enviar la URL del
+      // cliente a un tercero) — mismo enfoque que seguimiento.html y los recibos
+      // del taller. Si la librería no cargó, se cae al servicio externo.
+      if (typeof QRCode !== 'undefined' && qrCanvas) {
+        QRCode.toCanvas(qrCanvas, trackUrl, { width: 160, margin: 1, errorCorrectionLevel: 'M' })
+          .then(() => { qrCanvas.style.display = 'block'; qrImg.style.display = 'none'; })
+          .catch(qrExterno);
+      } else {
+        qrExterno();
+      }
       trackLink.href = trackUrl;
       trackLink.style.display = 'block';
     } else {
       qrImg.style.display = 'none';
+      qrCanvas.style.display = 'none';
       trackLink.style.display = 'none';
     }
     document.getElementById('confirmModal').classList.add('open');

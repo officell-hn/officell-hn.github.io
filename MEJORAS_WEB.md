@@ -1,5 +1,15 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
-> Última revisión: 2026-08-17
+> Última revisión: 2026-08-20
+
+---
+
+## ✅ Mejora aplicada — revisión 2026-08-20
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `tienda.html` | 432 (markup del modal) + 448 (script) + 958 (`confirmarPedido`) | **MEJORA #19 (Media, pendiente desde 2026-07-16): el QR de confirmación del pedido dependía de un servicio externo (`api.qrserver.com`).** Tras registrar el pedido, el `<img id="confirmQR">` cargaba el QR desde `https://api.qrserver.com/...&data=<trackUrl>`. Dos problemas: (1) **privacidad** — se enviaba la URL de seguimiento del cliente a un tercero; (2) **dependencia externa** — si qrserver.com estaba caído o bloqueado, el cliente veía un QR roto justo en el momento de la confirmación. Era el **único** de los tres puntos con QR que seguía usando el servicio externo (`seguimiento.html` migró en #18 el 2026-06-25; `admin-taller.html` ya usaba `QRCode.toDataURL()`). | Cargado `qrcode.min.js` (mismo CDN que taller/seguimiento) y agregado un `<canvas id="confirmQRCanvas">`. El QR ahora se genera **localmente** con `QRCode.toCanvas(qrCanvas, trackUrl, {width:160, margin:1, errorCorrectionLevel:'M'})` — sin enviar nada a terceros. **Respaldo:** si la librería no cargó (`typeof QRCode === 'undefined'`) o `toCanvas` falla, se cae al `<img>` externo vía el helper `qrExterno()`, así el cliente nunca se queda sin QR. Las tres páginas con QR quedan alineadas bajo el mismo enfoque local. Verificado con chequeo de sintaxis del JS inline. |
+
+**Nota sobre el resto de la revisión:** se leyeron los cuatro paneles admin (`admin-taller.html`, `admin-productos.html`, `admin-keyson.html`) y las páginas públicas de seguimiento (`seguimiento.html`, `taller.html`, `tienda.html`). **Autenticación:** todas las llamadas usan `authHeaders()` con **Bearer JWT**; no queda ningún `x-admin-token` directo. **401:** `admin-taller` y `admin-productos` lo manejan vía `apiFetch()`; `admin-keyson` lo maneja con un chequeo `if (r.status === 401) { logout(); }` en cada fetch (equivalente). **Paginación, filtros, búsqueda y export CSV** ya están implementados en Taller, Inventario y Pedidos. No se encontraron bugs de lógica JS, referencias a DOM inexistentes ni funciones muertas nuevas. El único ítem accionable abierto era **#19**, aplicado arriba.
 
 ---
 
@@ -216,7 +226,7 @@ el backend devuelve el ID como número (`.toLowerCase()` directo sobre número l
 
 ## 🟡 Media prioridad (mejora de usabilidad significativa)
 
-### 19. `tienda.html` — el QR del modal de confirmación usa servicio externo (`api.qrserver.com`)
+### ~~19. `tienda.html` — el QR del modal de confirmación usa servicio externo (`api.qrserver.com`)~~ ✅ IMPLEMENTADA 2026-08-20
 **Detectado 2026-07-16.** En `confirmarPedido()` (≈línea 914), tras registrar el pedido el QR de seguimiento
 se genera con `https://api.qrserver.com/v1/create-qr-code/?...&data=<trackUrl>`. Esto:
 1. **Envía la URL de seguimiento del cliente a un tercero** (privacidad).
@@ -229,6 +239,9 @@ como el único punto que aún depende del servicio externo.
 y reemplazar el `<img src="api.qrserver.com…">` por un `<canvas>` generado con
 `QRCode.toCanvas(el, trackUrl, {width:300, margin:1})`, con fallback al `<img>` externo si la librería no
 cargó. Alinea las tres páginas con QR bajo el mismo enfoque local.
+**Fix aplicado 2026-08-20:** ver la entrada del 2026-08-20 al inicio del archivo. Se cargó `qrcode.min.js`,
+se agregó `<canvas id="confirmQRCanvas">` y el QR se genera con `QRCode.toCanvas(...)`; el `<img>` a
+`api.qrserver.com` queda solo como respaldo (`qrExterno()`) si la librería no carga o falla.
 
 ---
 
