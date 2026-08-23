@@ -1,4 +1,8 @@
 # MEJORAS_WEB.md — OFFICELL Admin Panel
+
+> 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
+> (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
+> Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
 > Última revisión: 2026-08-17
 
 ---
