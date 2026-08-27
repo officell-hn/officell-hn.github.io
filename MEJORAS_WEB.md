@@ -3,7 +3,21 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-08-17
+> Última revisión: 2026-08-27
+
+---
+
+## ✅ Hardening aplicado — revisión 2026-08-27
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-productos.html` | 1065 (`actualizarPreviews`) | **HARDENING RENDERIZADO/ATRIBUTO (misma clase que el fix del 2026-07-16, hueco gemelo sin cubrir)**: `actualizarPreviews()` pinta el preview de cada foto con `<img src="${url}">`, inyectando la URL **sin escapar** dentro de un atributo delimitado por comillas dobles. La URL sale de `.img-campo.value` (lo que hay escrito en el campo). El ciclo 2026-07-16 escapó justo el **valor del input** en `agregarCampoImagen()` (`value="${escHtml(valor)}"`), pero la función hermana que **relee** esos valores y los vuelca al preview quedó cruda: una URL con `"` (guardada así en un producto, o pegada a mano) cierra el atributo `src` antes de tiempo e inyecta atributos espurios en el `<img>` del preview. Ruta solo-admin y autoinfligida, pero es exactamente el patrón de comillas-en-atributos que el proyecto ya venía cerrando (`onclick` con apóstrofes, `value` de imagen). | Escapada la URL con la función canónica: `src="${escHtml(url)}"`. `escHtml()` (config.js) convierte `"` → `&quot;`, así el atributo sobrevive intacto y el navegador resuelve la URL real. Sin cambios visibles para URLs normales. **Con esto los 100 % de los puntos donde una URL de imagen se interpola en HTML (input y preview) pasan por `escHtml()`.** |
+
+**Notas de la revisión 2026-08-27:** revisados `admin-taller.html`, `admin-productos.html`, `admin-keyson.html`, `config.js` y las páginas de cliente (`tienda.html`, `seguimiento.html`, `taller.html`). **Sin bugs críticos ni de lógica JS este ciclo.**
+- **Autenticación correcta** en los tres paneles: login → `POST /admin/login` → JWT → `Authorization: Bearer` vía `authHeaders()`. **Ningún** fetch usa `x-admin-token` ni auth incorrecta (verificado por grep en todo el repo). `apiFetch()` maneja `401` (alerta + `doLogout()`) en taller/productos; keyson hace `logout()` en `401` en cada GET. La subida a Cloudinary usa preset unsigned (sin secretos en el cliente) — correcto.
+- **Sin CSS ni DOM rotos:** las 17 IDs que la lógica de `admin-productos.html` consulta (`buscar-ped`, `chk-cancelados`, `alerta-pendientes(-txt)`, `buscar-prod`, `filtro-cat`, `pag-productos`/`pag-pedidos`, `pagProdInfo`/`pagPedInfo`, `f-stockmin`, `f-codbarras`, `subida-estado`, `btn-subir-foto`, `imagenes-lista`, `img-previews`) existen en el HTML. Sin variables `var(--x)` sin definir. Sin funciones duplicadas ni código muerto nuevo.
+- **Paginación, filtros, export CSV/PDF y spinners** presentes y consistentes en los tres paneles; los filtros sobreviven a mutaciones/recargas (fixes de ciclos 2026-07-02/09). El parseo de `productos` en Pedidos (arreglo / texto JSON / roto) es defensivo tanto en render como en el CSV. `enteroNoNegativo()` sigue distinguiendo el 0 (valor) del campo vacío.
+- El único hallazgo accionable fue el hueco de escape gemelo en el preview de imágenes (arriba), ya cerrado. **No quedan pendientes abiertos en Web.**
 
 ---
 
