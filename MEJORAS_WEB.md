@@ -7,6 +7,39 @@
 
 ---
 
+## ✅ 2026-09-01 — fuera las fotos del mayorista (ZTE y Laver L3), commit `56f389f`
+
+Las dos fotos que estaban publicadas eran **el catálogo de otro negocio**:
+
+| Producto | Lo que llevaba encima |
+|---|---|
+| **ZTE Blade A56** | Logo de MUNDO INNOVACIÓN · `Cod. 182091` · `mayoreo.mundoinnovacionhn.com` · marca de agua sobre la caja · **la etiqueta de inventario del mayorista, con código de barras, pegada en la caja** |
+| **Laver L3** | Logo de D-Tech PC Solutions · su teléfono `076 30 40 258` · "24 HOURS DELIVERY" · "ONE YEAR WARRANTY" · precio `6,950/=` en otra moneda |
+
+Es la foto que le costó a la cuenta la sanción del 23-ago: Instagram borró el post
+del ZTE y quitó el directo por un año.
+
+**⛔ Se recortó SOLO EL APARATO, no la caja.** La etiqueta del mayorista iba pegada
+en la caja: recortando el conjunto se venía puesta y el problema seguía publicado.
+El aparato quedó montado sobre un set de podio con el logo de OFFICELL.
+
+**Detalles que importan si hay que repetirlo:**
+- **Mismo nombre de archivo** (`img/ZTE A56 128.jpg`, `img/Laver L3.jpg`). La ficha,
+  la tienda y el `imagen_url` del inventario apuntan ahí, así que no hubo que tocar
+  ninguna otra cosa. De paso pesan la cuarta parte: 488 KB → 116 KB y 305 KB → 122 KB.
+- **El recorte NO se hizo con Cloudinary.** Su quitafondos solo acepta imágenes
+  subidas a la cuenta, no remotas (`Only upload, private, authenticated kinds are
+  allowed for the generative AI effect`). Se hizo local, **inundando el fondo blanco
+  desde el borde hacia adentro** — un filtro global de "borrar lo claro" le habría
+  hecho agujeros a la pantalla del Laver, que tiene recuadros blancos impresos.
+- **Se comprobó que el archivo servido en producción había cambiado ANTES de levantar
+  `foto_apta`.** Al revés, Renata podía publicar la foto vieja en esa ventana.
+
+`foto_apta` quedó en TRUE para los dos: **60 aptas, 0 sin revisar, 1 bloqueada**
+(el Teléfono Básico F5, que sigue con la foto del proveedor).
+
+---
+
 ## ✅ Hardening aplicado — revisión 2026-08-27
 
 | Archivo | Línea aprox. | Problema | Fix aplicado |
