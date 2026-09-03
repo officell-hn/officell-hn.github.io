@@ -3,7 +3,20 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-08-27
+> Última revisión: 2026-09-03
+
+---
+
+## ✅ Bug de lógica corregido — revisión 2026-09-03
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `tienda.html` | 694 (`agregarCarrito`) + 783 (`cambiarQty`) | **EL BOTÓN "+" DEL CARRITO NO RESPETABA EL STOCK — anulaba parcialmente el guard de agotados (2026-08-09).** `agregarCarrito()` topa la cantidad al stock disponible (`if (carrito[idx].cantidad >= disponible)`), pero el botón **+** del panel del carrito llama a `cambiarQty(idx, +1)`, que hacía `carrito[idx].cantidad += delta` **sin ningún tope**. Un cliente podía agregar la última unidad (capada a 1) y luego subirla a 2, 3, … desde el carrito, pidiendo más de lo que hay en el local. La causa de fondo: al agregar, `carrito.push({ ...producto, cantidad: 1 })` **pisa** `producto.cantidad` (que trae el stock) con la cantidad pedida, así que `cambiarQty()` se quedaba sin el dato del stock para poder validar. | (1) Al agregar se guarda el stock aparte: `{ ...producto, cantidad: 1, _stock: disponible }`, y en el re-agregado se refresca `carrito[idx]._stock = disponible` con el stock más reciente. (2) `cambiarQty()` ahora, **solo al incrementar** (`delta > 0`), topa contra `_stock`: si `cantidad >= _stock` avisa (`Solo tenemos N unidad(es)…`) y no sube. **Degradación limpia:** los carritos ya guardados en `localStorage` no tienen `_stock` (`Number(undefined)` no es finito) → no se topan, igual que antes, y la revalidación real la hace el backend al registrar el pedido. `_stock` **no** se filtra: `confirmarPedido()` solo manda `{id, nombre, precio, cantidad}`, y el render del carrito no lo muestra. Verificado con chequeo de sintaxis del JS inline. |
+
+**Notas de la revisión 2026-09-03:** revisados `admin-taller.html`, `admin-productos.html`, `admin-keyson.html`, `config.js` y las páginas de cliente que tocan el backend (`tienda.html`, `seguimiento.html`, `taller.html`). Desde la revisión anterior (2026-08-27) **no cambió código de los paneles** — solo se publicaron fichas de producto, el sitemap y el cambio de fotos del ZTE/Laver (documentado arriba). **Auth 100 % JWT Bearer vía `authHeaders()` en los tres paneles; ningún `x-admin-token` en el repo** (verificado por grep). `apiFetch()` maneja `401` en taller/productos; keyson hace `logout()` en `401`. Sin variables CSS ni referencias DOM rotas, sin funciones duplicadas ni código muerto nuevo. Paginación, filtros, export CSV/PDF y spinners consistentes en los tres paneles.
+- **Único hallazgo accionable:** el tope de stock que faltaba en el botón "+" del carrito (arriba), ya corregido. Es la misma clase de guard que `agregarCarrito()` ya aplicaba al agregar; ahora ambos caminos (agregar / subir cantidad) quedan alineados.
+- **Nota sobre el enunciado del task:** el sitio **no tiene** `admin-ventas.html`. Las ventas del taller se registran vía el modal de estado de `admin-taller.html` (abonos/adelantos → `POST /taller/adelanto/:id`) y los pedidos web viven en la pestaña Pedidos de `admin-productos.html`. No hay panel de ventas independiente que revisar.
+- **No quedan pendientes abiertos en Web.**
 
 ---
 
