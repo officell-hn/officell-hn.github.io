@@ -708,9 +708,13 @@ function agregarCarrito(producto) {
       alert(`Solo tenemos ${disponible} unidad(es) de este producto.`);
       return;
     }
+    carrito[idx]._stock = disponible; // refrescar el tope con el stock más reciente
     carrito[idx].cantidad++;
   } else {
-    carrito.push({ ...producto, cantidad: 1 });
+    // _stock guarda el stock disponible: el spread pisa producto.cantidad con la
+    // cantidad pedida (1), así que sin esto cambiarQty() perdería el tope y el
+    // botón "+" del carrito dejaría pedir más unidades de las que hay.
+    carrito.push({ ...producto, cantidad: 1, _stock: disponible });
   }
   guardarCarrito();
   actualizarContador();
@@ -781,6 +785,17 @@ function renderCarrito() {
 }
 
 function cambiarQty(idx, delta) {
+  // El botón "+" del carrito debe respetar el stock igual que agregarCarrito():
+  // sin este tope se podían pedir más unidades de las que hay, anulando el guard
+  // de agotados. _stock puede faltar en carritos viejos de localStorage → no topa
+  // (mismo comportamiento que antes), pero la revalidación real la hace el backend.
+  if (delta > 0) {
+    const tope = Number(carrito[idx]._stock);
+    if (Number.isFinite(tope) && carrito[idx].cantidad >= tope) {
+      alert(`Solo tenemos ${tope} unidad(es) de este producto.`);
+      return;
+    }
+  }
   carrito[idx].cantidad += delta;
   if (carrito[idx].cantidad <= 0) carrito.splice(idx, 1);
   guardarCarrito();
