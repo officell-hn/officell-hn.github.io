@@ -3,7 +3,40 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-09-03
+> Última revisión: 2026-09-04
+
+---
+
+## ✅ 2026-09-04 — la tienda muestra el rechazo del pedido (`e60ef74`)
+
+**El caso.** El servidor pasó a rechazar los pedidos sin stock (`462dd25` del repo IA, decisión de
+Adonias: *"que lo rechace y le diga cuánto hay"*). Al conectarlo apareció que la tienda no podía
+mostrar ese rechazo.
+
+⛔ **La rama de `ok:false` de `confirmarPedido()` era MUDA.** Estaba así:
+
+```js
+const d = await r.json();
+if (d.ok) { codigo = d.codigo_seguimiento; ... }
+// …y si NO venía ok, no pasaba nada
+```
+
+No se avisaba nada y **se abría WhatsApp igual** con el mensaje del pedido, así que el cliente
+creía que había entrado. Lo único protegido era el modal de confirmación, por `if (codigo)`.
+
+Ya era un fallo antes, pero con el rechazo por stock habría sido peor: a Adonias le llegaría por
+WhatsApp un pedido que el sistema acababa de rechazar.
+
+**El arreglo:** se guarda el mensaje del servidor en `rechazo` y se corta **antes** de
+`window.open` de WhatsApp. El carrito **no se borra**, para que el cliente baje la cantidad y
+reintente. Verificado que el corte va antes de abrir WhatsApp y que el JS en línea compila.
+
+ℹ️ **El fallo de RED se dejó exactamente como estaba, a propósito.** Si la API no contesta
+(excepción del `fetch`), WhatsApp se abre igual: perder la venta porque el servidor no respondió
+sería peor que registrarla a mano. Solo se corta cuando el servidor **responde** que no.
+
+**Prueba pendiente, de Adonias:** agregar algo con poco stock, subir la cantidad por encima desde
+el carrito y confirmar. Debe verse el aviso con la cantidad real y **no** debe abrirse WhatsApp.
 
 ---
 
