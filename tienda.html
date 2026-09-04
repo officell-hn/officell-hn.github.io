@@ -919,7 +919,7 @@ async function confirmarPedido(metodo) {
   const items = carrito.map(i => `• ${i.nombre} x${i.cantidad} — L.${(i.precio*i.cantidad).toLocaleString('es-HN')}`).join('\n');
 
   // 1. Registrar pedido en DB
-  let codigo = null, trackUrl = null, pendientePago = false;
+  let codigo = null, trackUrl = null, pendientePago = false, rechazo = null;
   try {
     const r = await fetch(`${API}/pedido`, {
       method: 'POST',
@@ -934,7 +934,16 @@ async function confirmarPedido(metodo) {
     });
     const d = await r.json();
     if (d.ok) { codigo = d.codigo_seguimiento; trackUrl = d.tracking_url; pendientePago = d.pendiente_pago || false; }
-  } catch(e) { console.error('Error registrando pedido:', e); }
+    // El servidor RECHAZÓ el pedido (4-sep-2026). Antes esta rama era muda: si
+    // respondía ok:false no se avisaba nada, se abría WhatsApp igual y el cliente
+    // creía que su pedido había entrado. Desde hoy el servidor rechaza por falta
+    // de stock diciendo cuánto hay, así que ese mensaje tiene que llegarle.
+    else { rechazo = d.error || 'No pudimos registrar tu pedido. Intentá de nuevo, por favor.'; }
+  } catch(e) {
+    // Fallo de red: NO se bloquea. Se sigue al WhatsApp como siempre — perder la
+    // venta porque el servidor no contestó sería peor que registrarla a mano.
+    console.error('Error registrando pedido:', e);
+  }
   finally {
     _pedidoEnvio = false;
     document.querySelectorAll('[onclick*="confirmarPedido"]').forEach(btn => {
@@ -943,6 +952,10 @@ async function confirmarPedido(metodo) {
       if (btn.dataset.originalText) btn.textContent = btn.dataset.originalText;
     });
   }
+
+  // Si el servidor lo rechazó, se corta acá: no se abre WhatsApp y el carrito se
+  // deja intacto para que el cliente baje la cantidad y vuelva a intentar.
+  if (rechazo) { alert(rechazo); return; }
 
   // 2. Abrir WhatsApp con mensaje + código
   const metodosLabel = { paypal: 'PayPal', deposito: 'Depósito bancario', whatsapp: 'WhatsApp' };
