@@ -3,7 +3,36 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-09-04
+> Última revisión: 2026-09-10
+
+---
+
+## ✅ 2026-09-10 — el switch de la tabla de productos mentía cuando fallaba el guardado (`admin-productos.html`)
+
+**El caso.** En la tabla de Inventario cada producto tiene tres switches (**En Web**, **Destacado**,
+**Venta permanente**) que guardan al vuelo con `toggleCampo()` (PUT `/admin/producto/:id`).
+
+⛔ **Si el PUT fallaba, el switch se quedaba pintado en el estado nuevo.** El `onchange` corre
+**después** de que el navegador ya volteó el checkbox, así que ante un error de red o un rechazo del
+backend (`d.ok` falso) lo único que pasaba era un `toast` de error que se va solo en 3 s. Resultado:
+un producto que se ve **"En Web"** en pantalla y que el backend nunca publicó (o al revés, uno que
+se cree despublicado y sigue a la venta). Silencioso y directo sobre lo que el cliente ve en la tienda.
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-productos.html` | 621/627/633 (render) + 853 (`toggleCampo`) | El checkbox no se revertía cuando el guardado fallaba; quedaba mostrando un estado que el backend no aceptó. | Los tres `onchange` pasan ahora el propio checkbox (`this`) a `toggleCampo(id, campo, valor, chk)`, y el `catch` hace `chk.checked = !chk.checked` para devolver el switch a su estado real. En `401` el `apiFetch` ya hace `doLogout()` (la app se oculta), así que revertir ahí no molesta. |
+
+**Verificado:** el JS en línea compila (`new Function` sobre el bloque `<script>`). Cambio mínimo,
+sin tocar el camino feliz (guardado OK sigue igual: actualiza `todosProductos`, `updateStats` y toast).
+
+**Notas de la revisión 2026-09-10:** revisados los tres paneles (`admin-taller.html`,
+`admin-productos.html`, `admin-keyson.html`), `config.js` y las páginas de cliente que tocan el
+backend. Desde la revisión anterior (2026-09-04) **no cambió código de los paneles** — solo fichas de
+producto y el sitemap. **Auth 100 % JWT Bearer vía `authHeaders()` en los tres paneles; ningún
+`x-admin-token` en el repo** (verificado por grep). Sin variables CSS ni referencias DOM rotas, sin
+funciones duplicadas ni código muerto. Paginación, filtros, export CSV/PDF y spinners consistentes.
+Único hallazgo accionable: el switch que no revertía (arriba), ya corregido. **No quedan pendientes
+abiertos en Web.**
 
 ---
 

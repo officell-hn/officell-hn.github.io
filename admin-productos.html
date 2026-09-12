@@ -618,19 +618,19 @@ function renderProductos(prods, resetPagina = true) {
       <td>${parseInt(p.cantidad)>0 ? `<span class="badge badge-green">${p.cantidad}</span>` : `<span class="badge badge-red">0</span>`}</td>
       <td>
         <label class="toggle">
-          <input type="checkbox" ${p.en_web?'checked':''} onchange="toggleCampo('${p.id}','en_web',this.checked)">
+          <input type="checkbox" ${p.en_web?'checked':''} onchange="toggleCampo('${p.id}','en_web',this.checked,this)">
           <span class="slider"></span>
         </label>
       </td>
       <td>
         <label class="toggle">
-          <input type="checkbox" ${p.destacado?'checked':''} onchange="toggleCampo('${p.id}','destacado',this.checked)">
+          <input type="checkbox" ${p.destacado?'checked':''} onchange="toggleCampo('${p.id}','destacado',this.checked,this)">
           <span class="slider"></span>
         </label>
       </td>
       <td>
         <label class="toggle">
-          <input type="checkbox" ${p.reposicion!=='unica'?'checked':''} onchange="toggleCampo('${p.id}','reposicion', this.checked ? 'permanente' : 'unica')">
+          <input type="checkbox" ${p.reposicion!=='unica'?'checked':''} onchange="toggleCampo('${p.id}','reposicion', this.checked ? 'permanente' : 'unica', this)">
           <span class="slider"></span>
         </label>
       </td>
@@ -850,7 +850,7 @@ function condBadge(c) {
   return `<span class="badge ${m[c]||'badge-gray'}">${c||'—'}</span>`;
 }
 
-async function toggleCampo(id, campo, valor) {
+async function toggleCampo(id, campo, valor, chk) {
   try {
     const body = {};
     body[campo] = valor;
@@ -866,7 +866,14 @@ async function toggleCampo(id, campo, valor) {
     if (prod) prod[campo] = valor;
     updateStats(todosProductos);
     toast(`Actualizado`, 'ok');
-  } catch (e) { toast(e.message, 'err'); }
+  } catch (e) {
+    // El switch YA se pintó en el nuevo estado (onchange corre tras el flip). Si el
+    // guardado falla, el toast se va en 3s y deja al admin creyendo que el cambio
+    // quedó: un producto "publicado" en pantalla que el backend nunca activó (o al
+    // revés). Revertir el checkbox deja la UI diciendo la verdad.
+    if (chk) chk.checked = !chk.checked;
+    toast(e.message, 'err');
+  }
 }
 
 async function eliminarProducto(id, btn) {
