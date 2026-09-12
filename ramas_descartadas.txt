@@ -9,3 +9,7 @@ origin/claude/jolly-noether-r4nglx   # PR #7: sus 3 arreglos de tienda.html YA s
                                      # no existian y vaciaba el bloque de productos. Mergearla
                                      # deja un marcador de conflicto dentro del sitemap.xml y
                                      # devuelve el enlace a producto/ singular. NO mergear.
+origin/claude/jolly-noether-hipcx2   # 03-sep, "topar stock en el boton + del carrito". YA ESTA en
+                                     # main por cherry-pick (commit 187234d, 04-sep): git cherry
+                                     # la marca con "-" (equivalente ya aplicado). El guardia la
+                                     # seguia mostrando porque no detecta cherry-picks. Nada que juntar.
