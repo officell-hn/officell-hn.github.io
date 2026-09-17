@@ -817,7 +817,7 @@ function abrirCheckout() {
   cerrarCarrito();
   const total = carrito.reduce((s, i) => s + i.precio * i.cantidad, 0);
   document.getElementById('resumenItems').innerHTML =
-    carrito.map(i => `<div class="resumen-item"><span>${i.nombre} x${i.cantidad}</span><span>L.${(i.precio * i.cantidad).toLocaleString()}</span></div>`).join('') +
+    carrito.map(i => `<div class="resumen-item"><span>${escHtml(i.nombre)} x${i.cantidad}</span><span>L.${(i.precio * i.cantidad).toLocaleString()}</span></div>`).join('') +
     `<div class="resumen-item"><span>TOTAL</span><span>L.${total.toLocaleString()}</span></div>`;
   // Mostrar campo Game ID solo si hay diamantes Free Fire en el carrito
   const tieneFF = carrito.some(i => i.id && i.id.startsWith('ff-'));
