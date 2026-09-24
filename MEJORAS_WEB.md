@@ -3,7 +3,47 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-09-10
+> Última revisión: 2026-09-24
+
+---
+
+## ✅ 2026-09-24 — el panel de Keyson mostraba "Error" en vez del estado vacío (`admin-keyson.html`)
+
+**El caso.** `admin-keyson.html` (chat de WhatsApp de Keyson) tiene dos GETs que renderizan
+listas: `cargarClientes()` (lista de conversaciones) y `abrirConversacion()` (mensajes de una).
+Ambos comprobaban el resultado así:
+
+```js
+const d = await r.json();
+if (!d.ok || !d.clientes.length) { …estado vacío… }   // y el gemelo con d.mensajes
+```
+
+⛔ **`.length` sobre un arreglo ausente lanza `TypeError`.** Si el backend responde
+`{ok:true}` **sin** la clave `clientes` (o `mensajes`) —contrato roto, respuesta parcial, o un
+cambio futuro del backend—, `d.clientes.length` revienta, la excepción cae en el `catch` y el
+panel pinta **"Error cargando clientes"** / **"Error cargando mensajes"**. Es decir: ante un
+período legítimamente vacío el admin veía un error rojo en vez del mensaje correcto
+("Sin conversaciones en este período" / "Sin mensajes registrados"). Confunde y hace pensar que
+el panel está caído cuando no lo está.
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-keyson.html` | 271 (`cargarClientes`) + 336 (`abrirConversacion`) | `!d.clientes.length` / `!d.mensajes.length` lanzan `TypeError` si la clave del arreglo no viene en la respuesta; el error cae en el `catch` y muestra un mensaje de error engañoso en vez del estado vacío. | Se antepone `Array.isArray(...)` en ambos: `!d.ok \|\| !Array.isArray(d.clientes) \|\| !d.clientes.length`. Si el arreglo falta, cae limpio en el estado vacío correcto. Sin cambios en el camino feliz (arreglo con datos → `.map()` igual que antes). |
+
+**Verificado:** el JS en línea de los dos bloques `<script>` compila (`new Function`). Cambio
+mínimo y defensivo, del mismo tipo que el hardening que este ciclo ya viene aplicando.
+
+**Notas de la revisión 2026-09-24:** revisados los tres paneles (`admin-taller.html`,
+`admin-productos.html`, `admin-keyson.html`), `config.js` y las páginas de cliente que tocan el
+backend (`tienda.html`, `seguimiento.html`, `taller.html`). **Auth 100 % JWT Bearer vía
+`authHeaders()` en los tres paneles; ningún `x-admin-token` en el repo** (verificado por grep —
+solo aparece en docs históricos). Sin variables CSS ni referencias DOM rotas, sin funciones
+duplicadas ni código muerto. Paginación (25/25/20 en taller/productos/pedidos), filtros de
+búsqueda, filtro de fechas del taller, export CSV en las tres pestañas + PDF/impresión de
+inventario, y spinners de carga: **todo presente y consistente.** El QR del modal de confirmación
+de `tienda.html` ya se genera localmente con respaldo externo (pendiente #19 cerrado). El checkout
+maneja doble-submit, rechazo por stock del servidor y caída de red. Único hallazgo accionable: el
+`.length` sin guard en Keyson (arriba), ya corregido. **No quedan pendientes abiertos en Web.**
 
 ---
 
