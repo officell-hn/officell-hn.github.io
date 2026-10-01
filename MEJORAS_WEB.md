@@ -3,7 +3,62 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-09-10
+> Última revisión: 2026-10-01
+
+---
+
+## ✅ 2026-10-01 — `admin-productos.html` no protegía los arreglos del backend con `|| []`
+
+**El caso.** Los otros dos paneles ya blindan los arreglos que llegan del backend:
+`admin-taller.html` hace `ORDENES = d.ordenes || []` y `admin-keyson.html` antepone
+`Array.isArray(...)` antes de leer `.length` (ese guard va en el PR abierto #14). **`admin-productos.html`
+era el único que asignaba los arreglos en crudo:** `todosProductos = d.productos`,
+`todosPedidos = d.pedidos` y `categoriasCache = d.categorias`.
+
+⛔ **Si el backend responde `ok:true` sin la clave del arreglo** (un refactor del endpoint, un `ok` sin
+`productos`, etc.), el valor queda `undefined` y la primera lectura de `.length`/`.map()` lanza
+`TypeError: Cannot read properties of undefined (reading 'length')`:
+
+- `cargarProductos()` → `updateStats(todosProductos)` revienta y la pestaña muestra
+  **"Error: Cannot read properties of undefined…"** en vez del estado vacío **"Sin productos"**.
+- `cargarPedidos()` → `renderPedidos()` revienta igual (en vez de **"Sin pedidos aún"**).
+- `cargarCategorias()` → `categoriasCache` queda `undefined`; `poblarSelectCategoria()` corre **fuera**
+  del `try`, así que el `.map()` revienta sin red de seguridad y en la siguiente llamada
+  `categoriasCache.length` también explota.
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `admin-productos.html` | 538 (`cargarCategorias`) | `categoriasCache = d.categorias` sin guard | `d.categorias \|\| []` |
+| `admin-productos.html` | 568 (`cargarProductos`) | `todosProductos = d.productos` sin guard | `d.productos \|\| []` |
+| `admin-productos.html` | 1172 (`cargarPedidos`) | `todosPedidos = d.pedidos` sin guard | `d.pedidos \|\| []` |
+
+**Verificado:** el JS en línea sigue compilando (`new Function` sobre el bloque `<script>`). Cambio
+mínimo y defensivo; el camino feliz (arreglo con datos → render normal) no cambia, y ahora los tres
+paneles son consistentes. Prioridad **Media** (depende de que el backend rompa su contrato), pero el
+costo del fix es nulo y cierra la inconsistencia entre paneles.
+
+**Notas de la revisión 2026-10-01:** revisados los tres paneles (`admin-taller.html`,
+`admin-productos.html`, `admin-keyson.html`), `config.js` y las páginas de cliente que tocan el backend
+(`tienda.html`, `seguimiento.html`, `taller.html`). **Auth 100 % JWT Bearer vía `authHeaders()` en los
+tres paneles; ningún `x-admin-token` en el repo** (verificado por grep). **0 referencias DOM rotas**
+(cada `getElementById()` cruzado contra los `id=` de cada archivo: taller 45/45, productos 44/44,
+keyson 14/14). Sin funciones duplicadas ni código muerto. Paginación, filtros de búsqueda, filtro de
+fechas, export CSV (3 pestañas) + PDF/impresión de inventario, y spinners de carga presentes y
+consistentes. Todo el JS en línea compila (`new Function`).
+
+⚠️ **Dos revisiones anteriores siguen en PR abierto sin fusionar a `main`**, así que sus fixes **no
+están** en el código vivo todavía: el PR **#14** (guards `Array.isArray` en `admin-keyson.html`) y el
+PR **#13** (escapar el nombre del producto en el checkout de `tienda.html`). No se vuelven a tocar acá
+para no duplicar; conviene fusionarlos.
+
+**Hallazgos menores (prioridad Baja, no aplicados — no rompen funcionalidad):**
+
+- `admin-taller.html` (`copiarCodigo`, ~línea 1152): `navigator.clipboard.writeText(c).then(...)` no
+  tiene `.catch`. En un contexto sin permiso de portapapeles la promesa se rechaza sin aviso al usuario
+  y sin el toast "¡Código copiado!". En `github.io` (HTTPS) funciona, por eso es Baja.
+- `admin-productos.html` (botón subir foto, ~línea 403): usa `var(--verde,#00A74A)` pero `--verde` no
+  está definido en `:root`; pinta bien por el valor de respaldo. Cosmético, ya anotado en revisiones
+  previas; no se toca.
 
 ---
 
