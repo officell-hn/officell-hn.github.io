@@ -535,7 +535,7 @@ async function cargarCategorias() {
   try {
     const r = await fetch(`${API}/categorias?todas=true`);
     const d = await r.json();
-    if (d.ok) categoriasCache = d.categorias;
+    if (d.ok) categoriasCache = d.categorias || [];
   } catch (e) { /* si falla, los selects quedan con la opción por defecto */ }
   poblarSelectCategoria();
   poblarFiltroCategoria();
@@ -565,7 +565,11 @@ async function cargarProductos() {
     const r = await apiFetch(`${API}/admin/productos`, { headers: authHeaders() });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
-    todosProductos = d.productos;
+    // Guard defensivo (igual que admin-taller con d.ordenes||[]): si el backend
+    // responde ok:true sin la clave 'productos', un todosProductos=undefined hacía
+    // reventar updateStats()/renderProductos() con "Cannot read properties of
+    // undefined (reading 'length')" y la pestaña mostraba un error en vez de "Sin productos".
+    todosProductos = d.productos || [];
     updateStats(todosProductos);
     // Ya no se llama populateCatFilter(): el filtro de categorías se llena desde
     // la taxonomía única del backend (poblarFiltroCategoria), no de los productos
@@ -1169,7 +1173,9 @@ async function cargarPedidos() {
     const r = await apiFetch(`${API}/admin/pedidos`, { headers: authHeaders() });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error);
-    todosPedidos = d.pedidos;
+    // Mismo guard defensivo que en productos/taller: sin el ||[] un ok:true sin la
+    // clave 'pedidos' rompía renderPedidos() con un TypeError en vez de "Sin pedidos aún".
+    todosPedidos = d.pedidos || [];
     // Preservar la búsqueda activa tras recargar (confirmar pago, cancelar, eliminar
     // re-fetchean vía cargarPedidos): sin esto la tabla saltaba a TODOS los pedidos y
     // perdía el filtro justo después de actuar sobre un pedido encontrado por búsqueda.
