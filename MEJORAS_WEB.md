@@ -3,7 +3,48 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-09-10
+> Última revisión: 2026-09-17
+
+---
+
+## ✅ 2026-09-17 — el resumen del checkout no escapaba el nombre del producto (`tienda.html`)
+
+**El caso.** En `tienda.html` el nombre del producto se pinta con `innerHTML` en varios lugares
+(catálogo, ficha, carrito). En **todos** pasa por `escHtml()`… menos en uno: `abrirCheckout()`,
+que arma el resumen del pedido (`#resumenItems`) justo antes de pagar.
+
+⛔ **`abrirCheckout()` interpolaba `i.nombre` crudo** (`${i.nombre}` en vez de `${escHtml(i.nombre)}`),
+siendo el **único** punto de la página donde un nombre de producto entra a `innerHTML` sin escapar.
+Es el gemelo del fix que ya se hizo en `renderCarrito()` (que sí escapa). Los nombres los pone Adonias
+desde el panel, así que no es una vía de inyección desde el cliente, pero **sí es un bug de
+presentación real**: un producto con `<`, `>`, `&` o `"` en el nombre (p. ej. *"Cable 3-en-1 <USB-C>"*
+o *"Funda 6.5\" antishock"*) se veía correcto en el carrito y **mangleado o cortado en la pantalla de
+pago** — la última que ve el cliente antes de confirmar. Misma clase de hueco que se cerró en
+`admin-productos.html` (previews, 2026-08-27) y `taller.html` (`formatTipo`, 2026-07-16): "escapar en
+cada punto donde un dato del backend se interpola en HTML".
+
+| Archivo | Línea aprox. | Problema | Fix aplicado |
+|---|---|---|---|
+| `tienda.html` | 820 (`abrirCheckout`) | El nombre del producto se interpolaba crudo en el resumen del checkout (`#resumenItems`); un nombre con `<`/`>`/`&`/`"` rompía el HTML de esa pantalla. | `${i.nombre}` → `${escHtml(i.nombre)}`, alineado con `renderCarrito()` y el resto de la página. |
+
+**Nota:** las otras dos apariciones del nombre en `confirmarPedido()` NO necesitan escape y se dejaron
+como están: una arma el **texto plano** del mensaje de WhatsApp (línea 919) y la otra el **JSON** del
+pedido al backend (línea 931); ninguna toca `innerHTML`. La cantidad (`i.cantidad`) es numérica del
+carrito, se dejó cruda igual que en `renderCarrito()`.
+
+**Verificado:** el JS en línea de `tienda.html` compila (`node --check` sobre los bloques `<script>`,
+excluyendo el `application/ld+json`). Cambio mínimo, una sola interpolación.
+
+**Notas de la revisión 2026-09-17:** revisados los tres paneles (`admin-taller.html`,
+`admin-productos.html`, `admin-keyson.html`), `config.js` y las páginas de cliente que tocan el backend
+(`tienda.html`, `seguimiento.html`, `taller.html`). Desde la revisión anterior **no cambió código de
+los paneles** — solo fichas de producto y el sitemap. **Auth 100 % JWT Bearer vía `authHeaders()` en
+los tres paneles; ningún `x-admin-token` en el repo** (verificado por grep). **0 referencias DOM rotas**
+(cruzado cada `getElementById()` contra los `id=` del archivo) y **0 variables CSS sin resolver**
+(`var(--verde,#00A74A)` en `admin-productos.html` usa valor de respaldo, así que pinta bien; queda como
+nota menor, no rompe nada). Sin funciones duplicadas ni código muerto. Paginación, filtros, export
+CSV/PDF y spinners consistentes en los tres paneles. Único hallazgo accionable: el escape del checkout
+(arriba), ya corregido. **No quedan pendientes abiertos en Web.**
 
 ---
 
