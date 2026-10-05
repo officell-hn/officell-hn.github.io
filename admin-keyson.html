@@ -269,7 +269,10 @@ async function cargarClientes(buscar = '') {
     const r = await fetch(`${API}/admin/keyson/clientes?${params}`, { headers: authHeaders() });
     if (r.status === 401) { logout(); return; }
     const d = await r.json();
-    if (!d.ok || !d.clientes.length) {
+    // Array.isArray antes de .length: si el backend responde {ok:true} sin la
+    // clave `clientes`, `.length` lanzaría un TypeError que caía en el catch y
+    // mostraba "Error cargando clientes" en vez del estado vacío correcto.
+    if (!d.ok || !Array.isArray(d.clientes) || !d.clientes.length) {
       list.innerHTML = '<div class="empty-list">Sin conversaciones en este período</div>';
       return;
     }
@@ -334,7 +337,9 @@ async function abrirConversacion(phone, nombre) {
     const r = await fetch(`${API}/admin/keyson/conversacion/${encodeURIComponent(phone)}`, { headers: authHeaders() });
     if (r.status === 401) { logout(); return; }
     const d = await r.json();
-    if (!d.ok || !d.mensajes.length) {
+    // Mismo guard que en cargarClientes: sin Array.isArray, un {ok:true} sin
+    // `mensajes` reventaba en .length y mostraba "Error cargando mensajes".
+    if (!d.ok || !Array.isArray(d.mensajes) || !d.mensajes.length) {
       msgs.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted)">Sin mensajes registrados</div>';
       return;
     }
