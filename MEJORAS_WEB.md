@@ -3,7 +3,69 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-10-01
+> Última revisión: 2026-10-08
+
+---
+
+## ✅ 2026-10-08 — `index.html` leía `d.productos.length` sin guard y anulaba su propio fallback
+
+**El caso.** El bloque de "productos destacados" del home (`index.html`, IIFE al final del `<body>`)
+pide primero los destacados y, si no hay, cae a pedir el catálogo completo. El fallback ya está
+escrito a la defensiva — `prods = (d.productos || []).slice(0, 8)` — pero **la primera lectura no**:
+
+```js
+let prods = d.ok && d.productos.length ? d.productos : [];   // ❌ d.productos puede venir undefined
+```
+
+⛔ **Si el endpoint `?destacados=true` responde `ok:true` sin la clave `productos`** (un refactor del
+endpoint, un `ok` sin arreglo), `d.productos.length` lanza
+`TypeError: Cannot read properties of undefined (reading 'length')`. El error **no cae en un
+estado vacío**: revienta toda la IIFE hacia el `catch`, que pinta solo un enlace "Ver tienda →".
+Peor aún, **el fallback al catálogo completo (que sí está blindado) nunca llega a correr**, porque el
+`throw` ocurre antes. Resultado: el home se queda sin su carrusel de productos aunque el backend
+general sí tenga catálogo.
+
+| Archivo | Línea | Problema | Fix aplicado |
+|---|---|---|---|
+| `index.html` | 623 | `d.ok && d.productos.length` sin verificar que el arreglo exista | `d.ok && Array.isArray(d.productos) && d.productos.length` |
+
+El fix usa `Array.isArray(...)`, el mismo patrón que ya aplica `seguimiento.html`
+(`const items = Array.isArray(p.productos) ? p.productos : []`) y `admin-keyson.html`. El camino feliz
+(destacados con datos → carrusel) no cambia; la única diferencia es que un `ok:true` sin `productos`
+ahora **sí** cae al fallback del catálogo completo, como siempre se pretendió. Prioridad **Media**
+(depende de que el backend cambie su contrato), costo nulo. Bloque `<script>` de `index.html` verificado
+con `node --check` (2 bloques JS en línea, sin errores de sintaxis).
+
+**Mantenimiento del guardia `verificar_ramas.js`.** El guardia avisaba en falso de **cinco ramas de PRs
+ya mergeados** (#2, #3, #4, #5, #6 — contenido en producción desde julio/agosto). La causa: GitHub los
+mergeó por *squash*, que crea un commit sin ancestro común con la rama; `git merge-tree HEAD rama`
+aborta con *"refusing to merge unrelated histories"* y el script, al no poder comparar árboles, las
+listaba como pendientes. Verificado uno por uno que el contenido está en `main` (README idéntico;
+`filtrarTabla`/`filtrarPedidos`, `renderPaginacionProductos`, `esc(formatTipo(...))` presentes) y
+registradas las cinco en `ramas_descartadas.txt` con el motivo. El guardia vuelve a dar verde limpio,
+para que un pendiente real no se esconda entre falsos avisos.
+
+**Notas de la revisión 2026-10-08:** revisados los tres paneles (`admin-taller.html`,
+`admin-productos.html`, `admin-keyson.html`), `config.js` y las páginas de cliente que tocan el backend
+(`tienda.html`, `seguimiento.html`, `taller.html`, `index.html`). **Auth 100 % JWT Bearer vía
+`sessionStorage oc_admin_jwt` + `Authorization: Bearer` en los tres paneles; ningún `x-admin-token` ni
+`oc_admin_token` en el código** (verificado por grep). Los `localStorage` de `tienda.html` son solo el
+carrito, no auth. Los guards del backend quedaron consistentes en todos los puntos: `admin-productos`
+(`|| []`), `admin-taller` (`|| []`), `admin-keyson` (`Array.isArray`), `seguimiento` (`Array.isArray`)
+y ahora `index.html` (`Array.isArray`). Sin código muerto ni funciones duplicadas nuevas. Todo el JS en
+línea de los archivos tocados compila.
+
+**Hallazgos menores (prioridad Baja, no aplicados — no rompen funcionalidad):**
+
+- `taller.html` (`cargarServicios`, ~línea 367): `d.servicios.map(...)` sin `Array.isArray`. Está dentro
+  de un `try/catch`, así que un `ok:true` sin `servicios` no rompe la página — degrada al mensaje
+  genérico "No se pudieron cargar los servicios." en vez de dejar la grilla vacía. Baja porque el
+  `catch` ya lo contiene; si se quisiera consistencia total, aplicar el mismo `Array.isArray` que el
+  resto.
+- `taller.html` (~líneas 453 y 457): `${o.fecha_entrada || '—'}` y `${o.fecha_estimada || 'Por
+  confirmar'}` se interpolan en `innerHTML` **sin `esc()`**, únicos campos del detalle de orden sin
+  escapar (el resto pasa por `esc()`). Son fechas que fija el admin, no texto libre del cliente, así que
+  el riesgo XSS es mínimo; es más una inconsistencia de endurecimiento. Baja.
 
 ---
 

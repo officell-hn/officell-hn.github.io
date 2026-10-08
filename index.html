@@ -620,7 +620,7 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
   try {
     let r = await fetch('https://officell-ia-production.up.railway.app/api/tienda/productos?destacados=true');
     let d = await r.json();
-    let prods = d.ok && d.productos.length ? d.productos : [];
+    let prods = d.ok && Array.isArray(d.productos) && d.productos.length ? d.productos : [];
     if (!prods.length) {
       r = await fetch('https://officell-ia-production.up.railway.app/api/tienda/productos');
       d = await r.json();
