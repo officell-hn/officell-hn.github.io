@@ -13,3 +13,20 @@ origin/claude/jolly-noether-hipcx2   # 03-sep, "topar stock en el boton + del ca
                                      # main por cherry-pick (commit 187234d, 04-sep): git cherry
                                      # la marca con "-" (equivalente ya aplicado). El guardia la
                                      # seguia mostrando porque no detecta cherry-picks. Nada que juntar.
+
+# 8-oct-2026, revisada y descartada: cinco ramas de PRs YA MERGEADOS (contenido
+# en produccion). El guardia las mostraba en falso porque fueron squash-merge:
+# el squash crea un commit nuevo sin ancestro comun con la rama, asi que
+# `git merge-tree HEAD rama` aborta con "refusing to merge unrelated histories"
+# y el script, al no poder comparar el arbol, las lista como pendientes. No lo son.
+origin/claude/jolly-noether-j57inl   # PR #3 (mergeada 10-jul): "preservar filtro activo tras
+                                     # mutacion/recarga". En main: cargarProductos()/cargarPedidos()
+                                     # reaplican filtrarTabla()/filtrarPedidos() (admin-productos.html).
+origin/revision-2026-07-02           # PR #2 (mergeada 04-jul): "3 bugs — HTML sin escapar en recibos,
+                                     # filtro post-delete, codigo muerto". En main (escHtml en el panel).
+origin/claude/jolly-noether-ssqoc1   # PR #4 (mergeada 07-ago): "escape de imagen/tipo_servicio + doc auth".
+                                     # En main: taller.html usa esc(formatTipo(o.tipo_servicio)).
+origin/claude/jolly-noether-yezyha   # PR #5 (mergeada 07-ago): "corrige auth en README (JWT Bearer)".
+                                     # README.md de la rama es IDENTICO al de main (diff vacio).
+origin/claude/jolly-noether-tal6b6   # PR #6 (mergeada 07-ago): "paginacion en pestana Productos".
+                                     # En main: renderPaginacionProductos() y paginaProductos.
