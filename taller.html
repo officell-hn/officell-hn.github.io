@@ -450,11 +450,11 @@ async function buscarOrden() {
           </div>
           <div class="dato-item">
             <div class="dato-label">Fecha de entrada</div>
-            <div class="dato-valor">${o.fecha_entrada || '—'}</div>
+            <div class="dato-valor">${esc(o.fecha_entrada) || '—'}</div>
           </div>
           <div class="dato-item" style="grid-column:span 1">
             <div class="dato-label">Fecha estimada</div>
-            <div class="dato-valor">${o.fecha_estimada || 'Por confirmar'}</div>
+            <div class="dato-valor">${esc(o.fecha_estimada) || 'Por confirmar'}</div>
           </div>
         </div>
         ${o.notas ? `

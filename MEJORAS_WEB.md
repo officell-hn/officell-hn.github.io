@@ -3,7 +3,107 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-10-08
+> Última revisión: 2026-10-15
+
+---
+
+## ✅ 2026-10-15 — `tienda.html` y `taller.html`: datos del backend sin escapar e array sin guard
+
+**El caso 1 — catálogo revienta si `/categorias` o `/productos` responde sin su arreglo
+(`tienda.html`, `cargarProductos()`).** Las dos respuestas se usaban confiando **solo** en el
+flag `.ok`, sin verificar que el arreglo anidado existiera:
+
+```js
+todosProductos = prodData.ok ? prodData.productos : [];          // ❌ productos puede faltar
+if (catData.ok && catData.categorias.length > 0) { ... }          // ❌ .length sobre undefined
+```
+
+⛔ Si `/categorias` devuelve `ok:true` sin la clave `categorias` (DB vacía, payload parcial,
+cambio de contrato del endpoint), `catData.categorias.length` lanza
+`TypeError: Cannot read properties of undefined (reading 'length')`. El `throw` cae en el
+`try/catch` de `cargarProductos()`, así que `renderProductos()` **nunca corre** y la página muestra
+"No se pudo conectar con la tienda" aunque los productos sí hayan cargado. El caso de `productos`
+ausente es más filoso: `todosProductos` queda `undefined` y, como los handlers de filtro/búsqueda
+(`filtrarCategoria`, `filtrarCondicion`, `buscar` → `renderProductos`/`.filter`) **no** están
+envueltos en `try/catch`, el primer clic en cualquier filtro lanza un `TypeError` no atrapado y
+rompe toda la interacción del catálogo.
+
+| Archivo | Línea | Problema | Fix aplicado |
+|---|---|---|---|
+| `tienda.html` | 485 | `prodData.ok ? prodData.productos : []` sin verificar el arreglo | `(prodData.ok && Array.isArray(prodData.productos)) ? prodData.productos : []` |
+| `tienda.html` | 490 | `catData.ok && catData.categorias.length` sin verificar el arreglo | `catData.ok && Array.isArray(catData.categorias) && catData.categorias.length > 0` |
+
+Mismo patrón `Array.isArray(...)` que ya aplican `seguimiento.html`, `admin-keyson.html` e
+`index.html` (fix del 2026-10-08). El camino feliz no cambia.
+
+**El caso 2 — XSS almacenado por el ícono de categoría sin escapar (`tienda.html`,
+`renderProductos()`).** El ícono de categoría viene crudo del backend
+(`mapaIconosCat[c.categoria] = c.icono`) y se interpolaba **sin escapar** en el `innerHTML` de cada
+tarjeta de producto, tanto en el placeholder sin imagen como dentro del handler `onerror` de la
+imagen:
+
+```js
+const icono = mapaIconosCat[p.categoria_web] || '📦';   // ❌ crudo
+...
+: `<div class="producto-img-placeholder">${icono}</div>`;                 // línea 604
+onerror="...innerHTML='<div style=...>${icono}</div>'"                      // línea 601
+```
+
+⛔ Un `icono` como `"><img src=x onerror=alert(document.cookie)>` se renderiza como HTML real en la
+línea 604 → **XSS almacenado** que se dispara en cualquier visitante del catálogo. Era inconsistente
+con el **mismo** valor, que sí se escapa para los botones de filtro (línea 496,
+`escHtml(c.icono + ' ' + c.label)`): escapar el ícono estaba claramente previsto y solo se omitió
+aquí. El dato es de origen admin (las categorías las crea el panel), así que el riesgo real es menor
+que el de un input de cliente, pero sigue siendo un hueco de escape.
+
+| Archivo | Línea | Problema | Fix aplicado |
+|---|---|---|---|
+| `tienda.html` | 587 | `c.icono` interpolado crudo en `innerHTML` (líneas 601 y 604) | escapar en origen: `const icono = escHtml(mapaIconosCat[p.categoria_web] \|\| '📦')` |
+
+Escapar en origen cubre los dos puntos de interpolación; los emojis no se ven afectados por
+`escHtml`.
+
+**El caso 3 — fechas sin escapar en la vista pública de seguimiento (`taller.html`,
+`buscarOrden()`).** En el resultado de seguimiento, todos los campos de la orden pasan por `esc()`
+(`equipo`, `cliente_nombre`, `codigo_seguimiento`, `estado`, `notas`, `formatTipo(...)`) **menos
+dos**: las fechas, interpoladas crudas en `innerHTML`.
+
+```js
+<div class="dato-valor">${o.fecha_entrada || '—'}</div>          // ❌  línea 453
+<div class="dato-valor">${o.fecha_estimada || 'Por confirmar'}</div>  // ❌  línea 457
+```
+
+⛔ Son campos del backend reflejados a cualquiera que consulte ese código de seguimiento. Hueco de
+escape inconsistente idéntico al del `formatTipo` cerrado el 2026-07-16.
+
+| Archivo | Línea | Problema | Fix aplicado |
+|---|---|---|---|
+| `taller.html` | 453 | `o.fecha_entrada` crudo en `innerHTML` | `${esc(o.fecha_entrada) \|\| '—'}` |
+| `taller.html` | 457 | `o.fecha_estimada` crudo en `innerHTML` | `${esc(o.fecha_estimada) \|\| 'Por confirmar'}` |
+
+(`esc('')` devuelve `''`, así que los respaldos `'—'` / `'Por confirmar'` siguen funcionando.)
+
+**Verificación.** Extraídos los bloques `<script>` (JS real, excluyendo los `application/ld+json`) de
+`taller.html` y `tienda.html` a `.js` temporales y corridos con `node --check`: todos sin errores de
+sintaxis. `node verificar_ramas.js` → "Todo lo revisado esta en main".
+
+**Mejoras no críticas documentadas este ciclo (defensa en profundidad, no son bugs explotables):**
+
+| # | Archivo | Observación | Prioridad |
+|---|---|---|---|
+| D1 | `admin-taller.html` | `codigo_seguimiento`, `fecha_entrada` y `fecha_estimada` se interpolan sin `esc()` en la tabla/detalle. Son códigos y fechas generados por el backend con formato controlado y la vista es solo para el admin autenticado → no explotable, pero convendría escaparlos por consistencia. | Baja |
+| D2 | `admin-productos.html` | `condBadge()` interpola `p.condicion` sin escapar (la ruta de impresión sí escapa). El valor es un enum fijo del `<select>` (nuevo/usado/reacondicionado) y el producto lo crea el admin → no controlable por atacante. Escapar por consistencia. | Baja |
+
+**Notas de la revisión 2026-10-15:** revisados los siete archivos del alcance — `tienda.html`,
+`taller.html`, `seguimiento.html`, `index.html` y los tres paneles `admin-productos.html`,
+`admin-taller.html`, `admin-keyson.html` — más `config.js`. **Auth 100 % JWT Bearer vía
+`sessionStorage oc_admin_jwt` + `Authorization: Bearer` en los tres paneles; ningún `x-admin-token`
+ni `oc_admin_token` en el código** (verificado por grep). `seguimiento.html` e `index.html` limpios
+(ya blindados con `Array.isArray` y `esc()` en ciclos previos). Los tres paneles limpios: todas las
+refs `getElementById`/`querySelector` resuelven, todas las `var(--…)` están definidas en `:root`, los
+arreglos del backend tienen guard (`|| []` en productos/taller, `Array.isArray` en keyson) y los
+datos de cliente se escapan. Sin código muerto ni funciones duplicadas nuevas. 0 PRs de ciclos
+anteriores sin fusionar al abrir la revisión. Sin pendientes abiertos en Web.
 
 ---
 

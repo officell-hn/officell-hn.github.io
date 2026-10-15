@@ -482,12 +482,12 @@ async function cargarProductos() {
     const prodData = await prodRes.json();
     const catData = await catRes.json();
 
-    todosProductos = prodData.ok ? prodData.productos : [];
+    todosProductos = (prodData.ok && Array.isArray(prodData.productos)) ? prodData.productos : [];
 
     // Renderizar filtros de categoría
     // los íconos/etiquetas venían hardcodeados con slugs que no existían en los datos (ej: 'celulares-nuevos'),
     // por eso el ícono de producto siempre caía al 📦 por defecto — ahora se usa lo que ya trae la API
-    if (catData.ok && catData.categorias.length > 0) {
+    if (catData.ok && Array.isArray(catData.categorias) && catData.categorias.length > 0) {
       mapaIconosCat = {};
       catData.categorias.forEach(c => { mapaIconosCat[c.categoria] = c.icono; });
       const filtrosEl = document.getElementById('filtrosCat');
@@ -584,7 +584,7 @@ function renderProductos() {
   container.innerHTML = `<div class="productos-grid">${productos.map(p => {
     const badgeCond = p.condicion === 'nuevo' ? 'badge-nuevo' : p.condicion === 'usado' ? 'badge-usado' : 'badge-reacondicionado';
     const condLabel = p.condicion === 'nuevo' ? '✨ Nuevo' : p.condicion === 'usado' ? '🔄 Usado' : '🔧 Reacon.';
-    const icono = mapaIconosCat[p.categoria_web] || '📦';
+    const icono = escHtml(mapaIconosCat[p.categoria_web] || '📦');
 
     // Soporte para múltiples imágenes
     let imagenes = [];
