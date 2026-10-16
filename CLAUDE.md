@@ -2,6 +2,12 @@
 
 ## Antes de hacer nada: leé el buzón
 
+> ⏰ **Y con el PRIMER MENSAJE DE CADA MAÑANA, aunque la sesión lleve días abierta.**
+> Regla de Adonias del 16-oct-2026. "Al empezar" no alcanza: la sesión de la PC del
+> negocio llevaba **tres días** abierta y esa mañana el buzón quedó sin revisar hasta
+> que él lo pidió. Si es el primer mensaje del día, lo primero es el buzón.
+
+
 Adonias trabaja con Claude en **tres lugares** (Mac, PC del negocio, iPhone) y las
 sesiones no se ven entre sí. Se comunican por `COORDINACION_CLAUDE.md` del repo
 **officell-ia**. Al empezar, **siempre**, aunque no haya commits nuevos:
