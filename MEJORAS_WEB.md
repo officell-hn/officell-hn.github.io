@@ -3,7 +3,68 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-10-15
+> Última revisión: 2026-10-29
+
+---
+
+## ✅ 2026-10-29 — Hardening: guard de `nombre` en los filtros de búsqueda cliente
+
+**Revisión semanal: sin bugs críticos.** Barrido de los 7 archivos del alcance (`tienda.html`,
+`taller.html`, `seguimiento.html`, `index.html`, `admin-productos.html`, `admin-taller.html`,
+`admin-keyson.html`):
+
+- `node --check` sobre **todos** los bloques `<script>` en línea → 0 errores de sintaxis.
+- Auth 100% **JWT Bearer** (`Authorization: Bearer` + `sessionStorage oc_admin_jwt`) en los 3
+  paneles. **0 rastros de `x-admin-token`** (mecanismo eliminado).
+- 0 referencias DOM rotas (cruzado `getElementById()` y `querySelector('#…')` vs los `id=`
+  declarados en cada archivo).
+- 0 variables CSS sin resolver. El único `var()` sin definición local, `var(--verde,#00A74A)` en
+  el botón de subida de `admin-productos.html`, **tiene valor de fallback** → resuelve a verde, no
+  es un bug.
+- 0 handlers `on*` apuntando a funciones inexistentes.
+- Datos del backend guardados consistentemente (`Array.isArray`/`|| []`) y datos de usuario/backend
+  escapados con `esc()`/`escHtml()` en cada `innerHTML`.
+
+**Hardening aplicado (defensivo, 1 clase).** El filtro de búsqueda del lado cliente llamaba
+`p.nombre.toLowerCase()` **sin guard**, mientras el campo hermano `descripcion` **sí** estaba
+guardado en la misma expresión:
+
+```js
+// tienda.html, renderProductos()
+if (busquedaActiva && !p.nombre.toLowerCase().includes(busquedaActiva.toLowerCase())) return false;  // ❌
+// admin-productos.html, filtrarTabla()/imprimirInventario()/exportarCSVProductos()
+(!buscar || p.nombre.toLowerCase().includes(buscar) || (p.descripcion||'').toLowerCase().includes(buscar))  // ❌ nombre sin ||''
+```
+
+⛔ Si el backend devolviera alguna vez un producto sin `nombre`, `p.nombre.toLowerCase()` lanza
+`TypeError`. El `throw` ocurre dentro del callback de `.filter`, **fuera de todo `try/catch`**: en
+`tienda.html` `renderProductos()` se invoca desde `buscar()` (setTimeout), `filtrarCategoria()` y
+`filtrarCondicion()`, no desde el `try` de `cargarProductos()`, así que la grilla deja de
+actualizarse al buscar/filtrar. En `admin-productos.html` lo mismo desde `filtrarTabla()` (el
+`oninput` del buscador). Hoy el alta de producto exige `nombre`, así que la probabilidad real es
+baja — es un guard defensivo, no un crash reproducido.
+
+| Archivo | Punto | Fix |
+|---|---|---|
+| `tienda.html` | filtro del catálogo (`renderProductos`) | `(p.nombre\|\|'').toLowerCase()` |
+| `admin-productos.html` | `filtrarTabla`, `imprimirInventario`, `exportarCSVProductos` (3 puntos) | `(p.nombre\|\|'').toLowerCase()` |
+
+Alineado con el `(p.descripcion||'')` que ya estaba justo al lado. El camino feliz no cambia.
+Prioridad: **Baja** (defensivo). `taller.html` ya guarda sus filtros con `(o.equipo||'')` etc.;
+`admin-taller.html` y `admin-keyson.html` no tienen el patrón.
+
+**Mantenimiento de `verificar_ramas.js`.** Avisaba en falso de 2 ramas de PRs **ya mergeados**:
+`origin/claude/jolly-noether-7ih9bc` (PR #9) y `origin/claude/jolly-noether-t0fkn8` (PR #10). Ambos
+fueron squash-merge, así que `git merge-tree HEAD rama` aborta con "refusing to merge unrelated
+histories" en el clon shallow y el guardia, sin poder comparar árboles, las listaba como
+pendientes. Verificado leyendo `main` que su contenido está en producción (QR local en
+`confirmarPedido()` de `tienda.html`; `escHtml(url)` en `actualizarPreviews()` de
+`admin-productos.html`) y agregadas a `ramas_descartadas.txt` con el motivo → `verificar_ramas.js`
+vuelve a dar verde (exit 0). Mismo caso documentado que el bloque del 8-oct.
+
+**Nota de coordinación.** El buzón `COORDINACION_CLAUDE.md` (repo `officell-ia`) **no se pudo leer**
+este ciclo: ese repo está fuera del alcance de GitHub de esta sesión (la API devuelve 403). Queda
+pendiente revisarlo desde una sesión con acceso.
 
 ---
 

@@ -568,7 +568,7 @@ function renderProductos() {
   let productos = todosProductos.filter(p => {
     if (categoriaActiva !== 'todos' && p.categoria_web !== categoriaActiva) return false;
     if (condicionActiva && p.condicion !== condicionActiva) return false;
-    if (busquedaActiva && !p.nombre.toLowerCase().includes(busquedaActiva.toLowerCase())) return false;
+    if (busquedaActiva && !(p.nombre||'').toLowerCase().includes(busquedaActiva.toLowerCase())) return false;
     return true;
   });
 
