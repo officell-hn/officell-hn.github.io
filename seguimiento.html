@@ -172,9 +172,14 @@ async function buscar() {
         💬 Consultar por WhatsApp
       </a>
     `;
-    // Generar QR localmente (sin dependencia externa)
-    QRCode.toCanvas(document.getElementById('qr-canvas'), trackUrl, { width: 150, margin: 1, errorCorrectionLevel: 'M' })
-      .catch(() => {});
+    // Generar QR localmente (sin dependencia externa). Guard igual que tienda.html:
+    // si qrcode.min.js no cargó (CDN bloqueado/offline), QRCode es undefined y
+    // QRCode.toCanvas(...) lanzaría SÍNCRONAMENTE — dentro de este try —, y el catch
+    // de abajo pisaría el pedido ya renderizado con un falso "Error de conexión".
+    if (typeof QRCode !== 'undefined') {
+      QRCode.toCanvas(document.getElementById('qr-canvas'), trackUrl, { width: 150, margin: 1, errorCorrectionLevel: 'M' })
+        .catch(() => {});
+    }
 
   } catch(e) {
     el.innerHTML = `<div class="error-box">⚠️ Error de conexión. Intenta de nuevo.</div>`;
