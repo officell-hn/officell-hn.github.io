@@ -650,7 +650,7 @@ function filtrarTabla() {
   const buscar = document.getElementById('buscar-prod').value.toLowerCase();
   const cat = document.getElementById('filtro-cat').value;
   const filtrados = todosProductos.filter(p =>
-    (!buscar || p.nombre.toLowerCase().includes(buscar) || (p.descripcion||'').toLowerCase().includes(buscar)) &&
+    (!buscar || (p.nombre||'').toLowerCase().includes(buscar) || (p.descripcion||'').toLowerCase().includes(buscar)) &&
     (!cat || p.categoria_web === cat)
   );
   renderProductos(filtrados);
@@ -685,7 +685,7 @@ function imprimirInventario() {
   const catFiltro = document.getElementById('filtro-cat').value;
 
   let prods = todosProductos.filter(p =>
-    (!buscar || p.nombre.toLowerCase().includes(buscar) || (p.descripcion||'').toLowerCase().includes(buscar)) &&
+    (!buscar || (p.nombre||'').toLowerCase().includes(buscar) || (p.descripcion||'').toLowerCase().includes(buscar)) &&
     (!catFiltro || p.categoria_web === catFiltro)
   );
 
@@ -811,7 +811,7 @@ function exportarCSVProductos() {
   const buscar = document.getElementById('buscar-prod').value.toLowerCase();
   const catFiltro = document.getElementById('filtro-cat').value;
   const prods = todosProductos.filter(p =>
-    (!buscar || p.nombre.toLowerCase().includes(buscar) || (p.descripcion||'').toLowerCase().includes(buscar)) &&
+    (!buscar || (p.nombre||'').toLowerCase().includes(buscar) || (p.descripcion||'').toLowerCase().includes(buscar)) &&
     (!catFiltro || p.categoria_web === catFiltro)
   );
   if (!prods.length) { toast('No hay productos para exportar', 'err'); return; }

@@ -30,3 +30,15 @@ origin/claude/jolly-noether-yezyha   # PR #5 (mergeada 07-ago): "corrige auth en
                                      # README.md de la rama es IDENTICO al de main (diff vacio).
 origin/claude/jolly-noether-tal6b6   # PR #6 (mergeada 07-ago): "paginacion en pestana Productos".
                                      # En main: renderPaginacionProductos() y paginaProductos.
+
+# 29-oct-2026, revisada y descartada: dos ramas de PRs YA MERGEADOS. Mismo caso
+# que el bloque de 8-oct — squash-merge + clon shallow, asi que
+# `git merge-tree HEAD rama` aborta con "refusing to merge unrelated histories"
+# y el guardia, sin poder comparar el arbol, las lista en falso. Su contenido
+# esta en produccion (verificado leyendo main).
+origin/claude/jolly-noether-7ih9bc   # PR #9 (mergeada): "QR de confirmacion local en tienda.html".
+                                     # En main: confirmarPedido() genera el QR con QRCode.toCanvas y
+                                     # cae a api.qrserver.com solo si la libreria falla (tienda.html).
+origin/claude/jolly-noether-t0fkn8   # PR #10 (mergeada): "hardening escape en preview de imagenes".
+                                     # En main: actualizarPreviews() escapa la URL con escHtml()
+                                     # antes de meterla al src (admin-productos.html).
