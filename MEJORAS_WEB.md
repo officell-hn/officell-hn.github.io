@@ -3,7 +3,72 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-10-29
+> Última revisión: 2026-11-12
+
+---
+
+## ✅ 2026-11-12 — Bug de seguimiento (QR pisa el pedido) + cierre de D1/D2 de escape
+
+**Revisión semanal.** Barrido de los 7 archivos del alcance (`tienda.html`, `taller.html`,
+`seguimiento.html`, `index.html`, `admin-productos.html`, `admin-taller.html`,
+`admin-keyson.html`), dos auditorías cruzadas (públicas / paneles):
+
+- `node --check` sobre **todos** los bloques `<script>` en línea de los 8 archivos → 0 errores.
+- Auth 100% **JWT Bearer** (`Authorization: Bearer` + `sessionStorage oc_admin_jwt`) en los 3
+  paneles. **0 rastros de `x-admin-token`**.
+- 0 referencias DOM rotas, 0 `var()` CSS sin resolver (el único sin raíz, `var(--verde,#00A74A)`,
+  tiene fallback), 0 handlers `on*` colgados, headers de auth presentes en todas las llamadas
+  protegidas. Lecturas de arreglos del backend guardadas (`Array.isArray`/`|| []`).
+
+### 🐞 Bug real corregido — `seguimiento.html`, `buscar()`
+
+El QR del pedido se generaba con `QRCode.toCanvas(...)` **dentro del `try`**, después de haber
+renderizado ya el pedido válido. Si `qrcode.min.js` no cargó (CDN bloqueado/offline/ad-blocker),
+`QRCode` es `undefined` y la llamada lanza **síncronamente** `TypeError`: el `catch` de abajo
+**pisaba el pedido ya mostrado** con un falso `⚠️ Error de conexión. Intenta de nuevo.` — un
+cliente cuyo pedido SÍ se encontró veía un error inexistente.
+
+```js
+// ANTES (seguimiento.html)         // DESPUÉS
+QRCode.toCanvas(...).catch(()=>{}); // if (typeof QRCode !== 'undefined') { QRCode.toCanvas(...).catch(()=>{}); }
+```
+
+Mismo guard que `tienda.html` ya aplica en `confirmarPedido()`. El camino feliz no cambia.
+
+### 🔒 Hardening de escape aplicado (defensivo, Baja) — cierra D1 y D2
+
+Tres campos `estado`/`condicion` (enums fijados por el propio panel) caían en su **valor crudo del
+backend** dentro de `innerHTML` sin `escHtml()`/`esc()`, mientras el campo hermano sí escapaba.
+No explotables hoy (son enums), pero es exactamente la clase que la revisión persigue y eran
+inconsistencias ya anotadas como D1/D2 el 15-oct. Cerradas:
+
+- `admin-productos.html` · `condBadge(c)` → `${escHtml(c||'—')}` (igual que `imprimirInventario`). **[D2]**
+- `admin-productos.html` · `renderPedidos()` → `label: escHtml(p.estado || 'pendiente')` (solo el
+  fallback; las etiquetas conocidas del `estadoMap` son literales seguros).
+- `admin-taller.html` · `badgeLabel()` → `return m[estado] || esc(estado);` (usado en `renderTabla`
+  y `verDetalle`, ambos `innerHTML`). **[D1]**
+- `admin-taller.html` · recibo/print línea del Estado → `${esc(badgeLabelText(o.estado))}`. El
+  escape va en el **call site**, no en `badgeLabelText()`, porque esa función también alimenta el
+  CSV de `exportarCSV()` (escapar ahí corrompería el CSV con entidades HTML).
+
+### 🧹 Mantenimiento de `verificar_ramas.js`
+
+Registradas en `ramas_descartadas.txt` dos ramas que el guardia listaba en falso (squash-merge +
+clon shallow → "unrelated histories"), con su contenido **verificado en main**:
+`oaafyl` (10-sep, revertir el switch de producto al fallar el guardado — en main vía
+`toggleCampo(…,chk)`) y `yjsn74` (15-oct, escapes de backend — en main). `verificar_ramas.js`
+vuelve a dar verde (exit 0).
+
+### 🔀 PR de ciclos anteriores
+
+**PR #18** (rev. 29-oct, guard `(p.nombre||'')` en filtros de búsqueda) estaba abierta y lista:
+revisada, validada (`node --check` limpio, única, sin tocar archivos generados) y **mergeada a
+main** al inicio de este ciclo.
+
+### Nota
+
+El buzón `COORDINACION_CLAUDE.md` (repo `officell-ia`) **no se pudo leer**: ese repo está fuera del
+alcance de GitHub de la sesión (403).
 
 ---
 

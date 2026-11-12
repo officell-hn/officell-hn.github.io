@@ -678,7 +678,7 @@ function badgeLabel(estado) {
     recibido:'📥 Recibido', en_reparacion:'🔧 En Reparación',
     listo:'🎉 Listo', entregado:'✅ Entregado', cancelado:'✕ Cancelado'
   };
-  return m[estado] || estado;
+  return m[estado] || esc(estado);
 }
 
 // ── Exportar a CSV (respeta filtro y búsqueda activos) ────
@@ -1119,7 +1119,7 @@ function imprimir(id, formato) {
         <table><tr><th>Fecha de Entrada</th><td>${o.fecha_entrada||new Date().toISOString().substring(0,10)}</td><th>Entrega Estimada</th><td>${o.fecha_estimada||'Por confirmar'}</td></tr></table>
         <h3>Estado Actual</h3>
         <table>
-          <tr><th>Estado</th><td colspan="3"><strong>${badgeLabelText(o.estado)}</strong></td></tr>
+          <tr><th>Estado</th><td colspan="3"><strong>${esc(badgeLabelText(o.estado))}</strong></td></tr>
           ${o.notas ? `<tr><th>Notas</th><td colspan="3">${esc(o.notas)}</td></tr>` : ''}
         </table>
         <div class="terms"><strong>Términos y Condiciones:</strong> Garantía según tipo de servicio (pantallas: 30 días, baterías: 90 días, software: 15 días). El equipo debe ser retirado dentro de los 30 días posteriores a que esté listo. Pasado este plazo, OFFICELL no se responsabiliza por el equipo.</div>

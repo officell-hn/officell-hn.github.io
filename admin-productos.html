@@ -851,7 +851,7 @@ function exportarCSVProductos() {
 
 function condBadge(c) {
   const m = { nuevo: 'badge-green', usado: 'badge-orange', reacondicionado: 'badge-blue' };
-  return `<span class="badge ${m[c]||'badge-gray'}">${c||'—'}</span>`;
+  return `<span class="badge ${m[c]||'badge-gray'}">${escHtml(c||'—')}</span>`;
 }
 
 async function toggleCampo(id, campo, valor, chk) {
@@ -1232,7 +1232,7 @@ function renderPedidos(pedidos, resetPagina = true) {
       cancelado:      { cls: 'badge-red',    label: '❌ Cancelado'      },
       pagado:         { cls: 'badge-green',  label: '✅ Pagado'         }
     };
-    const est = estadoMap[p.estado] || { cls: 'badge-orange', label: p.estado || 'pendiente' };
+    const est = estadoMap[p.estado] || { cls: 'badge-orange', label: escHtml(p.estado || 'pendiente') };
     const codigo = p.codigo_seguimiento || p.id;
     const trackUrl = `https://officell-hn.github.io/seguimiento.html?codigo=${encodeURIComponent(codigo)}`;
     return `

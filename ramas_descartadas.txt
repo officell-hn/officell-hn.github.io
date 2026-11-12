@@ -42,3 +42,15 @@ origin/claude/jolly-noether-7ih9bc   # PR #9 (mergeada): "QR de confirmacion loc
 origin/claude/jolly-noether-t0fkn8   # PR #10 (mergeada): "hardening escape en preview de imagenes".
                                      # En main: actualizarPreviews() escapa la URL con escHtml()
                                      # antes de meterla al src (admin-productos.html).
+
+# 12-nov-2026, revisada y descartada: dos ramas de revisiones cuyo contenido YA
+# ESTA EN MAIN. Mismo caso de squash-merge + clon shallow: `git merge-tree HEAD
+# rama` aborta con "refusing to merge unrelated histories", el guardia no puede
+# comparar el arbol y las lista en falso. Verificado leyendo main.
+origin/claude/jolly-noether-oaafyl   # Rev. 10-sep: "revertir el switch de producto cuando falla el
+                                     # guardado". En main: toggleCampo(id,campo,valor,chk) revierte
+                                     # chk.checked en el catch (admin-productos.html).
+origin/claude/jolly-noether-yjsn74   # Rev. 15-oct: "escapar datos del backend y blindar arreglos sin
+                                     # guard". En main: esc(o.fecha_entrada/estimada) en taller.html,
+                                     # Array.isArray(prodData.productos/catData.categorias) y
+                                     # escHtml(mapaIconosCat[...]) en tienda.html.
