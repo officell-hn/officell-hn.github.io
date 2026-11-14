@@ -45,7 +45,10 @@ jobs:
           URL="https://officell.duckdns.org/salud-servidor"
 
           revisar() {
-            curl -sS --max-time 20 -o /tmp/respuesta -w '%{http_code}' "$URL" 2>/dev/null || echo "000"
+            # ⛔ Sin `|| echo 000`: cuando curl no conecta YA imprime 000 por su
+            #    cuenta, y el echo agregaba otro encima -> "000000", que no coincidia
+            #    con nada y el aviso salia con un codigo raro en vez del texto claro.
+            curl -sS --max-time 20 -o /tmp/respuesta -w '%{http_code}' "$URL" 2>/dev/null
           }
 
           CODIGO=$(revisar)
@@ -67,7 +70,7 @@ jobs:
           fi
 
           MOTIVO="código HTTP $CODIGO"
-          if [ "$CODIGO" = "000" ]; then
+          if [ "$CODIGO" = "000" ] || [ -z "$CODIGO" ]; then
             MOTIVO="no contestó nada (sin conexión o apagado)"
           fi
           echo "⛔ SERVIDOR CAÍDO — $MOTIVO"
