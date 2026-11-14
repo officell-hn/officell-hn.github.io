@@ -11,6 +11,11 @@ name: Vigilante del servidor
 # ⛔ Y POR QUÉ NO VIVE EN EL PROPIO SERVIDOR:
 #    un vigilante que corre adentro de lo que vigila se cae junto con él. Este
 #    mira desde afuera, desde las máquinas de GitHub.
+#
+# ⛔ 13-nov-2026: la primera versión de este archivo NO ERA YAML VÁLIDO y
+#    GitHub ni siquiera pudo leerlo. El mensaje de Telegram tenía saltos de
+#    línea que empezaban en la columna cero, y eso corta el bloque de texto.
+#    Por eso ahora el mensaje se arma con printf y TODO queda indentado.
 
 on:
   schedule:
@@ -33,15 +38,14 @@ jobs:
           TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT: ${{ secrets.TELEGRAM_OWNER_CHAT_ID }}
         run: |
-          # Se limpian espacios y saltos: si al guardar el secreto se colo un
-          # salto de linea, la llamada a Telegram fallaria justo el dia que
-          # hace falta, y sin decir por que.
-          TOKEN=$(printf %s "$TOKEN" | tr -d "[:space:]")
-          CHAT=$(printf %s "$CHAT" | tr -d "[:space:]")
+          # Se limpian espacios y saltos: si al guardar el secreto se coló un
+          # salto de línea, el aviso fallaría justo el día que hace falta.
+          TOKEN=$(printf %s "$TOKEN" | tr -d '[:space:]')
+          CHAT=$(printf %s "$CHAT" | tr -d '[:space:]')
           URL="https://officell.duckdns.org/salud-servidor"
 
           revisar() {
-            curl -sS --max-time 20 -o /tmp/respuesta -w '%{http_code}' "$URL" 2>/tmp/error || echo "000"
+            curl -sS --max-time 20 -o /tmp/respuesta -w '%{http_code}' "$URL" 2>/dev/null || echo "000"
           }
 
           CODIGO=$(revisar)
@@ -59,24 +63,33 @@ jobs:
 
           if [ "$CODIGO" = "200" ] && [ "$CUERPO" = "servidor-ok" ]; then
             echo "✅ servidor OK"
-          else
-            MOTIVO="código HTTP $CODIGO"
-            [ "$CODIGO" = "000" ] && MOTIVO="no contestó nada (sin conexión o apagado)"
-            echo "⛔ SERVIDOR CAÍDO — $MOTIVO"
-            if [ -n "$TOKEN" ] && [ -n "$CHAT" ]; then
-              curl -sS --max-time 20 \
-                -d "chat_id=$CHAT" \
-                --data-urlencode "text=🔴 EL SERVIDOR DE ORACLE NO RESPONDE
-$MOTIVO
-Dos intentos con 30 segundos de diferencia.
-officell.duckdns.org
-— Vigilante" \
-                "https://api.telegram.org/bot$TOKEN/sendMessage" >/dev/null && echo "aviso enviado por Telegram"
-            else
-              echo "⚠️ sin TELEGRAM_BOT_TOKEN o TELEGRAM_OWNER_CHAT_ID: no se pudo avisar"
-            fi
+            exit 0
+          fi
+
+          MOTIVO="código HTTP $CODIGO"
+          if [ "$CODIGO" = "000" ]; then
+            MOTIVO="no contestó nada (sin conexión o apagado)"
+          fi
+          echo "⛔ SERVIDOR CAÍDO — $MOTIVO"
+
+          if [ -z "$TOKEN" ] || [ -z "$CHAT" ]; then
+            echo "⚠️ faltan los secretos de Telegram: no se pudo avisar"
             exit 1
           fi
+
+          MENSAJE=$(printf '%s\n%s\n%s\n%s\n%s' \
+            '🔴 EL SERVIDOR DE ORACLE NO RESPONDE' \
+            "$MOTIVO" \
+            'Dos intentos con 30 segundos de diferencia.' \
+            'officell.duckdns.org' \
+            '— Vigilante')
+
+          curl -sS --max-time 20 \
+            -d "chat_id=$CHAT" \
+            --data-urlencode "text=$MENSAJE" \
+            "https://api.telegram.org/bot$TOKEN/sendMessage" >/dev/null
+          echo "aviso enviado por Telegram"
+          exit 1
 
       - name: Avisar si el certificado está por vencer
         if: success()
@@ -87,17 +100,19 @@ officell.duckdns.org
           # Caddy renueva solo, pero si alguna vez falla conviene enterarse
           # ANTES de que Meta deje de entregar los mensajes por certificado
           # vencido, no después.
-          TOKEN=$(printf %s "$TOKEN" | tr -d "[:space:]")
-          CHAT=$(printf %s "$CHAT" | tr -d "[:space:]")
-          FIN=$(echo | openssl s_client -servername officell.duckdns.org \
-                  -connect officell.duckdns.org:443 2>/dev/null \
-                | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
-          [ -z "$FIN" ] && { echo "no pude leer el certificado"; exit 0; }
+          TOKEN=$(printf %s "$TOKEN" | tr -d '[:space:]')
+          CHAT=$(printf %s "$CHAT" | tr -d '[:space:]')
+          FIN=$(echo | openssl s_client -servername officell.duckdns.org -connect officell.duckdns.org:443 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
+          if [ -z "$FIN" ]; then
+            echo "no pude leer el certificado"
+            exit 0
+          fi
           DIAS=$(( ( $(date -d "$FIN" +%s) - $(date +%s) ) / 86400 ))
           echo "el certificado vence en $DIAS días ($FIN)"
           if [ "$DIAS" -lt 10 ] && [ -n "$TOKEN" ] && [ -n "$CHAT" ]; then
-            curl -sS --max-time 20 -d "chat_id=$CHAT" \
-              --data-urlencode "text=🟠 El certificado de officell.duckdns.org vence en $DIAS días y no se ha renovado solo. Revisar Caddy.
-— Vigilante" \
+            MENSAJE=$(printf '%s\n%s' \
+              "🟠 El certificado de officell.duckdns.org vence en $DIAS días y no se renovó solo. Revisar Caddy." \
+              '— Vigilante')
+            curl -sS --max-time 20 -d "chat_id=$CHAT" --data-urlencode "text=$MENSAJE" \
               "https://api.telegram.org/bot$TOKEN/sendMessage" >/dev/null
           fi
