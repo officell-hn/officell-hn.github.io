@@ -19,12 +19,21 @@
 
 name: Fichas de producto
 
+# ⛔ 15-nov-2026: EL HORARIO SE APAGO Y AHORA LO DISPARA EL SERVIDOR.
+#
+#    Medido: este archivo pedia correr cada 15 minutos y GitHub lo corria cada
+#    ~5 HORAS — 5 corridas en 24 h en vez de 96. Por eso un producto dado de
+#    alta por WhatsApp tardaba horas en tener su pagina y el cliente que hacia
+#    click veia 404, que es exactamente el problema que este archivo nacio para
+#    resolver en agosto.
+#
+#    Ahora lo publica el servidor de OFFICELL en Oracle, que tiene reloj propio
+#    y cumple: /opt/officell/publicar_fichas.sh con un reloj de systemd cada 15
+#    minutos. Este archivo se deja SOLO con el boton manual, como respaldo por
+#    si el servidor estuviera caido. Dos horarios a la vez se pisarian al
+#    publicar.
 on:
-  schedule:
-    # Cada 15 minutos. GitHub a veces retrasa los cron, así que puede tardar un
-    # poco más; para verlo al instante está el botón de "Run workflow".
-    - cron: '*/15 * * * *'
-  workflow_dispatch:        # botón manual, cuando no se quiere esperar
+  workflow_dispatch:        # solo a mano: el horario lo lleva el servidor
 
 # Permiso para que la tarea pueda commitear en este mismo repo.
 permissions:
