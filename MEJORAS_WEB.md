@@ -3,7 +3,66 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-11-12
+> Última revisión: 2026-11-19
+
+---
+
+## ✅ 2026-11-19 — Bug real: botón 🖨️ del taller muere si el CDN del QR no carga
+
+**Revisión semanal.** Barrido de los 7 archivos del alcance (`tienda.html`, `taller.html`,
+`seguimiento.html`, `index.html`, `admin-productos.html`, `admin-taller.html`,
+`admin-keyson.html`) + `config.js`, con auditoría cruzada públicas/paneles:
+
+- `node --check` sobre el bloque `<script>` en línea del archivo tocado (`admin-taller.html`) → 0 errores.
+- Auth 100% **JWT Bearer** (`Authorization: Bearer` + `sessionStorage oc_admin_jwt`) en los 3
+  paneles. **0 rastros de `x-admin-token`** (grep en todo el repo).
+- 0 referencias DOM rotas (cruzado `getElementById()`/`querySelector('#…')` vs `id=` en los 3
+  paneles — p. ej. los 32 ids que toca el script de `admin-taller.html` existen todos), 0 `var()`
+  CSS sin resolver, headers de auth presentes en todas las llamadas protegidas, lecturas de
+  arreglos del backend guardadas (`Array.isArray`/`|| []`), e interpolaciones a `innerHTML`
+  escapadas con `esc()`/`escHtml()`.
+
+### 🐞 Bug real corregido — `admin-taller.html`, `imprimir()`
+
+El botón **🖨️** de cada orden (imprimir recibo A4/80mm — acción frecuente del día a día) llamaba
+`QRCode.toDataURL(...)` **sin guard**. Si `qrcode.min.js` no cargó (CDN bloqueado/offline/ad-blocker),
+`QRCode` es `undefined` y la llamada lanza **síncronamente** un `TypeError` **antes** de la cadena
+`.then()/.catch()` — así que el `.catch` **nunca corre**: el botón quedaba **muerto, sin ningún
+aviso** (solo un error en consola que el dueño no ve). No se podía imprimir el recibo del cliente.
+
+```js
+// ANTES                                   // DESPUÉS
+QRCode.toDataURL(qrUrl,{...})              // const qrPromise = (typeof QRCode !== 'undefined')
+  .then(...).catch(...)                    //   ? QRCode.toDataURL(qrUrl,{...}).catch(()=>qrExterno)
+                                           //   : Promise.resolve(qrExterno);
+                                           // qrPromise.then(...).catch(...)
+```
+
+Cae al servicio externo `api.qrserver.com` (mismo patrón que `confirmarPedido()` de `tienda.html`
+y el guard de `seguimiento.html`), de modo que el recibo **sigue imprimiéndose con QR** aunque la
+librería local falle. El camino feliz (CDN OK) no cambia: usa el QR local sin terceros.
+
+### 🔒 Hardening aplicado (misma clase, defensivo) — `admin-taller.html`, `imprimirPlantilla()`
+
+La hoja de recepción en blanco tenía la **misma** llamada sin guard (`await QRCode.toDataURL(...)`).
+Ahí sí estaba dentro de un `try/catch`, así que no moría en silencio — pero abortaba **toda** la
+plantilla con un alert de error. Mismo guard + respaldo a `api.qrserver.com`: ahora la plantilla
+se imprime igual aunque el CDN del QR esté caído. Es la única clase de defecto que seguía abierta
+en estos dos métodos; `seguimiento.html` y `tienda.html` ya la cubrían.
+
+### 🌿 Mantenimiento de `verificar_ramas.js`
+
+El guardia avisaba en falso de **5 ramas** (`772eqg`/24-sep, `dysbbr`/01-oct, `ilzhm8`/17-sep,
+`p5bqxc`/08-oct, `w1z417`/29-oct) cuyo contenido **ya está en `main`** — mismo caso de los bloques
+anteriores: squash-merge + clon shallow hacen que `git merge-tree HEAD rama` aborte con "refusing
+to merge unrelated histories" y, sin poder comparar el árbol, las lista como pendientes. **0 PRs
+abiertas** (`gh api .../pulls` = 0). Verificado leyendo `main` archivo por archivo (los 5 guards
+están presentes) y registradas en `ramas_descartadas.txt` → el guardia vuelve a dar verde (exit 0).
+
+### 📭 Nota: buzón no legible este ciclo
+
+`COORDINACION_CLAUDE.md` (repo `officell-ia`) **no se pudo leer**: ese repo está fuera del alcance
+de GitHub de la sesión (403). Se deja constancia, igual que en los ciclos del 29-oct y 12-nov.
 
 ---
 

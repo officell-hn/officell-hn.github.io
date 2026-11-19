@@ -931,7 +931,13 @@ async function imprimirPlantilla() {
     const { codigo_seguimiento, fecha } = data;
     const qrUrl = `https://officell-hn.github.io/taller.html?codigo=${encodeURIComponent(codigo_seguimiento)}`;
 
-    const qrDataUrl = await QRCode.toDataURL(qrUrl, { width: 160, margin: 1, errorCorrectionLevel: 'M' });
+    // Mismo guard que imprimir(): si qrcode.min.js no cargó, QRCode es undefined y
+    // el await lanzaría (acá sí lo atrapa el try, pero abortaría toda la plantilla).
+    // Se cae al servicio externo para que la hoja de recepción siga imprimiéndose.
+    const qrExterno = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrUrl)}`;
+    const qrDataUrl = (typeof QRCode !== 'undefined')
+      ? await QRCode.toDataURL(qrUrl, { width: 160, margin: 1, errorCorrectionLevel: 'M' }).catch(() => qrExterno)
+      : qrExterno;
         const hoy = new Date().toLocaleDateString('es-HN', { timeZone: 'America/Tegucigalpa' });
         const css = `
           @page { size: A4; margin: 12mm 15mm; }
@@ -1064,8 +1070,19 @@ function imprimir(id, formato) {
   const codigo = o.codigo_seguimiento || o.id;
   const qrUrl  = `https://officell-hn.github.io/taller.html?codigo=${encodeURIComponent(codigo)}`;
   const es80   = formato === '80mm';
+  const px     = es80 ? 130 : 160;
 
-  QRCode.toDataURL(qrUrl, { width: es80 ? 130 : 160, margin: 1, errorCorrectionLevel: 'M' })
+  // QR local, sin terceros. Si qrcode.min.js no cargó (CDN caído/bloqueado),
+  // QRCode queda undefined y QRCode.toDataURL lanzaría un TypeError SÍNCRONO —
+  // antes de la cadena .then/.catch de abajo —, dejando el botón 🖨️ muerto sin
+  // ningún aviso. Se cae al servicio externo de QR, igual que el modal de
+  // confirmación de tienda.html y el guard de seguimiento.html.
+  const qrExterno = `https://api.qrserver.com/v1/create-qr-code/?size=${px}x${px}&data=${encodeURIComponent(qrUrl)}`;
+  const qrPromise = (typeof QRCode !== 'undefined')
+    ? QRCode.toDataURL(qrUrl, { width: px, margin: 1, errorCorrectionLevel: 'M' }).catch(() => qrExterno)
+    : Promise.resolve(qrExterno);
+
+  qrPromise
     .then(qrDataUrl => {
       const css = es80 ? `
         @page { size: 80mm auto; margin: 3mm 4mm; }
