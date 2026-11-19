@@ -52,11 +52,12 @@ en estos dos métodos; `seguimiento.html` y `tienda.html` ya la cubrían.
 
 ### 🌿 Mantenimiento de `verificar_ramas.js`
 
-El guardia avisaba en falso de **5 ramas** (`772eqg`/24-sep, `dysbbr`/01-oct, `ilzhm8`/17-sep,
-`p5bqxc`/08-oct, `w1z417`/29-oct) cuyo contenido **ya está en `main`** — mismo caso de los bloques
-anteriores: squash-merge + clon shallow hacen que `git merge-tree HEAD rama` aborte con "refusing
-to merge unrelated histories" y, sin poder comparar el árbol, las lista como pendientes. **0 PRs
-abiertas** (`gh api .../pulls` = 0). Verificado leyendo `main` archivo por archivo (los 5 guards
+El guardia avisaba en falso de **6 ramas** (`772eqg`/24-sep, `dysbbr`/01-oct, `ilzhm8`/17-sep,
+`p5bqxc`/08-oct, `w1z417`/29-oct y `ykm27q`/12-nov — esta última apareció a mitad de ciclo tras un
+`git fetch --prune`) cuyo contenido **ya está en `main`** — mismo caso de los bloques anteriores:
+squash-merge + clon shallow hacen que `git merge-tree HEAD rama` aborte con "refusing to merge
+unrelated histories" y, sin poder comparar el árbol, las lista como pendientes. **0 PRs abiertas
+previas** (`gh api .../pulls`). Verificado leyendo `main` archivo por archivo (todos los guards
 están presentes) y registradas en `ramas_descartadas.txt` → el guardia vuelve a dar verde (exit 0).
 
 ### 📭 Nota: buzón no legible este ciclo
