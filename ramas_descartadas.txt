@@ -54,3 +54,22 @@ origin/claude/jolly-noether-yjsn74   # Rev. 15-oct: "escapar datos del backend y
                                      # guard". En main: esc(o.fecha_entrada/estimada) en taller.html,
                                      # Array.isArray(prodData.productos/catData.categorias) y
                                      # escHtml(mapaIconosCat[...]) en tienda.html.
+
+# 19-nov-2026, revisada y descartada: cinco ramas cuyo contenido YA ESTA EN MAIN.
+# Mismo caso de squash-merge + clon shallow de los bloques anteriores: `git
+# merge-tree HEAD rama` aborta con "refusing to merge unrelated histories", el
+# guardia no puede comparar el arbol y las lista en falso. Sin PRs abiertas
+# (gh api .../pulls = 0). Verificado leyendo main archivo por archivo.
+origin/claude/jolly-noether-772eqg   # 24-sep: "admin-keyson: guard array access before .length".
+                                     # En main: admin-keyson.html lineas 275 y 342 usan
+                                     # !Array.isArray(d.clientes)/!Array.isArray(d.mensajes) antes de .length.
+origin/claude/jolly-noether-dysbbr   # 01-oct: "guard || [] para arreglos del backend en admin-productos".
+                                     # En main: admin-productos.html todosProductos=d.productos||[] (572)
+                                     # y todosPedidos=d.pedidos||[] (1178).
+origin/claude/jolly-noether-ilzhm8   # 17-sep: "escapar el nombre del producto en el resumen del checkout".
+                                     # En main: tienda.html linea 820, escHtml(i.nombre) en resumenItems.
+origin/claude/jolly-noether-p5bqxc   # 08-oct: "guard Array.isArray en destacados del home (index.html)".
+                                     # En main: index.html linea 623, d.ok && Array.isArray(d.productos).
+origin/claude/jolly-noether-w1z417   # 29-oct: "guard de nombre en filtros de busqueda".
+                                     # En main: (p.nombre||'').toLowerCase() en filtrarTabla (admin-productos
+                                     # 653), buscar de tienda.html (571) y aplicarFiltros de admin-taller (572).
