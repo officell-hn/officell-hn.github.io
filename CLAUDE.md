@@ -25,6 +25,6 @@ gh api repos/officell-hn/officell-ia/contents/COORDINACION_CLAUDE.md -H "Accept:
 - **Repo PÚBLICO**: nunca subir contraseñas, tokens ni datos financieros.
 - HTML/CSS/JS puro, sin build. Cada push a `main` se publica en GitHub Pages.
 - Paneles admin: JWT `Authorization: Bearer` + `sessionStorage oc_admin_jwt`.
-  Backend: `https://officell-ia-production.up.railway.app/api/tienda`.
+  Backend: `https://officell.duckdns.org/api/tienda`.
 - Escapar con `escHtml()`/`esc()` (de `config.js`) todo dato del backend que vaya a
   `innerHTML`. Bitácora: `MEJORAS_WEB.md`. Pendientes: `PENDIENTES.md` en officell-ia.

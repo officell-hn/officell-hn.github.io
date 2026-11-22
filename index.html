@@ -618,11 +618,11 @@ footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem
 (async () => {
   const el = document.getElementById('store-featured');
   try {
-    let r = await fetch('https://officell-ia-production.up.railway.app/api/tienda/productos?destacados=true');
+    let r = await fetch('https://officell.duckdns.org/api/tienda/productos?destacados=true');
     let d = await r.json();
     let prods = d.ok && Array.isArray(d.productos) && d.productos.length ? d.productos : [];
     if (!prods.length) {
-      r = await fetch('https://officell-ia-production.up.railway.app/api/tienda/productos');
+      r = await fetch('https://officell.duckdns.org/api/tienda/productos');
       d = await r.json();
       prods = (d.productos || []).slice(0, 8);
     } else {

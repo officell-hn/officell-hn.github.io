@@ -116,7 +116,7 @@ No hay dependencias que instalar. Los cambios en `main` se publican solos en Git
 **Acceso a ambos paneles (los tres: taller, productos y keyson):**
 - Login por contraseña contra `POST /admin/login`; el servidor devuelve un **JWT**
 - Las peticiones autenticadas envían el token como header `Authorization: Bearer <jwt>` (helper `authHeaders()`)
-- **Backend/API:** `https://officell-ia-production.up.railway.app/api/tienda`
+- **Backend/API:** `https://officell.duckdns.org/api/tienda`
 - La contraseña **no está en el código fuente** — la verifica el servidor en Railway
 - La sesión se guarda en `sessionStorage` (`oc_admin_jwt`); un `401` (token expirado) cierra sesión y pide volver a ingresar
 

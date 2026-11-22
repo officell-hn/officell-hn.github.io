@@ -2,8 +2,8 @@
 // Cambiar aquí afecta a todas las páginas que incluyan este archivo
 
 const OFFICELL_CONFIG = {
-  // URL base de la API backend (Railway)
-  API: 'https://officell-ia-production.up.railway.app/api/tienda',
+  // URL base de la API backend (Oracle Cloud, Queretaro — antes Railway)
+  API: 'https://officell.duckdns.org/api/tienda',
 
   // WhatsApp principal del negocio
   WHATSAPP: '50493323393',
