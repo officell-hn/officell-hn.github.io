@@ -56,7 +56,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -sS --fail --retry 3 --retry-delay 5 --max-time 120 \
-            https://officell-ia-production.up.railway.app/api/tienda/fichas \
+            https://officell.duckdns.org/api/tienda/fichas \
             -o fichas.json
           node -e "
             const d = JSON.parse(require('fs').readFileSync('fichas.json','utf8'));
