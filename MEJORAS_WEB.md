@@ -3,7 +3,76 @@
 > 📌 **Pendientes de los tres proyectos:** `PENDIENTES.md` en el repo `officell-ia`
 > (https://github.com/officell-hn/officell-ia/blob/main/PENDIENTES.md) — fuente única.
 > Web no tiene pendientes abiertos: M1 y M2 quedaron cerrados el 13 y 17 de agosto.
-> Última revisión: 2026-11-19
+> Última revisión: 2026-11-26
+
+---
+
+## ✅ 2026-11-26 — Ciclo limpio: sin bugs nuevos. Se mergeó a producción la PR #20 (guard QR del taller) que llevaba una semana abierta y sin fusionar
+
+**Revisión semanal.** Barrido de los 7 archivos del alcance (`tienda.html`, `taller.html`,
+`seguimiento.html`, `index.html`, `admin-productos.html`, `admin-taller.html`,
+`admin-keyson.html`) + `config.js`, con auditoría cruzada públicas/paneles.
+
+### 🔀 PR previa resuelta ANTES de la revisión propia — PR #20 (rev. 19-nov) → **mergeada a main**
+
+Al abrir el ciclo había **1 PR de la semana pasada abierta, lista y sin fusionar** (#20,
+"guard de QRCode en impresión del taller"). Es un **bug real único** (el botón 🖨️ de cada
+orden en `admin-taller.html` moría sin aviso si `qrcode.min.js` no cargaba) cuyo contenido **no
+estaba en `main`**. No había otras PRs con que compararla, así que no hay duplicado que
+descartar. Validada igual que una PR propia: test-merge local sin conflictos (solo tocaba
+`admin-taller.html` + 3 `.md`, nada de `sitemap.xml`/`productos/`/`.github/`), `node --check`
+sobre su bloque `<script>` (0 errores). **Mergeada a `main` (squash, #20) → el guard del QR ya
+está en producción.** `verificar_ramas.js` en verde tras el merge (su contenido ya está en main).
+
+### 🔍 Revisión propia — sin bugs que rompan funcionalidad
+
+Los 7 archivos están sólidos. Chequeos mecánicos de este ciclo:
+
+- **Sintaxis JS:** extraídos los bloques `<script>` inline de los 7 archivos y `node --check` en
+  cada uno → **0 errores de sintaxis** (los bloques `application/ld+json` de datos estructurados
+  son JSON válido, no JS, y se excluyen).
+- **Auth:** 100% **JWT Bearer** (`Authorization: Bearer` + `sessionStorage oc_admin_jwt`) en los
+  3 paneles; flujo login→jwt→401→logout correcto. **0 rastros de `x-admin-token`** (grep en todo
+  el repo).
+- **Refs DOM:** cruzados todos los `getElementById()`/`querySelector('#…')` contra los `id=`
+  declarados en cada archivo → **todas resuelven**, 0 botones muertos.
+- **CSS:** cruzadas todas las `var(--x)` contra sus definiciones → **todas resuelven** (`--verde`
+  en `admin-productos` se usa con fallback `#00A74A`).
+- **Lecturas del backend:** todos los `.length` sobre arreglos del backend están guardados
+  (`|| []` / `Array.isArray`): `todosProductos`/`todosPedidos`/`categoriasCache` en
+  `admin-productos`, `ORDENES` en `admin-taller`, `clientes`/`mensajes` en `admin-keyson`,
+  `productos`/`categorias` en `tienda`/`index`.
+- **`innerHTML`:** todo el texto libre del usuario/cliente que entra a `innerHTML` va escapado con
+  `esc()`/`escHtml()` (p. ej. `m.mensaje` y nombres de cliente en `admin-keyson`; `equipo`,
+  `cliente_nombre`, `cliente_telefono` en `admin-taller`).
+- **QRCode:** todas las llamadas (`tienda.html`, `seguimiento.html`, los 2 métodos de
+  `admin-taller.html`) tienen guard `typeof QRCode !== 'undefined'` + respaldo externo. La PR #20
+  cerró el último hueco.
+
+### 🟢 Mejoras Baja documentadas (defensivas, NO explotables — no se tocan este ciclo)
+
+Misma clase que los ítems D1/D2 de ciclos anteriores: valores **generados por el backend** (no
+texto del usuario) que caen crudos en `innerHTML`/`onclick` mientras sus hermanos de texto libre
+sí escapan. No rompen nada hoy ni son explotables (su formato lo fija el backend), por eso se
+documentan en vez de forzar un cambio cosmético:
+
+- **D3 — `admin-taller.html`, `renderTabla()`:** `o.codigo_seguimiento`, `o.id`,
+  `o.fecha_entrada` y `o.fecha_estimada` se interpolan crudos (el código va también dentro de un
+  string JS en `onclick="copiarCodigo('…')"`). Son códigos/fechas que genera el backend
+  (alfanumérico / `YYYY-MM-DD`), sin metacaracteres HTML. Fix futuro: pasar el código por
+  `data-*`+`dataset` (como ya hace `admin-keyson`) en vez de interpolarlo en el `onclick`, y
+  `esc()` en las fechas por consistencia con la vista pública de `taller.html`.
+- **D4 — `admin-keyson.html`:** el resultado de `iniciales()` (1–2 caracteres) y
+  `c.total_mensajes` (un conteo numérico) se insertan sin escapar. Máximo 1–2 caracteres o un
+  número: no permiten cerrar una etiqueta ni inyectar atributos. Fix futuro: `esc()` por
+  consistencia.
+
+### 📭 Nota: buzón no legible este ciclo
+
+`COORDINACION_CLAUDE.md` (repo `officell-ia`) **no se pudo leer**: ese repo está fuera del alcance
+de GitHub de la sesión (403), igual que en los ciclos del 29-oct, 12-nov y 19-nov. Se deja
+constancia; conviene que Adonias revise el buzón a mano o que se agregue `officell-ia` al alcance
+de esta sesión.
 
 ---
 
